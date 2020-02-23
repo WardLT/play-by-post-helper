@@ -36,3 +36,15 @@ _Note_: Some of the features alluded to by these permissions have not been imple
 You will need to store the access token as an environment variable named ``OAUTH_ACCESS_TOKEN``
 for the bot to use it. 
 My preferred method is to store it as an environment variable. 
+
+## Running the App
+
+Launch the Bot by first activating the appropriate Conda environment, 
+and then running: `python server.py`
+
+The app will run as a long-lived process (spending most of its time in a sleep state)
+ and prints log messages to the screen.
+
+The application itself is designed to be very lightweight. 
+I run the application on a Raspberry Pi, but you could also easily run it on 
+small instances on cloud compute providers if you do not have a home server. 
