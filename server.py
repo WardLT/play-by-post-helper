@@ -63,7 +63,7 @@ while True:
             logger.info('Last poster was not me. Sending an @channel reminder')
             client.chat_postMessage(
                 channel=channel_id,
-                text=f'<!channel> Last message {humanize.naturaltime(stall_time.resolution())}.'
+                text=f'<!channel> Last message was {humanize.naturaltime(stall_time)}.'
                      f' Who\'s up? Let\'s play some D&D!',
                 mrkdwn=True
             )
