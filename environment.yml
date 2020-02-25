@@ -3,12 +3,12 @@ channels:
   - defaults
   - conda-forge
 dependencies:
-  - python==3.8.*
+  - python==3.6.*
   - flask==1.1.*
-  - slackclient
   - humanize
   - pytest-flask
   - pytest
   - pip
   - pip:
+      - slackclient
       - slackeventsapi
