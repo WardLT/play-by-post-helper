@@ -9,8 +9,8 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(level
 logger = logging.getLogger(__name__)
 
 # Configuration details
-channel_to_monitor = "bot_test"
-threshold_stall_time = timedelta(seconds=15)
+channel_to_monitor = "ic_all"
+threshold_stall_time = timedelta(days=1)
 
 # Look for configuration information
 OAUTH_ACCESS_TOKEN = os.environ.get('OAUTH_ACCESS_TOKEN', None)
