@@ -1,6 +1,7 @@
 import os
 import logging
-from datetime import datetime, timedelta
+from threading import Thread
+from datetime import timedelta
 
 from modron.slack import BotClient
 
@@ -20,5 +21,8 @@ if OAUTH_ACCESS_TOKEN is None:
 client = BotClient(token=OAUTH_ACCESS_TOKEN)
 logger.info('Created web client')
 
-# Watch the cha
-client.display_reminders_on_channel(channel_to_monitor, threshold_stall_time)
+# Watch the channel as a daemon thread
+reminder_thread = Thread(target=client.display_reminders_on_channel, name=f'reminder_on_{channel_to_monitor}',
+                         args=(channel_to_monitor, threshold_stall_time),
+                         daemon=True)
+reminder_thread.start()
