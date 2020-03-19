@@ -92,11 +92,11 @@ class BotClient(WebClient):
 
             # Check if we are past the stall time
             if stall_time > allowed_stall_time:
-                logger.info(f'Channel has been stalled for {allowed_stall_time - stall_time} too long')
+                logger.info(f'Channel has been stalled for {stall_time - allowed_stall_time} too long')
 
                 # Check if the bot was the last one to send a message
                 #  If not, then send a reminder to the channel
-                last_poster = channel_info['latest']['user']
+                last_poster = channel_info['latest'].get('user', None)
                 if last_poster == self.my_id:
                     logger.info('Last poster was me, doing nothing')
                 else:
