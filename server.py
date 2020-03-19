@@ -24,5 +24,5 @@ logger.info('Created web client')
 # Watch the channel as a daemon thread
 reminder_thread = Thread(target=client.display_reminders_on_channel, name=f'reminder_on_{channel_to_monitor}',
                          args=(channel_to_monitor, threshold_stall_time),
-                         daemon=True)
+                         daemon=False)
 reminder_thread.start()
