@@ -9,7 +9,8 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(level
 logger = logging.getLogger(__name__)
 
 # Configuration details
-channel_to_monitor = "ic_all"
+reminder_channel = "ooc_discussion"
+watch_channel_regex = r"ic_(?!mezu_gm)"
 threshold_stall_time = timedelta(days=1)
 
 # Look for configuration information
@@ -21,8 +22,11 @@ if OAUTH_ACCESS_TOKEN is None:
 client = BotClient(token=OAUTH_ACCESS_TOKEN)
 logger.info('Created web client')
 
+# Get the channels to watch
+watch_channels = client.match_channels(watch_channel_regex)
+
 # Watch the channel as a daemon thread
-reminder_thread = Thread(target=client.display_reminders_on_channel, name=f'reminder_on_{channel_to_monitor}',
-                         args=(channel_to_monitor, threshold_stall_time),
+reminder_thread = Thread(target=client.display_reminders_on_channel, name=f'watch_for_stalls',
+                         args=(reminder_channel, watch_channels, threshold_stall_time),
                          daemon=False)
 reminder_thread.start()
