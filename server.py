@@ -9,7 +9,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(level
 logger = logging.getLogger(__name__)
 
 # Configuration details
-reminder_channel = "ooc_discussion"
+reminder_channel = "ic_all"
 watch_channel_regex = r"ic_(?!mezu_gm)"
 threshold_stall_time = timedelta(days=1)
 

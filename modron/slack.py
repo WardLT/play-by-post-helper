@@ -82,6 +82,12 @@ class BotClient(WebClient):
         # Get the channel ID for the reminder channel
         reminder_channel_id = self.get_channel_id(reminder_channel)
 
+        # Warn user if the bot does not write a channel watched for stalling
+        if reminder_channel not in watch_channels:
+            logger.warning(f'Bot will write reminders to a channel not being watched for stalling, which '
+                           f'means it will issue reminders even if no other activity has occurred since the '
+                           f'previous reminder.')
+
         # Make sure I am in the channels to be watched and reminder channel
         self.add_self_to_channel(reminder_channel)
         for channel in watch_channels:
