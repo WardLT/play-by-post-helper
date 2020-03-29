@@ -1,6 +1,8 @@
 # Play-by-Post Helper
 
-The Play-by-Post Helper (PbPHelper) is a Slack bot that assists playing Role Playing Games (RPGs) with Slack.
+[![Build Status](https://travis-ci.org/WardLT/play-by-post-helper.svg?branch=master)](https://travis-ci.org/WardLT/play-by-post-helper)
+
+The Play-by-Post Helper (Modron) is a Slack bot that assists playing Role Playing Games (RPGs) with Slack.
 
 The helper is designed to be a simple Slack Bot for performing tasks including:
 
