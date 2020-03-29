@@ -10,5 +10,6 @@ dependencies:
   - pytest
   - pip
   - pip:
+      - -e .
       - slackclient
       - slackeventsapi
