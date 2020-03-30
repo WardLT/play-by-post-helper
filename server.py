@@ -1,11 +1,18 @@
 import os
+import sys
 import logging
 from threading import Thread
 from datetime import timedelta
+from logging.handlers import RotatingFileHandler
 
 from modron.slack import BotClient
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.INFO,
+                    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+                    handlers=[RotatingFileHandler('modron.log', mode='a',
+                                                  maxBytes=1024 * 1024 * 16,
+                                                  backupCount=1),
+                              logging.StreamHandler(sys.stdout)])
 logger = logging.getLogger(__name__)
 
 # Configuration details
