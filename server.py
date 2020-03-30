@@ -1,20 +1,20 @@
 import os
 import sys
 import logging
-import platform
+from functools import partial
 from threading import Thread
 from datetime import timedelta, datetime
 from logging.handlers import RotatingFileHandler
 
-import humanize
 from slackeventsapi import SlackEventAdapter
 
+from modron.events import status_check
 from modron.slack import BotClient
 
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     handlers=[RotatingFileHandler('modron.log', mode='a',
-                                                  maxBytes=1024 * 1024 * 16,
+                                                  maxBytes=1024 * 1024 * 2,
                                                   backupCount=1),
                               logging.StreamHandler(sys.stdout)])
 logger = logging.getLogger(__name__)
@@ -49,25 +49,8 @@ reminder_thread = Thread(target=client.display_reminders_on_channel, name=f'watc
                          daemon=True)
 reminder_thread.start()
 
-
-# Make a test event
-@event_adapter.on('message')
-def status_check(event):
-    # Figure out where this came from
-    reply_channel = event["event"]["channel"]
-    sender = event["event"]["user"]
-    if sender == client.my_id:
-        logger.info("The message is me. Not going to talk to myself!")
-        return
-
-    # Reply back with something
-    logger.info(f'Received a direct message from {sender}')
-    client.chat_postMessage(
-        channel=reply_channel,
-        text=f'Hello! I\'ve been awake {humanize.naturaldelta(datetime.now() - start_time)}'
-             f' on {platform.node()}'
-    )
-
+# Register the events
+event_adapter.on('message', f=partial(status_check, client=client, start_time=start_time))
 
 # Start the Slack Events API
 event_adapter.start(port=3152, debug=True)
