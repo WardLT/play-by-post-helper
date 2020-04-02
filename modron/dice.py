@@ -2,6 +2,7 @@
 import re
 from typing import List
 from random import randint
+from collections import Counter
 
 
 _dice_regex = re.compile(r"(?P<sign>[-+]?)(?P<number>\d*)d(?P<sides>\d+)")
@@ -55,7 +56,7 @@ class DiceRoll:
         """
 
         assert not (advantage and disadvantage), "You cannot roll both at advantage and disadvantage"
-        self.dice = dice
+        self._dice = Counter(dice)
         self.modifier = modifier
         self.reroll_ones = reroll_ones
         self.advantage = advantage
@@ -63,10 +64,14 @@ class DiceRoll:
 
         # Make the rolls
         self.results = [roll_die(s, advantage=advantage, disadvantage=disadvantage, reroll_one=reroll_ones)
-                        for s in self.dice]
+                        for s in self._dice.elements()]
 
         # Store the result
         self.value = sum(self.results) + self.modifier
+
+    @property
+    def dice(self) -> List[int]:
+        return list(self._dice.elements())
 
     @classmethod
     def make_roll(cls, roll: str):
@@ -96,3 +101,7 @@ class DiceRoll:
         reroll_ones = 'reroll' in roll or 're-roll' in roll
         return cls(dice, modifier, reroll_ones=reroll_ones,
                    advantage=advantage, disadvantage=disadvantage)
+
+    def __str__(self):
+        coll_dice = [f'{count}d{sides}' for sides, count in sorted(self._dice.items(), key=lambda x: -x[0])]
+        return f'<Roll: {"+".join(coll_dice)}{self.modifier:+d} - Value: {self.value}>'
