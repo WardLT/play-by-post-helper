@@ -68,7 +68,7 @@ def assemble_parser(client: BotClient, modules: Sequence[InteractionModule.__cla
     # Register the modules
     subparsers = parser.add_subparsers(title='Available Commands',
                                        description='The different possible ways to interact with Modron',
-                                       dest='subcommand', required=True)
+                                       dest='subcommand')
     for module in modules:
         module_inst = module(client)
         subparser = subparsers.add_parser(module_inst.name,
