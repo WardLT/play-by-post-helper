@@ -35,10 +35,8 @@ def parser(client) -> NoExitParser:
 
 def test_help(parser):
     """We expect help commands to raise an error that contains both the error message and any printed messages"""
-    with raises(NoExitParserError) as exc:
-        parser.parse_args(['--help'])
-    assert exc.value.text_output.startswith('usage: /modron')
-    assert exc.value.error_message.startswith('the following arguments')
+    parser.parse_args(['--help'])
+    assert parser.text_buffer.getvalue().startswith('usage: /modron')
 
 
 def test_roll_help(parser):
