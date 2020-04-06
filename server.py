@@ -63,8 +63,8 @@ event_adapter.on('message', f=partial(status_check, client=client, start_time=st
 
 @app.route('/modron', methods=('POST',))
 def modron_slash_cmd():
-    payload = SlashCommandPayload(**request.json())
-    handle_slash_command(payload, parser=modron_cmd_parser)
+    payload = SlashCommandPayload(**request.form.to_dict())
+    return handle_slash_command(payload, parser=modron_cmd_parser)
 
 
 # Start the Slack Events API
