@@ -74,8 +74,18 @@ class DiceRoll:
         return list(self._dice.elements())
 
     @classmethod
-    def make_roll(cls, roll: str):
-        """Make a roll given a text string describing the dice"""
+    def make_roll(cls, roll: str, reroll_ones: bool = False,
+                  advantage: bool = False, disadvantage: bool = False) -> 'DiceRoll':
+        """Make a roll given a text string describing the dice
+
+        Args:
+            roll (str): String describing the roll, which must not contain spaces
+            reroll_ones (bool): Whether to re-roll dice which are 1 on the first roll
+            advantage (bool): Whether to roll each dice twice and take the high value
+            disadvantage (bool): Whether to roll the dice twice and take the low value
+        Returns:
+            (DiceRoll) Specified roll
+        """
 
         # Match the dice components
         dice = []
@@ -95,13 +105,18 @@ class DiceRoll:
         else:
             modifier = 0
 
-        # Look for any rolling method declarations
-        advantage = ' advantage' in roll
-        disadvantage = ' disadvantage' in roll
-        reroll_ones = 'reroll' in roll or 're-roll' in roll
         return cls(dice, modifier, reroll_ones=reroll_ones,
                    advantage=advantage, disadvantage=disadvantage)
 
     def __str__(self):
         coll_dice = [f'{count}d{sides}' for sides, count in sorted(self._dice.items(), key=lambda x: -x[0])]
-        return f'<Roll: {"+".join(coll_dice)}{self.modifier:+d} - Value: {self.value}>'
+
+        # Make a roll description
+        desc = ""
+        if self.advantage:
+            desc = " at advantage"
+        elif self.disadvantage:
+            desc = " at disadvantage"
+        if self.reroll_ones:
+            desc += " re-rolling ones"
+        return f'{"+".join(coll_dice)}{self.modifier:+d}{desc} = {self.value}'

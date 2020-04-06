@@ -60,8 +60,8 @@ def test_parser():
     assert roll.value == sum(roll.results) - 2
 
     # Test several dice rolls with re-rolling
-    roll = DiceRoll.make_roll('d3+4d14+2 re-rolling ones')
-    assert str(roll).startswith('<Roll: 4d14+1d3+2 - Value:')
+    roll = DiceRoll.make_roll('d3+4d14+2', reroll_ones=True)
+    assert str(roll).startswith('4d14+1d3+2 re-rolling ones =')
     assert roll.dice == [3, 14, 14, 14, 14]
     assert not roll.advantage
     assert not roll.disadvantage
@@ -69,12 +69,13 @@ def test_parser():
     assert roll.value == sum(roll.results) + 2
 
     # Test advantage and disadvantage
-    roll = DiceRoll.make_roll('d20+2 at advantage')
+    roll = DiceRoll.make_roll('d20+2', advantage=True)
+    assert str(roll).startswith('1d20+2 at advantage =')
     assert roll.dice == [20]
     assert roll.advantage
     assert not roll.disadvantage
 
-    roll = DiceRoll.make_roll('d20+2 at disadvantage')
+    roll = DiceRoll.make_roll('d20+2', disadvantage=True)
     assert roll.dice == [20]
     assert not roll.advantage
     assert roll.disadvantage
