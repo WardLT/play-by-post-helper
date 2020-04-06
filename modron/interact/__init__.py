@@ -45,8 +45,8 @@ class NoExitParser(ArgumentParser):
             self.text_buffer.write(message)
             self.text_buffer.flush()
 
-    def exit(self, status: int = ..., message: Optional[Text] = ...) -> NoReturn:
-        pass
+    def exit(self, status: int = ..., message: Optional[Text] = None) -> NoReturn:
+        raise NoExitParserError(self, message, self.text_buffer.getvalue())
 
     def error(self, message: Text) -> NoReturn:
         raise NoExitParserError(self, message, self.text_buffer.getvalue())

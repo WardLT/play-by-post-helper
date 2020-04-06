@@ -35,8 +35,14 @@ def parser(client) -> NoExitParser:
 
 def test_help(parser):
     """We expect help commands to raise an error that contains both the error message and any printed messages"""
-    parser.parse_args(['--help'])
-    assert parser.text_buffer.getvalue().startswith('usage: /modron')
+    with raises(NoExitParserError) as exc:
+        parser.parse_args(['--help'])
+    assert exc.value.text_output.startswith('usage: /modron')
+
+
+def test_help_payload(payload, parser):
+    payload.text = '--help'
+    handle_slash_command(payload, parser)
 
 
 def test_handle(parser, payload, caplog):
@@ -50,7 +56,6 @@ def test_roll_help(parser):
     with raises(NoExitParserError) as exc:
         parser.parse_args(['roll', '--help'])
     assert exc.value.text_output.startswith('usage: /modron roll')
-    assert exc.value.error_message.startswith('the following arguments')
 
 
 def test_rolling(parser, payload, caplog):
