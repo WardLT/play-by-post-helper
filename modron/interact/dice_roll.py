@@ -31,7 +31,7 @@ class DiceRollInteraction(InteractionModule):
         # Add modifiers to how the roll is computed
         adv_group = parser.add_mutually_exclusive_group(required=False)
         adv_group.add_argument("--advantage", "-a", help="Perform the roll at advantage", action='store_true')
-        adv_group.add_argument("--disadvantage", "-d", help="Perform the roll at disadvantage", action='store_false')
+        adv_group.add_argument("--disadvantage", "-d", help="Perform the roll at disadvantage", action='store_true')
         parser.add_argument("--reroll_ones", '-1', help="Re-roll any dice that roll a 1 the first time",
                             action='store_true')
 
@@ -39,7 +39,8 @@ class DiceRollInteraction(InteractionModule):
         # Make the dice roll
         roll = DiceRoll.make_roll(args.dice, advantage=args.advantage, disadvantage=args.disadvantage,
                                   reroll_ones=args.reroll_ones)
-        logger.info(f'{payload.user_id} requested to roll {roll}. Result = {roll.value}')
+        logger.info(f'{payload.user_id} requested to roll {roll.roll_description}.'
+                    f' Result = {roll.value}')
 
         # Make the reply
         if args.purpose is not None:

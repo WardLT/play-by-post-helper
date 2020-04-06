@@ -4,7 +4,7 @@ import os
 
 from pytest import fixture, raises
 
-from modron.interact import assemble_parser, NoExitParser, NoExitParserError, SlashCommandPayload
+from modron.interact import assemble_parser, NoExitParser, NoExitParserError, SlashCommandPayload, handle_slash_command
 from modron.slack import BotClient
 
 
@@ -37,6 +37,13 @@ def test_help(parser):
     """We expect help commands to raise an error that contains both the error message and any printed messages"""
     parser.parse_args(['--help'])
     assert parser.text_buffer.getvalue().startswith('usage: /modron')
+
+
+def test_handle(parser, payload, caplog):
+    payload.text = 'roll 1d20 test'
+    with caplog.at_level(logging.INFO):
+        assert handle_slash_command(payload, parser) == {"response_type": "in_channel"}
+    assert '1d20' in caplog.messages[0]
 
 
 def test_roll_help(parser):

@@ -82,11 +82,11 @@ def assemble_parser(client: BotClient, modules: Sequence[InteractionModule.__cla
     return parser
 
 
-def handle_slash_command(command: SlashCommandPayload, parser: NoExitParser) -> Union[dict, str]:
+def handle_slash_command(payload: SlashCommandPayload, parser: NoExitParser) -> Union[dict, str]:
     """Respond to a slash command received from Slack
 
     Args:
-        command (SlashCommandPayload): Slash command data sent from Slack
+        payload (SlashCommandPayload): Slash command data sent from Slack
         parser (ArgumentParser): Parser to use to understand command
     Returns:
         (dict) Immediate reply to give to Slack
@@ -94,7 +94,7 @@ def handle_slash_command(command: SlashCommandPayload, parser: NoExitParser) -> 
 
     # Parse the command
     try:
-        args = parser.parse_args(shlex.split(command.text))
+        args = parser.parse_args(shlex.split(payload.text))
     except NoExitParserError as exc:
         # Make the reply message
         msg = ''
@@ -108,4 +108,6 @@ def handle_slash_command(command: SlashCommandPayload, parser: NoExitParser) -> 
         }
 
     # Run the specified command
+    args.interact(args, payload)
+
     return {"response_type": "in_channel"}
