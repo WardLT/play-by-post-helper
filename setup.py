@@ -9,6 +9,7 @@ setup(
         'flask>=1.1',
         'humanize',
         'slackclient',
-        'slackeventsapi'
+        'slackeventsapi',
+        'pydantic'
     ]
 )

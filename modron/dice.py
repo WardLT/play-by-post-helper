@@ -108,9 +108,10 @@ class DiceRoll:
         return cls(dice, modifier, reroll_ones=reroll_ones,
                    advantage=advantage, disadvantage=disadvantage)
 
-    def __str__(self):
+    @property
+    def roll_description(self) -> str:
+        """Text description of roll"""
         coll_dice = [f'{count}d{sides}' for sides, count in sorted(self._dice.items(), key=lambda x: -x[0])]
-
         # Make a roll description
         desc = ""
         if self.advantage:
@@ -119,4 +120,8 @@ class DiceRoll:
             desc = " at disadvantage"
         if self.reroll_ones:
             desc += " re-rolling ones"
-        return f'{"+".join(coll_dice)}{self.modifier:+d}{desc} = {self.value}'
+        roll_desc = f'{"+".join(coll_dice)}{self.modifier:+d}{desc}'
+        return roll_desc
+
+    def __str__(self):
+        return f'{self.roll_description} = {self.value}'
