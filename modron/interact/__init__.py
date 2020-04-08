@@ -10,6 +10,7 @@ from typing import Dict, Union, Sequence, Text, NoReturn, Optional, IO
 from modron.interact.base import SlashCommandPayload, InteractionModule
 from modron.interact.dice_roll import DiceRollInteraction
 from modron.slack import BotClient
+from modron.utils import escape_slack_characters
 
 logger = logging.getLogger(__name__)
 
@@ -103,7 +104,7 @@ def handle_slash_command(payload: SlashCommandPayload, parser: NoExitParser) -> 
         msg += exc.text_output
 
         return {
-            'text': msg,
+            'text': escape_slack_characters(msg),
             'mkdwn': True
         }
 
