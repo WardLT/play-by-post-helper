@@ -5,7 +5,6 @@ from typing import List
 
 import requests
 
-from modron.utils import colors, escape_slack_characters
 from modron.dice import DiceRoll
 from modron.interact import SlashCommandPayload
 from modron.interact.base import InteractionModule
@@ -26,12 +25,13 @@ def _render_dice_rolls(roll: DiceRoll) -> List[str]:
     output = []
     for v, d in zip(roll.results, roll.dice):
         if v == 1:
-            output.append(f'<span style="color:{colors["red"]}">*1*</span>')
+            output.append(f'*1*')
         elif v == d:
-            output.append(f'<span style="color:{colors["green"]}">*{v}*</span>')
+            output.append(f'_{v}_')
         else:
             output.append(str(v))
     return output
+
 
 class DiceRollInteraction(InteractionModule):
     """Servicing requests to roll dice"""

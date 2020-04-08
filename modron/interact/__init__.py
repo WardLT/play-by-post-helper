@@ -100,7 +100,7 @@ def handle_slash_command(payload: SlashCommandPayload, parser: NoExitParser) -> 
         # Make the reply message
         msg = ''
         if exc.error_message != "":
-            msg = f'<span style="color:{colors["red"]}">{exc.error_message}</div>\n'
+            msg = f'*{exc.error_message}*\n'
         msg += exc.text_output
 
         return {

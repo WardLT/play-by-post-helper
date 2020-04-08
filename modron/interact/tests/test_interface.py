@@ -72,3 +72,9 @@ def test_rolling(parser, payload, caplog):
         args.interact(args, payload)
 
     assert '1d6+1' in caplog.messages[0]
+
+
+def test_payload_error(parser, payload):
+    payload.text = 'roll'
+    result = handle_slash_command(payload, parser)
+    assert isinstance(result, dict)
