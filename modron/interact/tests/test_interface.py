@@ -41,8 +41,15 @@ def test_help(parser):
 
 
 def test_help_payload(payload, parser):
+    # Option 1: Using --help
     payload.text = '--help'
-    handle_slash_command(payload, parser)
+    result = handle_slash_command(payload, parser)
+    assert len(result['text']) > 10
+
+    # Option 2: Sending nothing
+    payload.text = ''
+    result = handle_slash_command(payload, parser)
+    assert len(result['text']) > 10
 
 
 def test_handle(parser, payload, caplog):

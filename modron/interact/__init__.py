@@ -10,7 +10,7 @@ from typing import Dict, Union, Sequence, Text, NoReturn, Optional, IO
 from modron.interact.base import SlashCommandPayload, InteractionModule
 from modron.interact.dice_roll import DiceRollInteraction
 from modron.slack import BotClient
-from modron.utils import escape_slack_characters
+from modron.utils import escape_slack_characters, colors
 
 logger = logging.getLogger(__name__)
 
@@ -100,7 +100,7 @@ def handle_slash_command(payload: SlashCommandPayload, parser: NoExitParser) -> 
         # Make the reply message
         msg = ''
         if exc.error_message != "":
-            msg = f'<div color="red">{exc.error_message}</div>\n'
+            msg = f'<span style="color:{colors["red"]}">{exc.error_message}</div>\n'
         msg += exc.text_output
 
         return {
@@ -108,6 +108,13 @@ def handle_slash_command(payload: SlashCommandPayload, parser: NoExitParser) -> 
             'mkdwn': True
         }
 
+    # If there is not an interact command, return help message
+    if not hasattr(args, 'interact'):
+        parser.print_help()
+        return {
+            'text': parser.text_buffer.getvalue(),
+            'mkdwn': True
+        }
     # Run the specified command
     args.interact(args, payload)
 
