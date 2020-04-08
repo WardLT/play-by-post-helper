@@ -1,6 +1,7 @@
 """Tests the functions used to interface with interaction modules"""
 import logging
 import os
+from time import sleep
 
 from pytest import fixture, raises
 
@@ -56,6 +57,7 @@ def test_handle(parser, payload, caplog):
     payload.text = 'roll 1d20 test'
     with caplog.at_level(logging.INFO):
         assert handle_slash_command(payload, parser) == {"response_type": "in_channel"}
+        sleep(5)  # Waits for the delayed thread to run
     assert '1d20' in caplog.messages[0]
 
 

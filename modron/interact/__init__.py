@@ -5,7 +5,9 @@ import shlex
 import logging
 from io import StringIO
 from argparse import ArgumentParser
-from typing import Dict, Union, Sequence, Text, NoReturn, Optional, IO
+from threading import Thread
+from time import sleep
+from typing import Dict, Union, Sequence, Text, NoReturn, Optional, IO, Callable
 
 from modron.interact.base import SlashCommandPayload, InteractionModule
 from modron.interact.dice_roll import DiceRollInteraction
@@ -16,6 +18,16 @@ logger = logging.getLogger(__name__)
 
 
 _modules = (DiceRollInteraction,)
+
+
+def _pause_then_run(func: Callable, *args, **kwargs):
+    """Pause for a short period and then run a function
+
+    Args:
+        func (Callable): Function to run
+    """
+    sleep(3)
+    func(*args, **kwargs)
 
 
 class NoExitParserError(Exception):
@@ -115,7 +127,10 @@ def handle_slash_command(payload: SlashCommandPayload, parser: NoExitParser) -> 
             'text': parser.text_buffer.getvalue(),
             'mkdwn': True
         }
-    # Run the specified command
-    args.interact(args, payload)
+
+    # Run the specified command in a Thread
+    #  Allows this function
+    responder = Thread(target=_pause_then_run, args=(args.interact, args, payload))
+    responder.start()
 
     return {"response_type": "in_channel"}
