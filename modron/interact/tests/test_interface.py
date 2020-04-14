@@ -35,10 +35,12 @@ def parser(client) -> NoExitParser:
 
 
 def test_help(parser):
-    """We expect help commands to raise an error that contains both the error message and any printed messages"""
+    """We expect help commands to raise an error that contains b
+    oth the error message and any printed messages"""
     with raises(NoExitParserError) as exc:
         parser.parse_args(['--help'])
-    assert exc.value.text_output.startswith('usage: /modron')
+    print(exc.value.text_output)
+    assert exc.value.text_output.startswith('**usage**: /modron')
 
 
 def test_help_payload(payload, parser):
@@ -64,7 +66,8 @@ def test_handle(parser, payload, caplog):
 def test_roll_help(parser):
     with raises(NoExitParserError) as exc:
         parser.parse_args(['roll', '--help'])
-    assert exc.value.text_output.startswith('usage: /modron roll')
+    print(exc.value.text_output)
+    assert exc.value.text_output.startswith('**usage**: /modron roll')
 
 
 def test_rolling(parser, payload, caplog):
@@ -72,8 +75,13 @@ def test_rolling(parser, payload, caplog):
     args = parser.parse_args(['roll', '1d6+1'])
     with caplog.at_level(logging.INFO):
         args.interact(args, payload)
-
     assert '1d6+1' in caplog.messages[0]
+
+    # Try rolling with a purpose
+    args = parser.parse_args(['roll', '1d6+1', 'test', 'roll'])
+    with caplog.at_level(logging.INFO):
+        args.interact(args, payload)
+    assert '1d6+1 for test roll.' in caplog.messages[-1]
 
 
 def test_payload_error(parser, payload):

@@ -46,8 +46,8 @@ class DiceRollInteraction(InteractionModule):
                                          ' For example, "1d6+4d6+4" would be accepted and "1d6+4d6 + 4"'
                                          ' would not.',
                             type=str)
-        parser.add_argument("purpose", help='Purpose of the roll. Used for making the reply prettier.', nargs='?',
-                            default=None, type=str)
+        parser.add_argument("purpose", help='Purpose of the roll. Used for making the reply prettier.',
+                            nargs='*', default=None, type=str)
 
         # Add modifiers to how the roll is computed
         adv_group = parser.add_mutually_exclusive_group(required=False)
@@ -60,15 +60,18 @@ class DiceRollInteraction(InteractionModule):
         # Make the dice roll
         roll = DiceRoll.make_roll(args.dice, advantage=args.advantage, disadvantage=args.disadvantage,
                                   reroll_ones=args.reroll_ones)
-        logger.info(f'{payload.user_id} requested to roll {roll.roll_description}.'
-                    f' Result = {roll.value}')
 
         # Make the reply
-        if args.purpose is not None:
-            reply = f'<@{payload.user_id}> rolled for {args.purpose}\n' \
+        purpose = ' '.join(args.purpose)
+        if len(purpose) > 0:
+            reply = f'<@{payload.user_id}> rolled for {purpose}\n' \
                     f'{roll.roll_description} = _{roll.value}_'
+            logger.info(f'{payload.user_id} requested to roll {roll.roll_description} for {purpose}.'
+                        f' Result = {roll.value}')
         else:
             reply = f'<@{payload.user_id}> rolled {roll.roll_description} = _{roll.value}_'
+            logger.info(f'{payload.user_id} requested to roll {roll.roll_description}.'
+                        f' Result = {roll.value}')
         reply += f'\n*Rolls*: {" ".join(_render_dice_rolls(roll))}'
 
         # POST the result back to the reply url

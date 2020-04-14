@@ -3,16 +3,17 @@
 Holds logic of how Modron should respond a certain direct message"""
 import shlex
 import logging
-from io import StringIO
 from argparse import ArgumentParser
 from threading import Thread
 from time import sleep
-from typing import Dict, Union, Sequence, Text, NoReturn, Optional, IO, Callable
+from typing import Union, Sequence, Callable
+
+from modron.interact._argparse import NoExitParserError, NoExitParser
 
 from modron.interact.base import SlashCommandPayload, InteractionModule
 from modron.interact.dice_roll import DiceRollInteraction
 from modron.slack import BotClient
-from modron.utils import escape_slack_characters, colors
+from modron.utils import escape_slack_characters
 
 logger = logging.getLogger(__name__)
 
@@ -28,41 +29,6 @@ def _pause_then_run(func: Callable, *args, **kwargs):
     """
     sleep(3)
     func(*args, **kwargs)
-
-
-class NoExitParserError(Exception):
-    """Error when parsing fails.
-
-    Captures the error message and what was printed to screen from the
-    parser that threw the error. This allows for the screen output
-    from subparsers to be easily accessed by the user, as they will
-    be passed along with the exception itself."""
-
-    def __init__(self, parser: 'NoExitParser', error_message: Text,
-                 text_output: Text):
-        super().__init__()
-        self.parser = parser
-        self.error_message = error_message
-        self.text_output = text_output
-
-
-class NoExitParser(ArgumentParser):
-    """A version of ArgumentParser that does not terminate on exit"""
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.text_buffer = StringIO()
-
-    def _print_message(self, message: str, file: Optional[IO[str]] = ...) -> None:
-        if message:
-            self.text_buffer.write(message)
-            self.text_buffer.flush()
-
-    def exit(self, status: int = ..., message: Optional[Text] = None) -> NoReturn:
-        raise NoExitParserError(self, message, self.text_buffer.getvalue())
-
-    def error(self, message: Text) -> NoReturn:
-        raise NoExitParserError(self, message, self.text_buffer.getvalue())
 
 
 def assemble_parser(client: BotClient, modules: Sequence[InteractionModule.__class__] = _modules) -> NoExitParser:
