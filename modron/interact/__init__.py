@@ -31,6 +31,17 @@ def _pause_then_run(func: Callable, *args, **kwargs):
     func(*args, **kwargs)
 
 
+_description='''A Slack command to handle common D&D computations
+
+At present, it only does dice rolls.
+
+Roll dice by calling `/modron roll`. 
+The `roll` command takes the list of dice to roll and any modifiers.
+For example, `/modron roll 1d20-1` rolls a d20 with a -1 modifier.
+Call `/modron roll --help` for more examples. 
+'''
+
+
 def assemble_parser(client: BotClient, modules: Sequence[InteractionModule.__class__] = _modules) -> NoExitParser:
     """Generate the argument parser and interaction models
 
@@ -42,17 +53,17 @@ def assemble_parser(client: BotClient, modules: Sequence[InteractionModule.__cla
     """
 
     # Assemble the root parser
-    parser = NoExitParser(description='All of the available actions for Modron', add_help=True, prog='/modron')
+    parser = NoExitParser(description=_description, add_help=True, prog='/modron')
 
     # Register the modules
-    subparsers = parser.add_subparsers(title='Available Commands',
-                                       description='The different possible ways to interact with Modron',
+    subparsers = parser.add_subparsers(title='available commands',
+                                       description='The different ways to interact with Modron.',
                                        dest='subcommand')
     for module in modules:
         module_inst = module(client)
         subparser = subparsers.add_parser(module_inst.name,
                                           description=module_inst.description,
-                                          help=module_inst.description,
+                                          help=module_inst.help_string,
                                           add_help=True)
         module_inst.register_argparse(subparser)
         subparser.set_defaults(interact=module_inst.interact)

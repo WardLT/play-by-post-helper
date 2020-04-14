@@ -1,6 +1,8 @@
 from modron.dice import roll_die, DiceRoll
 from math import isclose
+from random import seed
 
+seed(1)
 _default_rolls = 10 ** 6
 
 

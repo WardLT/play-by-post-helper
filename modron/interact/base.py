@@ -33,15 +33,17 @@ class InteractionModule:
     back to Slack.
     """
 
-    def __init__(self, client: BotClient, name: str, description: str):
+    def __init__(self, client: BotClient, name: str, help_string: str, description: str):
         """
         Args:
              client (BotClient): Active bot client used to make replies
              name (str): Name of the interaction module, defines the subcommand name
-             description (str): Description of the module. Used in the help command
+             help_string (str): Short-form name description of the module. Used in the root parser description
+             description (str): Long-form description of the module. Used in its detailed home command
         """
         self.client = client
         self.name = name
+        self.help_string = help_string
         self.description = description
 
     def register_argparse(self, parser: ArgumentParser):

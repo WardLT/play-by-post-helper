@@ -33,11 +33,36 @@ def _render_dice_rolls(roll: DiceRoll) -> List[str]:
     return output
 
 
+_description = """Roll a set of dice.
+
+This module lets you roll any kind of die and 
+supports all of the dice rules of D&D 5e,
+such as re-rolling 1s and rolling at advantage.
+
+The dice notation follows common conventions,
+where dice are expressed in the format:
+
+`<number of dice>d<number of sides>[+|-]<modifier>`
+
+## examples
+
+A common dice roll without any special rolls: `/modron roll 1d20+1`
+
+A common dice roll, with a defined purpose: `/modron roll 10d6+5 sneak attack damage`
+
+Option flags before the dice descriptions change how the rolls are made.
+For example, the `-d` or `--disadvantage` flags signal for Modron to roll
+at disadvantage:
+
+`/roll -d 1d20+2`
+"""
+
+
 class DiceRollInteraction(InteractionModule):
     """Servicing requests to roll dice"""
 
     def __init__(self, client: BotClient):
-        super().__init__(client, "roll", "Roll a set of dice")
+        super().__init__(client, "roll", "Roll a set of dice", _description)
 
     def register_argparse(self, parser: ArgumentParser):
         # Add the roll definition

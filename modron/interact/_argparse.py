@@ -1,4 +1,4 @@
-from argparse import HelpFormatter, ArgumentParser
+from argparse import HelpFormatter, ArgumentParser, RawTextHelpFormatter
 from io import StringIO
 from typing import Text, Optional, IO, NoReturn
 
@@ -19,7 +19,7 @@ class NoExitParserError(Exception):
         self.text_output = text_output
 
 
-class MarkdownFormatter(HelpFormatter):
+class MarkdownFormatter(RawTextHelpFormatter):
     """Argparse HelpFormatter that renders the help in markdown format"""
 
     class _Section(HelpFormatter._Section):
