@@ -42,7 +42,7 @@ app = Flask('modron')
 
 # Make the Slack client and Events adapter
 client = BotClient(token=OAUTH_ACCESS_TOKEN)
-event_adapter = SlackEventAdapter(SIGNING_SECRET, server=None)
+event_adapter = SlackEventAdapter(SIGNING_SECRET, "/slack/events", app)
 logger.info('Created web client')
 
 # Generate the slash command responder
@@ -67,5 +67,6 @@ def modron_slash_cmd():
     return handle_slash_command(payload, parser=modron_cmd_parser)
 
 
-# Start the Slack Events API
-app.run(port=3152, debug=False)
+if __name__ == "__name__":
+    # Start the Slack Events API
+    app.run(port=3152, host='0.0.0.0', debug=False)
