@@ -55,7 +55,7 @@ class MarkdownFormatter(RawTextHelpFormatter):
     def _format_usage(self, usage: Text, actions,
                       groups, prefix: Optional[Text]):
         if prefix is None:
-            prefix = '**usage**: '
+            prefix = '*usage*: '
         return super()._format_usage(usage, actions, groups, prefix)
 
     def _format_action(self, action):
@@ -69,7 +69,7 @@ class MarkdownFormatter(RawTextHelpFormatter):
         subactions = list(self._iter_indented_subactions(action))
         if len(subactions) == 0:
             # make the action part of a indented list
-            parts = [f'{" " * self._current_indent}- **{action_header}**\n']
+            parts = [f'{" " * self._current_indent}- *{action_header}*\n']
 
             # if there was help for the action, add lines of help text
             #  Split the help into multiple lines even though it will
@@ -85,8 +85,7 @@ class MarkdownFormatter(RawTextHelpFormatter):
         else:
             # Print out the sub-options in a nice way
             assert action_header.startswith('{') and action_header.endswith('}'), 'Unexpected header format'
-            subaction_cmds = action_header[1:-1].split(',')
-            parts = [f'_Choices_: {", ".join(subaction_cmds)}\n']
+            parts = []
 
             # if there are any sub-actions, add their help as well
             for subaction in subactions:

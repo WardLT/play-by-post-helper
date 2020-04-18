@@ -40,7 +40,7 @@ def test_help(parser):
     with raises(NoExitParserError) as exc:
         parser.parse_args(['--help'])
     print(exc.value.text_output)
-    assert exc.value.text_output.startswith('**usage**: /modron')
+    assert exc.value.text_output.startswith('*usage*: /modron')
 
 
 def test_help_payload(payload, parser):
@@ -67,7 +67,7 @@ def test_roll_help(parser):
     with raises(NoExitParserError) as exc:
         parser.parse_args(['roll', '--help'])
     print(exc.value.text_output)
-    assert exc.value.text_output.startswith('**usage**: /modron roll')
+    assert exc.value.text_output.startswith('*usage*: /modron roll')
 
 
 def test_rolling(parser, payload, caplog):

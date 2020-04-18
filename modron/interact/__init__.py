@@ -94,7 +94,7 @@ def handle_slash_command(payload: SlashCommandPayload, parser: NoExitParser) -> 
 
         return {
             'text': escape_slack_characters(msg),
-            'mkdwn': True
+            'mrkdwn': True
         }
 
     # If there is not an interact command, return help message
@@ -102,7 +102,7 @@ def handle_slash_command(payload: SlashCommandPayload, parser: NoExitParser) -> 
         parser.print_help()
         return {
             'text': parser.text_buffer.getvalue(),
-            'mkdwn': True
+            'mrkdwn': True
         }
 
     # Run the specified command in a Thread
