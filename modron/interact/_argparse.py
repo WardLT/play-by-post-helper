@@ -44,8 +44,7 @@ class MarkdownFormatter(RawTextHelpFormatter):
 
             # add the heading if the section was non-empty
             if self.heading is not None:
-                current_indent = self.formatter._current_indent
-                heading = f'{"#"*(current_indent+2)} {self.heading}\n\n'
+                heading = f'  *{self.heading}*\n\n'
             else:
                 heading = ''
 
@@ -69,7 +68,7 @@ class MarkdownFormatter(RawTextHelpFormatter):
         subactions = list(self._iter_indented_subactions(action))
         if len(subactions) == 0:
             # make the action part of a indented list
-            parts = [f'{" " * self._current_indent}- *{action_header}*\n']
+            parts = [f'{" " * self._current_indent}- `{action_header}`\n']
 
             # if there was help for the action, add lines of help text
             #  Split the help into multiple lines even though it will
