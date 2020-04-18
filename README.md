@@ -7,6 +7,29 @@ The Play-by-Post Helper (Modron) is a Slack bot that assists playing Role Playin
 The helper is designed to be a simple Slack Bot for performing tasks including:
 
 - Messaging the channel to remind people if play has stalled
+- Performing rolls according to D&D 5e rules
+
+## Using Modron
+
+### Channel Reminders 
+
+Modron will automatically watch the the channels to issue reminders as needed.
+Configure the channels that Modron watches for activity and which channel
+it writes reminders to in `server.py`
+
+### Rolling Dice
+
+Modron supports all of the D&D 5e rules for dice rolling, such
+as advantage and re-rolling ones.
+Roll dice by calling `/modron roll`.
+A few examples include:
+
+   - `/modron roll 1d20+5`: Rolling a single D20
+   - `/modron roll 4d6 -1`: Roll 4d6 and re-roll any dice that are 1 on the first roll
+
+### Status Checks
+
+Send direct messages to Modron and it will reply with status information.  
 
 ## Installation
 
@@ -39,10 +62,15 @@ You will need to store the access token as an environment variable named ``OAUTH
 for the bot to use it. 
 My preferred method is to store it as an environment variable. 
 
-## Running the App
+### Running the App
 
 Launch the Bot by first activating the appropriate Conda environment, 
-and then running: `python server.py`
+and then running:
+
+```bash
+export FLASK_APP=server.py
+flask run --host 0.0.0.0 --port <your choice>
+```
 
 The app will run as a long-lived process (spending most of its time in a sleep state)
  and prints log messages to the screen.
@@ -50,3 +78,21 @@ The app will run as a long-lived process (spending most of its time in a sleep s
 The application itself is designed to be very lightweight. 
 I run the application on a Raspberry Pi, but you could also easily run it on 
 small instances on cloud compute providers if you do not have a home server. 
+
+### Registering a Web Service
+
+The interactive elements of Modron requires a webserver that can respond to incoming requests.
+
+The Slack API recommends you use [`ngrok`](https://ngrok.com/) to start with, 
+which I would also recommend highly.
+It not only forwards requests over a tunnel but also handles HTTPS authentication.
+You need not even set up Flask to use HTTPS (which is a bit involved but
+ [well described in a blog](https://blog.miguelgrinberg.com/post/running-your-flask-application-over-https))
+
+I eventually settled on using DuckDNS to give a public address for Modron, 
+which took a little work to make happen because I have to use my own HTTPS authentication.
+See the [Let's Encrypt forum](https://community.letsencrypt.org/t/raspberry-pi-with-duckdns-ddns-failing-to-verify/53567/9)
+for details on how to get the certificates set up behind DuckDNS.
+You then will need to modify the above run command for the service to point to your certificates, 
+and would recommend you read [Miguel Grinberg's blog](https://blog.miguelgrinberg.com/post/running-your-flask-application-over-https)
+to understand how that could work.
