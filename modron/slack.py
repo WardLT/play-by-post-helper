@@ -124,7 +124,7 @@ class BotClient(WebClient):
 
                 # Sleep for the timeout length
                 logger.info(f'Sleeping for {stall_time}')
-                sleep(stall_time.total_seconds())
+                sleep(allowed_stall_time.total_seconds())
             else:
                 # If we are not past the stall time, wait for the remaining time
                 remaining_time = allowed_stall_time - stall_time
