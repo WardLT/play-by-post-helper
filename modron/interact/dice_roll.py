@@ -33,28 +33,18 @@ def _render_dice_rolls(roll: DiceRoll) -> List[str]:
     return output
 
 
-_description = """Roll a set of dice.
+_description = """Roll dice with all the options of D&D 5e.
 
-This module lets you roll any kind of die and 
-supports all of the dice rules of D&D 5e,
-such as re-rolling 1s and rolling at advantage.
+Dice are expressed in the format: `<number of dice>d<number of sides>[+|-]<modifier>`
 
-The dice notation follows common conventions,
-where dice are expressed in the format:
-
-`<number of dice>d<number of sides>[+|-]<modifier>`
-
-## examples
+*examples*
 
 A common dice roll without any special rolls: `/modron roll 1d20+1`
-
 A common dice roll, with a defined purpose: `/modron roll 10d6+5 sneak attack damage`
 
-Option flags before the dice descriptions change how the rolls are made.
-For example, the `-d` or `--disadvantage` flags signal for Modron to roll
-at disadvantage:
+Option flags alter rules when rolling. Example: rolling at disadvantage: `/roll -d 1d20+2`
 
-`/roll -d 1d20+2`
+Call `/modron roll --help` for full details
 """
 
 
@@ -71,7 +61,8 @@ class DiceRollInteraction(InteractionModule):
                                          ' For example, "1d6+4d6+4" would be accepted and "1d6+4d6 + 4"'
                                          ' would not.',
                             type=str)
-        parser.add_argument("purpose", help='Purpose of the roll. Used for making the reply prettier.',
+        parser.add_argument("purpose", help='Purpose of the roll. Used for making the reply prettier '
+                                            'and tracking player statistics.',
                             nargs='*', default=None, type=str)
 
         # Add modifiers to how the roll is computed
