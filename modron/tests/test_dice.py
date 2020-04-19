@@ -19,7 +19,7 @@ def _measure_probability(sides: int, target_val: int, n_trials: int = _default_r
     """
 
     # Using a functional notation to avoid storing the whole array
-    hits = sum(map(lambda x: roll_die(sides, **kwargs) == target_val, range(n_trials)))
+    hits = sum(map(lambda x: roll_die(sides, **kwargs)[0] == target_val, range(n_trials)))
     return hits / n_trials
 
 
@@ -51,7 +51,7 @@ def test_parser():
     assert not roll.advantage
     assert not roll.disadvantage
     assert not roll.reroll_ones
-    assert roll.value == sum(roll.results)
+    assert roll.value == roll.results[0][0]
 
     # d20 with modifier
     roll = DiceRoll.make_roll('d20-2')
@@ -59,7 +59,7 @@ def test_parser():
     assert not roll.advantage
     assert not roll.disadvantage
     assert not roll.reroll_ones
-    assert roll.value == sum(roll.results) - 2
+    assert roll.value == roll.results[0][0] - 2
 
     # Test several dice rolls with re-rolling
     roll = DiceRoll.make_roll('d3+4d14+2', reroll_ones=True)
@@ -68,7 +68,7 @@ def test_parser():
     assert not roll.advantage
     assert not roll.disadvantage
     assert roll.reroll_ones
-    assert roll.value == sum(roll.results) + 2
+    assert roll.value == sum([x[0] for x in roll.results]) + 2
 
     # Test advantage and disadvantage
     roll = DiceRoll.make_roll('d20+2', advantage=True)

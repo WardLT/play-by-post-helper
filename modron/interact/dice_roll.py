@@ -23,13 +23,19 @@ def _render_dice_rolls(roll: DiceRoll) -> List[str]:
     """
 
     output = []
-    for v, d in zip(roll.results, roll.dice):
-        if v == 1:
-            output.append(f'*1*')
-        elif v == d:
-            output.append(f'_{v}_')
+    for (value, unused), d in zip(roll.results, roll.dice):
+        # Display the unused results
+        if len(unused) == 0:
+            u = ''
         else:
-            output.append(str(v))
+            u = ' '.join([f'~{x}~' for x in unused]) + ' '
+
+        if value == 1:
+            output.append(f'{u}*1*')
+        elif value == d:
+            output.append(f'{u}_{value}_')
+        else:
+            output.append(f'{u}{value}')
     return output
 
 

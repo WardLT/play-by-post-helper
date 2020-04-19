@@ -92,6 +92,12 @@ def test_rolling(parser, payload, caplog):
         args.interact(args, payload)
     assert '1d6+1 for test roll.' in caplog.messages[-1]
 
+    # Try rolling at advantage
+    args = parser.parse_args(['roll', '1d6+1', 'test', '-a'])
+    with caplog.at_level(logging.INFO):
+        args.interact(args, payload)
+    assert '1d6+1 at advantage for test.' in caplog.messages[-1]
+
 
 def test_payload_error(parser, payload):
     payload.text = 'roll'

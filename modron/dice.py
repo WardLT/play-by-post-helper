@@ -1,6 +1,6 @@
 """Utility functions for rolling dice"""
 import re
-from typing import List
+from typing import List, Tuple, Sequence
 from random import randint
 from collections import Counter
 
@@ -9,7 +9,8 @@ _dice_regex = re.compile(r"(?P<sign>[-+]?)(?P<number>\d*)d(?P<sides>\d+)")
 _modifer_regex = re.compile(r"(?P<sign>[-+])(?P<value>\d+)([^d]|$)")
 
 
-def roll_die(sides: int, advantage: bool = False, disadvantage: bool = False, reroll_one: bool = False):
+def roll_die(sides: int, advantage: bool = False, disadvantage: bool = False,
+             reroll_one: bool = False) -> Tuple[int, Sequence[int]]:
     """Compute the result of rolling a single die
 
     Follows the D&D 5e rules. (See Chapter 7 of the PHB)
@@ -20,21 +21,32 @@ def roll_die(sides: int, advantage: bool = False, disadvantage: bool = False, re
         disadvantage (bool): Whether to perform the roll at disadvantage
         reroll_one (bool): Whether to re-roll one of the dice if either is a 1.
             Example: If I roll two 1s at advantage, I only re-roll one of the two dice.
+    Returns:
+        value: (int) Value of the roll
+        unused ([int]): Values of the dice that rolled but not used
     """
     assert not (advantage and disadvantage), "You cannot roll both at advantage and disadvantage"
     assert sides > 0, "Dice must have a nonnegative number of faces. No non-Euclidean geometry"
 
     if advantage or disadvantage:
         rolls = sorted([randint(1, sides), randint(1, sides)])
+
+        # Re-roll only one of the dice if a one is rolled
+        unused = []  # List of dice that are not the final value
         if reroll_one and rolls[0] == 1:
-            rolls[0] = randint(1, sides)
-        return max(rolls) if advantage else min(rolls)
+            unused.append(rolls.pop(0))  # Mark the die as unused
+            rolls.append(randint(1, sides))
+            rolls.sort()  # Needs re-sorting after adding new roll
+
+        # Remove the minimum or maximum value, depending on user request
+        unused.append(rolls.pop(0) if advantage else rolls.pop(1))
+        return rolls[0], unused
     else:
         # Simple logic: Not at [dis]advantage
         value = randint(1, sides)
         if reroll_one and value == 1:
-            return randint(1, sides)
-        return value
+            return randint(1, sides), [1]
+        return value, []
 
 
 class DiceRoll:
@@ -62,12 +74,12 @@ class DiceRoll:
         self.advantage = advantage
         self.disadvantage = disadvantage
 
-        # Make the rolls
+        # Make the rolls. Store the results and the unused dice
         self.results = [roll_die(s, advantage=advantage, disadvantage=disadvantage, reroll_one=reroll_ones)
                         for s in self._dice.elements()]
 
-        # Store the result
-        self.value = sum(self.results) + self.modifier
+        # Store the result, which is the result of the used dice
+        self.value = sum([x[0] for x in self.results]) + self.modifier
 
     @property
     def dice(self) -> List[int]:
