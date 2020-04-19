@@ -60,7 +60,16 @@ def test_handle(parser, payload, caplog):
     with caplog.at_level(logging.INFO):
         assert handle_slash_command(payload, parser) == {"response_type": "in_channel"}
         sleep(5)  # Waits for the delayed thread to run
-    assert '1d20' in caplog.messages[0]
+    assert '1d20' in caplog.messages[-1]
+
+
+def test_shortcut(parser, payload, caplog):
+    payload.command = '/mroll'
+    payload.text = '1d20 test'
+    with caplog.at_level(logging.INFO):
+        assert handle_slash_command(payload, parser) == {"response_type": "in_channel"}
+        sleep(5)  # Waits for the delayed thread to run
+    assert '1d20' in caplog.messages[-1]
 
 
 def test_roll_help(parser):

@@ -74,7 +74,18 @@ def handle_slash_command(payload: SlashCommandPayload, parser: NoExitParser) -> 
         (dict) Immediate reply to give to Slack
     """
 
+    # Expand shortcut commands
     logger.info(f'Received command: {payload.command} {payload.text}')
+    if payload.command != "/modron":
+        if not payload.command.startswith('/m'):
+            return {
+                'text': 'ERROR: your command is not supported by Modron yet :('
+            }
+
+        # Determine the sub command name
+        subcommand = payload.command[2:]
+        payload.text = f'{subcommand} {payload.text}'
+        logger.info(f'Expanded shortcut command to the longer-form "/modron {payload.text}')
 
     # Parse the command
     try:

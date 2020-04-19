@@ -26,6 +26,8 @@ A few examples include:
 
    - `/modron roll 1d20+5`: Rolling a single D20
    - `/modron roll 4d6 -1`: Roll 4d6 and re-roll any dice that are 1 on the first roll
+   
+`/mroll` is a shortcut for `/modron roll` you can use to 
 
 ### Status Checks
 
@@ -96,3 +98,10 @@ for details on how to get the certificates set up behind DuckDNS.
 You then will need to modify the above run command for the service to point to your certificates, 
 and would recommend you read [Miguel Grinberg's blog](https://blog.miguelgrinberg.com/post/running-your-flask-application-over-https)
 to understand how that could work.
+
+Once you have the server ready to receive incoming requests, register the URL with Slack.
+See Slack's documentation on 
+[creating Slash commands](https://api.slack.com/interactivity/slash-commands#creating_commands)
+and [subscribing to events](https://api.slack.com/events-api#subscriptions) for how to register URLs.
+You will need the following Slash commands: `/modron`, `/mroll`.
+All of the Slash commands are routed to the same HTTP endpoint: `https://<your url>/modron`
