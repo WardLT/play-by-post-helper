@@ -1,6 +1,10 @@
 from argparse import HelpFormatter, ArgumentParser, RawTextHelpFormatter
 from io import StringIO
 from typing import Text, Optional, IO, NoReturn
+import traceback
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class NoExitParserError(Exception):
@@ -103,9 +107,9 @@ class NoExitParser(ArgumentParser):
         self.text_buffer = StringIO()
 
     def _print_message(self, message: str, file: Optional[IO[str]] = ...) -> None:
+        logger.debug(f'Print message "{repr(message[:16])}"...[{len(message)} char] called from {traceback.extract_stack(limit=4)}')
         if message:
             self.text_buffer.write(message)
-            self.text_buffer.flush()
 
     def exit(self, status: int = ..., message: Optional[Text] = None) -> NoReturn:
         raise NoExitParserError(self, message, self.text_buffer.getvalue())

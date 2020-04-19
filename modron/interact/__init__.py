@@ -74,15 +74,20 @@ def handle_slash_command(payload: SlashCommandPayload, parser: NoExitParser) -> 
         (dict) Immediate reply to give to Slack
     """
 
+    logger.info(f'Received command: {payload.command} {payload.text}')
+
     # Parse the command
     try:
         args = parser.parse_args(shlex.split(payload.text))
     except NoExitParserError as exc:
+        logger.info(f'Parser raised an exception. Message: {exc.error_message}')
+
         # Make the reply message
         msg = ''
         if exc.error_message is not None:
             msg = f'*{exc.error_message}*\n'
         msg += exc.text_output
+        logger.info(f'Sending some help messages back. {repr(msg[:64])}...{len(msg)} char')
 
         return {
             'text': escape_slack_characters(msg),
@@ -92,8 +97,10 @@ def handle_slash_command(payload: SlashCommandPayload, parser: NoExitParser) -> 
     # If there is not an interact command, return help message
     if not hasattr(args, 'interact'):
         parser.print_help()
+        msg = parser.text_buffer.getvalue()
+        logger.info(f'Sending some help messages back. {repr(msg[:64])}...{len(msg)} char')
         return {
-            'text': parser.text_buffer.getvalue(),
+            'text': msg,
             'mrkdwn': True
         }
 
