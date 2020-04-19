@@ -31,15 +31,7 @@ def _pause_then_run(func: Callable, *args, **kwargs):
     func(*args, **kwargs)
 
 
-_description='''A Slack command to handle common D&D computations
-
-At present, it only does dice rolls.
-
-Roll dice by calling `/modron roll`. 
-The `roll` command takes the list of dice to roll and any modifiers.
-For example, `/modron roll 1d20-1` rolls a d20 with a -1 modifier.
-Call `/modron roll --help` for more examples. 
-'''
+_description='''A Slack command to handle common D&D tasks'''
 
 
 def assemble_parser(client: BotClient, modules: Sequence[InteractionModule.__class__] = _modules) -> NoExitParser:
@@ -88,7 +80,7 @@ def handle_slash_command(payload: SlashCommandPayload, parser: NoExitParser) -> 
     except NoExitParserError as exc:
         # Make the reply message
         msg = ''
-        if exc.error_message != "":
+        if exc.error_message is not None:
             msg = f'*{exc.error_message}*\n'
         msg += exc.text_output
 

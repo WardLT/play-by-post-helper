@@ -62,7 +62,7 @@ class DiceRollInteraction(InteractionModule):
     """Servicing requests to roll dice"""
 
     def __init__(self, client: BotClient):
-        super().__init__(client, "roll", "Roll a set of dice", _description)
+        super().__init__(client, "roll", "Roll a set of dice. Ex: `/modron roll 1d20+4 --advantage`", _description)
 
     def register_argparse(self, parser: ArgumentParser):
         # Add the roll definition
