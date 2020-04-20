@@ -14,6 +14,20 @@ def client() -> BotClient:
     return BotClient(token=token)
 
 
+@fixture
+def user_id(client) -> str:
+    """ID of the first user, Slackbot"""
+    result = client.users_list()
+    return result['members'][0]['id']
+
+
 def test_channel_match(client):
     matched = client.match_channels("ic_all")
     assert matched == ["ic_all"]
+
+
+def test_display_name(client, user_id):
+    # Pick a user at random
+    my_name = client.get_user_name(user_id)
+    assert my_name == 'Slackbot'
+

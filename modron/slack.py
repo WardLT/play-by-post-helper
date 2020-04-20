@@ -52,6 +52,15 @@ class BotClient(WebClient):
         logger.info(f'Found {channel_name} channel as channel id: {channel_id}')
         return channel_id
 
+    def get_user_name(self, user_id: str) -> str:
+        """Lookup a user name given their ID.
+
+        Of the `available options <https://api.slack.com/types/user>`_,
+        we use the display name, which is what is rendered in the client"""
+
+        result = self.users_info(user=user_id)
+        return result['user']['profile']['display_name']
+
     def add_self_to_channel(self, channel_name: str) -> Optional[SlackResponse]:
         """Adds the bot user to a certain channel
 
