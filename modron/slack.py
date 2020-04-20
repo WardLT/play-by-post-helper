@@ -52,6 +52,12 @@ class BotClient(WebClient):
         logger.info(f'Found {channel_name} channel as channel id: {channel_id}')
         return channel_id
 
+    @lru_cache(maxsize=128)
+    def get_channel_name(self, channel_id: str) -> str:
+        """Get the channel name given the id"""
+        result = self.conversations_info(channel=channel_id)
+        return result['channel']['name']
+
     def get_user_name(self, user_id: str) -> str:
         """Lookup a user name given their ID.
 

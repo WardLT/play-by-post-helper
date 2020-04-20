@@ -26,6 +26,12 @@ def test_channel_match(client):
     assert matched == ["ic_all"]
 
 
+def test_channel_name(client):
+    cid = client.get_channel_id("ic_all")
+    cname = client.get_channel_name(cid)
+    assert cname == "ic_all"
+
+
 def test_display_name(client, user_id):
     # Pick a user at random
     my_name = client.get_user_name(user_id)
