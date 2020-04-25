@@ -118,7 +118,7 @@ class DiceRollInteraction(InteractionModule):
 
         # If desired, save the dice roll
         new_file = not os.path.isfile(config.DICE_LOG)
-        with open(config.DICE_LOG, 'w') as fp:
+        with open(config.DICE_LOG, 'a') as fp:
             writer = csv.DictWriter(fp, fieldnames=dice_info.keys())
             if new_file:
                 writer.writeheader()

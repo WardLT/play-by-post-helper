@@ -27,7 +27,7 @@ def _pause_then_run(func: Callable, *args, **kwargs):
     Args:
         func (Callable): Function to run
     """
-    sleep(3)
+    sleep(0.1)
     func(*args, **kwargs)
 
 
