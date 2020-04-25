@@ -10,6 +10,7 @@ setup(
         'humanize',
         'slackclient',
         'slackeventsapi',
-        'pydantic'
+        'pydantic',
+        'pyyaml'
     ]
 )

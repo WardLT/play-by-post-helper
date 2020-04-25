@@ -1,0 +1,21 @@
+name: Joe B. Anyone
+alignment: chaotic good
+classes:
+  fighter: 1
+  cleric: 3
+strength: 14
+dexterity: 9
+constitution: 12
+intelligence: 10
+wisdom: 14
+charisma: 11
+hit_points: 45
+saving_throws:
+  - wisdom
+  - strength
+custom_skills:
+  Tomfoolery: charisma
+proficiencies:
+  - medicine  # Yes, these make no sense for Joe
+expertise:
+  - Athletics
