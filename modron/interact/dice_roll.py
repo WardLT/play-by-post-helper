@@ -94,7 +94,7 @@ class DiceRollInteraction(InteractionModule):
             reply = f'<@{payload.user_id}> rolled {roll.roll_description} = _{roll.value}_'
             logger.info(f'{payload.user_id} requested to roll {roll.roll_description}.'
                         f' Result = {roll.value}')
-        reply += f'\n*Rolls*: {" ".join(_render_dice_rolls(roll))}'
+        reply += f'\n*Rolls*: {", ".join(_render_dice_rolls(roll))}'
 
         # POST the result back to the reply url
         requests.post(payload.response_url, json={
