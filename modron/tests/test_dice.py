@@ -64,7 +64,7 @@ def test_parser():
     # Test several dice rolls with re-rolling
     roll = DiceRoll.make_roll('d3+4d14+2', reroll_ones=True)
     assert str(roll).startswith('4d14+1d3+2 re-rolling ones =')
-    assert roll.dice == [3, 14, 14, 14, 14]
+    assert roll.dice == [14, 14, 14, 14, 3]
     assert not roll.advantage
     assert not roll.disadvantage
     assert roll.reroll_ones

@@ -43,8 +43,8 @@ def parser(client) -> NoExitParser:
 
 
 def test_help(parser):
-    """We expect help commands to raise an error that contains b
-    oth the error message and any printed messages"""
+    """We expect help commands to raise an error that contains
+    both the error message and any printed messages"""
     with raises(NoExitParserError) as exc:
         parser.parse_args(['--help'])
     print(exc.value.text_output)

@@ -93,6 +93,9 @@ class DiceRoll:
 
     @property
     def dice(self) -> List[int]:
+        """Sizes of the dice that were rolled.
+
+        Dice are listed in descending order by number of faces."""
         return list(self._dice.elements())
 
     @classmethod
