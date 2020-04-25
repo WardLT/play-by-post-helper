@@ -52,6 +52,28 @@ class BotClient(WebClient):
         logger.info(f'Found {channel_name} channel as channel id: {channel_id}')
         return channel_id
 
+    @lru_cache(maxsize=128)
+    def get_channel_name(self, channel_id: str) -> str:
+        """Get the channel name given the id"""
+        result = self.conversations_info(channel=channel_id)
+        return result['channel']['name']
+
+    @lru_cache(maxsize=128)
+    def conversation_is_public_channel(self, channel_id: str) -> bool:
+        """Determine if a conversation is a channel and not an IM/Group/private channel/etc"""
+
+        result = self.conversations_info(channel=channel_id)
+        return result['channel']['is_channel']
+
+    def get_user_name(self, user_id: str) -> str:
+        """Lookup a user name given their ID.
+
+        Of the `available options <https://api.slack.com/types/user>`_,
+        we use the display name, which is what is rendered in the client"""
+
+        result = self.users_info(user=user_id)
+        return result['user']['profile']['display_name']
+
     def add_self_to_channel(self, channel_name: str) -> Optional[SlackResponse]:
         """Adds the bot user to a certain channel
 

@@ -1,10 +1,15 @@
 """Interaction for receiving a dice roll"""
+import csv
+import json
 import logging
+import os
 from argparse import ArgumentParser, Namespace
-from typing import List
+from datetime import datetime
+from typing import List, NoReturn
 
 import requests
 
+from modron import config
 from modron.dice import DiceRoll
 from modron.interact import SlashCommandPayload
 from modron.interact.base import InteractionModule
@@ -78,6 +83,47 @@ class DiceRollInteraction(InteractionModule):
         parser.add_argument("--reroll_ones", '-1', help="Re-roll any dice that roll a 1 the first time",
                             action='store_true')
 
+    def log_dice_roll(self, payload: SlashCommandPayload, roll: DiceRoll, purpose: str) -> NoReturn:
+        """Log a dice roll to disk
+
+        Only logs dice rolls if ``config.DICE_LOG`` is not ``None``
+        and the requests comes from a channel that is not on the skip list.
+
+        Args:
+            payload (SlashCommandPayload): Command send to Modron
+            roll (DiceRoll): Value of the dice roll
+            purpose (str): Purpose of the roll
+        """
+
+        # Determine if we should log or not
+        channel_name = self.client.get_channel_name(payload.channel_id)
+        if config.DICE_LOG is None or channel_name in config.DICE_SKIP_CHANNELS\
+                or not self.client.conversation_is_public_channel(payload.channel_id):
+            logger.debug('Refusing to log dice roll')
+            return
+
+        # Get the information about this dice roll
+        dice_info = {
+            'time': datetime.now().isoformat(),
+            'user': self.client.get_user_name(payload.user_id),
+            'channel': channel_name,
+            'reason': purpose,
+            'dice': roll.dice_description,
+            'advantage': roll.advantage,
+            'disadvantage': roll.disadvantage,
+            'reroll_ones': roll.reroll_ones,
+            'total_value': roll.value,
+            'dice_values': json.dumps(roll.dice_values)
+        }
+
+        # If desired, save the dice roll
+        new_file = not os.path.isfile(config.DICE_LOG)
+        with open(config.DICE_LOG, 'w') as fp:
+            writer = csv.DictWriter(fp, fieldnames=dice_info.keys())
+            if new_file:
+                writer.writeheader()
+            writer.writerow(dice_info)
+
     def interact(self, args: Namespace, payload: SlashCommandPayload):
         # Make the dice roll
         roll = DiceRoll.make_roll(args.dice, advantage=args.advantage, disadvantage=args.disadvantage,
@@ -101,3 +147,6 @@ class DiceRollInteraction(InteractionModule):
             'text': reply, 'mkdwn': True,
             'response_type': 'in_channel',
         })
+
+        # Log the dice roll
+        self.log_dice_roll(payload, roll, purpose)

@@ -11,13 +11,17 @@ The helper is designed to be a simple Slack Bot for performing tasks including:
 
 ## Using Modron
 
-### Channel Reminders 
+### Channel Reminders
+
+![reminder](.img/reminder.png) 
 
 Modron will automatically watch the the channels to issue reminders as needed.
 Configure the channels that Modron watches for activity and which channel
 it writes reminders to in `server.py`
 
 ### Rolling Dice
+
+![rolling_dice](.img/roll_command.png)
 
 Modron supports all of the D&D 5e rules for dice rolling, such
 as advantage and re-rolling ones.
@@ -27,9 +31,11 @@ A few examples include:
    - `/modron roll 1d20+5`: Rolling a single D20
    - `/modron roll 4d6 -1`: Roll 4d6 and re-roll any dice that are 1 on the first roll
    
-`/mroll` is a shortcut for `/modron roll` you can use to 
+`/mroll` is a shortcut for `/modron roll` you can use to type less. 
 
 ### Status Checks
+
+![status](.img/checkin.png)
 
 Send direct messages to Modron and it will reply with status information.  
 

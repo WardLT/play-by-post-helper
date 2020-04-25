@@ -1,12 +1,20 @@
 """Tests the functions used to interface with interaction modules"""
 import logging
 import os
+from csv import DictReader
 from time import sleep
 
 from pytest import fixture, raises
 
 from modron.interact import assemble_parser, NoExitParser, NoExitParserError, SlashCommandPayload, handle_slash_command
 from modron.slack import BotClient
+from modron import config
+
+
+@fixture
+def tmp_config(tmpdir):
+    config.DICE_LOG = os.path.join(tmpdir, 'dice_log.csv')
+    return config
 
 
 @fixture
@@ -79,7 +87,7 @@ def test_roll_help(parser):
     assert exc.value.text_output.startswith('*usage*: /modron roll')
 
 
-def test_rolling(parser, payload, caplog):
+def test_rolling(client, parser, payload, caplog, tmp_config):
     # Parse args and run the event
     args = parser.parse_args(['roll', '1d6+1'])
     with caplog.at_level(logging.INFO):
@@ -97,6 +105,21 @@ def test_rolling(parser, payload, caplog):
     with caplog.at_level(logging.INFO):
         args.interact(args, payload)
     assert '1d6+1 at advantage for test.' in caplog.messages[-1]
+
+    # Make sure the log file does not yet exist
+    print(f'Checking for existence of {config.DICE_LOG}')
+    assert not os.path.isfile(config.DICE_LOG)
+
+    # Run a test with ic_all to see if it saves the log
+    payload.channel_id = client.get_channel_id('ic_all')
+    args = parser.parse_args(['roll', '1d6+1', 'test', '-a'])
+    args.interact(args, payload)
+    with open(config.DICE_LOG) as fp:
+        reader = DictReader(fp)
+        roll = next(reader)
+        assert roll['reason'] == 'test'
+        assert roll['advantage']
+        assert roll['channel'] == 'ic_all'
 
 
 def test_payload_error(parser, payload):
