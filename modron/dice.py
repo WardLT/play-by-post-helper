@@ -68,6 +68,7 @@ class DiceRoll:
         """
 
         assert not (advantage and disadvantage), "You cannot roll both at advantage and disadvantage"
+        dice = sorted(dice, reverse=True)  # Sort dice in descending order
         self._dice = Counter(dice)
         self.modifier = modifier
         self.reroll_ones = reroll_ones
@@ -83,7 +84,11 @@ class DiceRoll:
 
     @property
     def dice_values(self) -> List[int]:
-        """Values rolled for each of the dice"""
+        """Values rolled for each of the dice
+
+        Dice are list in descending order by the number of faces.
+        For example, the results from rolling 4d8+2d6 will start
+        with all four of the d8's."""
         return [x[0] for x in self.results]
 
     @property
