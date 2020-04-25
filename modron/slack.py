@@ -58,6 +58,13 @@ class BotClient(WebClient):
         result = self.conversations_info(channel=channel_id)
         return result['channel']['name']
 
+    @lru_cache(maxsize=128)
+    def conversation_is_public_channel(self, channel_id: str) -> bool:
+        """Determine if a conversation is a channel and not an IM/Group/private channel/etc"""
+
+        result = self.conversations_info(channel=channel_id)
+        return result['channel']['is_channel']
+
     def get_user_name(self, user_id: str) -> str:
         """Lookup a user name given their ID.
 

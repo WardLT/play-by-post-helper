@@ -79,7 +79,12 @@ class DiceRoll:
                         for s in self._dice.elements()]
 
         # Store the result, which is the result of the used dice
-        self.value = sum([x[0] for x in self.results]) + self.modifier
+        self.value = sum(self.dice_values) + self.modifier
+
+    @property
+    def dice_values(self) -> List[int]:
+        """Values rolled for each of the dice"""
+        return [x[0] for x in self.results]
 
     @property
     def dice(self) -> List[int]:
@@ -122,8 +127,12 @@ class DiceRoll:
 
     @property
     def roll_description(self) -> str:
-        """Text description of roll"""
-        coll_dice = [f'{count}d{sides}' for sides, count in sorted(self._dice.items(), key=lambda x: -x[0])]
+        """Text description of roll.
+
+        Includes the dice that were rolled, the modifier, and any options in plaintext"""
+        # Get a description of the dice
+        dice_desc = self.dice_description
+
         # Make a roll description
         desc = ""
         if self.advantage:
@@ -132,8 +141,14 @@ class DiceRoll:
             desc = " at disadvantage"
         if self.reroll_ones:
             desc += " re-rolling ones"
-        roll_desc = f'{"+".join(coll_dice)}{self.modifier:+d}{desc}'
+        roll_desc = f'{dice_desc}{desc}'
         return roll_desc
+
+    @property
+    def dice_description(self):
+        """Description of the dice which were rolled and the modifier"""
+        coll_dice = [f'{count}d{sides}' for sides, count in sorted(self._dice.items(), key=lambda x: -x[0])]
+        return f'{"+".join(coll_dice)}{self.modifier:+d}'
 
     def __str__(self):
         return f'{self.roll_description} = {self.value}'
