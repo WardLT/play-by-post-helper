@@ -50,3 +50,13 @@ def test_skills(joe):
     assert joe.skill_mod('athletics') == 6
     with raises(ValueError):
         assert joe.skill_mod('not a skill')
+
+
+def test_hit_die(joe):
+    hit_die = joe.get_hit_die()
+    assert hit_die == {'d8': 3, 'd10': 1}
+
+    # Add a level in Paladin, which has the same hit die as his Fighter class
+    joe.classes['paladin'] = 1
+    hit_die = joe.get_hit_die()
+    assert hit_die == {'d8': 3, 'd10': 2}

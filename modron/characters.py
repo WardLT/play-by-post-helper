@@ -1,6 +1,8 @@
 """Saving and using information about characters"""
+
 from enum import Enum
-from typing import Dict, List, Tuple
+from collections import defaultdict
+from typing import Dict, List
 
 from pydantic import BaseModel, Field, validator
 
@@ -13,12 +15,11 @@ def _compute_mod(score: int) -> int:
     Returns:
         (int) Modifier for that score
     """
-
     return score // 2 - 5
 
 
 class Ability(str, Enum):
-    """List of available abilities"""
+    """Character abilities"""
     STR = 'strength'
     DEX = 'dexterity'
     CON = 'constitution'
@@ -51,6 +52,7 @@ _5e_skills = {
 
 
 class Alignment(str, Enum):
+    """Possible alignments"""
     LAWFUL_GOOD = 'lawful good'
     GOOD = 'good'
     CHAOTIC_GOOD = 'chaotic good'
@@ -60,6 +62,13 @@ class Alignment(str, Enum):
     LAWFUL_EVIL = 'lawful evil'
     EVIL = 'evil'
     CHAOTIC_EVIL = 'chaotic evil'
+
+
+_class_hit_die = {
+    'barbarian': 12, 'bard': 8, 'cleric': 8, 'druid': 8, 'fighter': 10, 'monk': 8, 'paladin': 10,
+    'ranger': 10, 'rogue': 8, 'sorcerer': 6, 'warlock': 8, 'wizard': 6
+}
+"""Hit die for each 5E class"""
 
 
 class Character(BaseModel):
@@ -86,6 +95,7 @@ class Character(BaseModel):
 
     # Combat attributes
     speed: int = Field(30, description='Speed in feet per round. Default: 30')
+    armor_class: int = Field(..., description='Resistance to physical attacks.')  # Eventually make derived
     hit_points: int = Field(..., description='Maximum number of hit points')
 
     # Abilities
@@ -100,8 +110,9 @@ class Character(BaseModel):
     def _val_lowercase(cls, v: str) -> str:
         return v.lower()
 
-    @validator('custom_skills')
-    def _val_custom_skills(cls, v: dict):
+    @validator('custom_skills', 'classes')
+    def _val_dicts(cls, v: dict):
+        """Makes keys for dictionaries """
         return dict((k.lower(), v) for k, v in v.items())
 
     # Derived quantities, such as modifiers
@@ -134,8 +145,27 @@ class Character(BaseModel):
         return sum(self.classes.values())
 
     @property
-    def proficiency_bonus(self):
+    def proficiency_bonus(self) -> int:
         return (self.level - 1) // 4 + 2
+
+    @property
+    def initiative(self):
+        return self.initiative
+
+    def get_hit_die(self) -> Dict[str, int]:
+        """Maximum hit die, computed based on class
+
+        Returns:
+            (dict) Where key is the hit die and value is the number
+        """
+        output = {}
+        for cls, num in self.classes.items():
+            hit_die = f'd{_class_hit_die[cls]}'
+            if hit_die not in output:
+                output[hit_die] = num
+            else:
+                output[hit_die] += num
+        return output
 
     # Skills and checks
     def save_modifier(self, ability: str) -> int:
