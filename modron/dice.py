@@ -22,31 +22,35 @@ def roll_die(sides: int, advantage: bool = False, disadvantage: bool = False,
         reroll_one (bool): Whether to re-roll one of the dice if either is a 1.
             Example: If I roll two 1s at advantage, I only re-roll one of the two dice.
     Returns:
-        value: (int) Value of the roll
-        unused ([int]): Values of the dice that rolled but not used
+        - value: (int) Value of the roll
+        - all_rolls ([int]): Values of all of the dice used in this calculation
     """
     assert not (advantage and disadvantage), "You cannot roll both at advantage and disadvantage"
     assert sides > 0, "Dice must have a nonnegative number of faces. No non-Euclidean geometry"
 
     if advantage or disadvantage:
-        rolls = sorted([randint(1, sides), randint(1, sides)])
+        rolls = [randint(1, sides), randint(1, sides)]
+        used = [True, True]  # Marking which die values are used
 
         # Re-roll only one of the dice if a one is rolled
-        unused = []  # List of dice that are not the final value
-        if reroll_one and rolls[0] == 1:
-            unused.append(rolls.pop(0))  # Mark the die as unused
+        if reroll_one and 1 in rolls:
+            used[rolls.index(1)] = False  # Mark a 1 as "unused"
+
+            # Add in a new roll to replace that die
+            used.append(True)
             rolls.append(randint(1, sides))
-            rolls.sort()  # Needs re-sorting after adding new roll
 
         # Remove the minimum or maximum value, depending on user request
-        unused.append(rolls.pop(0) if advantage else rolls.pop(1))
-        return rolls[0], unused
+        func = max if advantage else min
+        value = func([v for v, u in zip(rolls, used) if u])  # Get the best value of the used dice
+        return value, rolls
     else:
         # Simple logic: Not at [dis]advantage
         value = randint(1, sides)
         if reroll_one and value == 1:
-            return randint(1, sides), [1]
-        return value, []
+            value = randint(1, sides)
+            return value, [1, value]
+        return value, [value]
 
 
 class DiceRoll:
@@ -75,7 +79,7 @@ class DiceRoll:
         self.advantage = advantage
         self.disadvantage = disadvantage
 
-        # Make the rolls. Store the results and the unused dice
+        # Make the rolls. Store the results and all dice which were rolled
         self.results = [roll_die(s, advantage=advantage, disadvantage=disadvantage, reroll_one=reroll_ones)
                         for s in self._dice.elements()]
 

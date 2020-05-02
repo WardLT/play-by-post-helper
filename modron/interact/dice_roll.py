@@ -28,19 +28,25 @@ def _render_dice_rolls(roll: DiceRoll) -> List[str]:
     """
 
     output = []
-    for (value, unused), d in zip(roll.results, roll.dice):
-        # Display the unused results
-        if len(unused) == 0:
-            u = ''
-        else:
-            u = ' '.join([f'~{x}~' for x in unused]) + ' '
+    for (value, rolls), d in zip(roll.results, roll.dice):
+        # Get whether the dice was used
+        used_ix = rolls.index(value)
+        assert used_ix is not None, "Outcome of roll is not in the list of dice rolled!?"
+        was_used = [False] * len(rolls)
+        was_used[used_ix] = True
 
+        # Render the roll value
         if value == 1:
-            output.append(f'{u}*1*')
+            value_str = f'*1*'
         elif value == d:
-            output.append(f'{u}_{value}_')
+            value_str = f'_{value}_'
         else:
-            output.append(f'{u}{value}')
+            value_str = f'{value}'
+
+        # Render the value of all dice
+        output.append(
+            ' '.join([value_str if u else f'~{v}~' for v, u in zip(rolls, was_used)])
+        )
     return output
 
 
