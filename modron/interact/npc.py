@@ -37,6 +37,10 @@ def generate_and_render_npcs(location: str, n: int) -> dict:
         }
     }]
     for npc in npcs:
+        # Put in a divider
+        blocks.append({'type': 'divider'})
+
+        # Assemble the NPC info
         fields = []
         for k, v in npc.items():
             fields.append({

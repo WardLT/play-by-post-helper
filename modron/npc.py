@@ -109,7 +109,7 @@ def generate_relationship_status() -> str:
 
     roll = randint(1, 20)
     for threshold, status in config.RELATIONSHIP_DIST:
-        if threshold <= roll:
+        if roll <= threshold:
             return status
     raise Exception('Problem with relationship table. Does it have entries up to 20?')
 
