@@ -109,5 +109,5 @@ Once you have the server ready to receive incoming requests, register the URL wi
 See Slack's documentation on 
 [creating Slash commands](https://api.slack.com/interactivity/slash-commands#creating_commands)
 and [subscribing to events](https://api.slack.com/events-api#subscriptions) for how to register URLs.
-You will need the following Slash commands: `/modron`, `/mroll`.
+You will need the following Slash commands: `/modron`, `/mroll`, `/mnpcgen`.
 All of the Slash commands are routed to the same HTTP endpoint: `https://<your url>/modron`
