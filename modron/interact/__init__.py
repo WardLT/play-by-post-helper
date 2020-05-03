@@ -12,13 +12,14 @@ from modron.interact._argparse import NoExitParserError, NoExitParser
 
 from modron.interact.base import SlashCommandPayload, InteractionModule
 from modron.interact.dice_roll import DiceRollInteraction
+from modron.interact.npc import NPCGenerator
 from modron.slack import BotClient
 from modron.utils import escape_slack_characters
 
 logger = logging.getLogger(__name__)
 
 
-_modules = (DiceRollInteraction,)
+_modules = (DiceRollInteraction, NPCGenerator)
 
 
 def _pause_then_run(func: Callable, *args, **kwargs):

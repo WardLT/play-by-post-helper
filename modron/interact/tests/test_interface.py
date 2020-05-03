@@ -1,4 +1,5 @@
 """Tests the functions used to interface with interaction modules"""
+import json
 import logging
 import os
 from csv import DictReader
@@ -7,6 +8,7 @@ from time import sleep
 from pytest import fixture, raises
 
 from modron.interact import assemble_parser, NoExitParser, NoExitParserError, SlashCommandPayload, handle_slash_command
+from modron.interact.npc import generate_and_render_npcs
 from modron.slack import BotClient
 from modron import config
 
@@ -127,3 +129,14 @@ def test_payload_error(parser, payload):
     payload.text = 'roll'
     result = handle_slash_command(payload, parser)
     assert isinstance(result, dict)
+
+
+def test_npc_generator(parser, payload, caplog):
+    args = parser.parse_args(['npcgen', '3'])
+    with caplog.at_level(logging.INFO):
+        args.interact(args, payload)
+    assert '3 NPCs from default' in caplog.messages[-1]
+
+    # Print out an example to see how it looks
+    example = generate_and_render_npcs('default', 2)
+    print(json.dumps(example, indent=2))
