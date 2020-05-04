@@ -9,6 +9,7 @@ from logging.handlers import RotatingFileHandler
 from flask import Flask, request
 from slackeventsapi import SlackEventAdapter
 
+from modron.db import ModronState
 from modron.events import status_check
 from modron.interact import assemble_parser, handle_slash_command, SlashCommandPayload
 from modron.slack import BotClient
@@ -25,9 +26,7 @@ logger = logging.getLogger(__name__)
 start_time = datetime.now()
 
 # Configuration details
-reminder_channel = "ic_all"
-watch_channel_regex = r"ic_(?!mezu_gm)"
-threshold_stall_time = timedelta(days=1)
+state = ModronState.from_disk()
 
 # Get the secure tokens
 OAUTH_ACCESS_TOKEN = os.environ.get('OAUTH_ACCESS_TOKEN', None)
@@ -49,11 +48,11 @@ logger.info('Created web client')
 modron_cmd_parser = assemble_parser(client)
 
 # Get the channels to watch
-watch_channels = client.match_channels(watch_channel_regex)
+watch_channels = client.match_channels(state.watch_channel_regex)
 
 # Watch the channel as a daemon thread
 reminder_thread = Thread(target=client.display_reminders_on_channel, name=f'watch_for_stalls',
-                         args=(reminder_channel, watch_channels, threshold_stall_time),
+                         args=(state.reminder_channel, watch_channels, state.threshold_stall_time),
                          daemon=True)
 reminder_thread.start()
 

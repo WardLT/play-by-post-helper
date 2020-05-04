@@ -1,6 +1,10 @@
 """"Configuration details"""
 import os
 
+# Defining the Modron base
+STATE_PATH = os.path.join(os.path.dirname(__file__), '..', 'modron_state.yml')
+"""Default location for the Modron state file"""
+
 # Dice roll settings
 DICE_LOG = 'dice_rolls.csv'
 """Path where Modron should write the result of dice rolls. Set to ``None`` to skip saving"""
