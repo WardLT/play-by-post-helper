@@ -7,7 +7,7 @@ that performance requirements will not require a formal database.
 Using YAML to store state on disk has the advantage of it being easy to
 assess and alter the server state from the command line.
 """
-from datetime import timedelta
+from datetime import timedelta, datetime
 import json
 
 import yaml
@@ -20,13 +20,12 @@ class ModronState(BaseModel):
     """Holder for elements of Modron's configuration that can change during runtime
     or need to be persistent across restarts"""
 
-    reminder_channel: str = Field("ic_all", description='On which channel to post reminders')
-    watch_channel_regex: str = Field(r"ic_(?!mezu_gm)", description='Regex defining which channels to watch')
-    threshold_stall_time: timedelta = Field(timedelta(days=1),
-                                            description='How long to wait for activity before issuing reminders')
+    allowed_stall_time: timedelta = Field(timedelta(days=1),
+                                          description='How long to wait for activity before issuing reminders')
+    reminder_time: datetime = Field(None, description='Next time to check if a reminder is needed')
 
     @classmethod
-    def from_disk(cls, path: str = config.STATE_PATH) -> 'ModronState':
+    def load(cls, path: str = config.STATE_PATH) -> 'ModronState':
         """Load the configuration from disk
 
         Args:

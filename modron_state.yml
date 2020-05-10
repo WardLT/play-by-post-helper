@@ -1,3 +1,1 @@
-reminder_channel: ic_all
 threshold_stall_time: 86400.0
-watch_channel_regex: ic_(?!mezu_gm)

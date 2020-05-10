@@ -1,9 +1,15 @@
 """"Configuration details"""
 import os
 
-# Defining the Modron base
+# Defining the Modron database
 STATE_PATH = os.path.join(os.path.dirname(__file__), '..', 'modron_state.yml')
 """Default location for the Modron state file"""
+
+# Defining the reminder settings
+REMINDER_CHANNEL = 'ic_all'
+"""Channel on which to post reminders"""
+WATCH_CHANNELS = r'ic_(?!mezu_gm)'
+"""Regex used to determine which channels to watch"""
 
 # Dice roll settings
 DICE_LOG = 'dice_rolls.csv'

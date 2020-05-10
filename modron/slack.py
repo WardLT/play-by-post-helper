@@ -10,6 +10,7 @@ import humanize
 from slack import WebClient
 from slack.web.slack_response import SlackResponse
 
+from modron.db import ModronState
 
 logger = logging.getLogger(__name__)
 
@@ -85,8 +86,7 @@ class BotClient(WebClient):
         logger.info(f'Adding myself to the channel: {channel_name}')
         return self.channels_join(name=channel_name)
 
-    def display_reminders_on_channel(self, reminder_channel: str, watch_channels: List[str],
-                                     allowed_stall_time: timedelta = timedelta(days=1)):
+    def display_reminders_on_channel(self, reminder_channel: str, watch_channels: List[str]):
         """Display reminders if the play-by-post stalls.
 
         Modron will post reminders on a certain channel if no messages
@@ -99,7 +99,6 @@ class BotClient(WebClient):
         Args:
             reminder_channel (str): Name of the channel on which to post reminders
             watch_channels (str): Names of the channels on which to watch for messages
-            allowed_stall_time (timedelta): Time without a message before the reminder is sent
         """
         # Get the channel ID for the reminder channel
         reminder_channel_id = self.get_channel_id(reminder_channel)
@@ -118,18 +117,33 @@ class BotClient(WebClient):
         # Main loop: Wait for messages
         while True:
             # Check every channel
-            stall_times, last_was_me = zip(*map(self.get_stall_time, watch_channels))
+            last_times, last_was_me = zip(*map(self.get_last_activity, watch_channels))
 
-            # Get the minimum stall time and info on most recent channel
-            stall_time = min(stall_times)
-            active_channel_ind = stall_times.index(stall_time)
+            # Get the most recent activity and info on most recent channel
+            last_time = max(last_times)
+            active_channel_ind = last_times.index(last_time)
             active_channel = watch_channels[active_channel_ind]
             active_poster_was_me = last_was_me[active_channel_ind]
+            stall_time = datetime.now() - last_time
             logger.info(f'Most recent post was {stall_time} ago in {active_channel}')
 
+            # Determine when we would issue a reminder based on activity
+            state = ModronState.load()
+            reminder_time = last_time + state.allowed_stall_time
+
+            # If it is after any previous reminder time, replace that reminder time
+            if reminder_time > state.reminder_time:
+                logger.info(f'Moving up the next reminder time to: {reminder_time}')
+                state.reminder_time = reminder_time
+                state.save()
+            else:
+                logger.info(f'Activity-based reminder would be sooner '
+                            f'than user-specified reminder: {state.reminder_time}. Not updating reminder time')
+                reminder_time = state.reminder_time
+
             # Check if we are past the stall time
-            if stall_time > allowed_stall_time:
-                logger.info(f'Channel has been stalled for {stall_time - allowed_stall_time} too long')
+            if datetime.now() > reminder_time:
+                logger.info(f'Channel has been stalled for {stall_time - state.allowed_stall_time} too long')
 
                 # Check if the bot was the last one to send a message
                 #  If not, then send a reminder to the channel
@@ -146,20 +160,20 @@ class BotClient(WebClient):
 
                 # Sleep for the timeout length
                 logger.info(f'Sleeping for {stall_time}')
-                sleep(allowed_stall_time.total_seconds())
+                sleep(state.allowed_stall_time.total_seconds())
             else:
                 # If we are not past the stall time, wait for the remaining time
-                remaining_time = allowed_stall_time - stall_time
+                remaining_time = reminder_time - datetime.now()
                 logger.info(f'There is another {remaining_time} before a reminder will be sent')
                 sleep(remaining_time.total_seconds())
 
-    def get_stall_time(self, channel_name: str) -> Tuple[timedelta, bool]:
-        """Determine the time since a message was sent in a channel
+    def get_last_activity(self, channel_name: str) -> Tuple[datetime, bool]:
+        """Determine the most recent time a message was sent in a channel
 
         Args:
             channel_name (str): Name of the channel to assess
         Returns:
-            - (timedelta) Time since the last message was sent
+            - (datetime) Time when the most recent message was sent
             - (bool) Whether Modron was the last message sender
         """
         # Query the channel information
@@ -175,7 +189,7 @@ class BotClient(WebClient):
         # Determine if Modron posted last
         last_was_me = channel_info['latest'].get('user', None) == self.my_id
 
-        return stall_time, last_was_me
+        return last_time, last_was_me
 
     def match_channels(self, regex: str) -> List[str]:
         """Get a list of all channels whose names match a certain pattern
