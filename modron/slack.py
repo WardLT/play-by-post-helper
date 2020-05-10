@@ -132,7 +132,7 @@ class BotClient(WebClient):
             reminder_time = last_time + state.allowed_stall_time
 
             # If it is after any previous reminder time, replace that reminder time
-            if reminder_time > state.reminder_time:
+            if state.reminder_time is None or reminder_time > state.reminder_time:
                 logger.info(f'Moving up the next reminder time to: {reminder_time}')
                 state.reminder_time = reminder_time
                 state.save()

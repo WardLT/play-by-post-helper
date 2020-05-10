@@ -46,4 +46,4 @@ class ModronState(BaseModel):
         with open(path, 'w') as fp:
             # Convert to JSON so that it uses Pydantic's conversations of special types
             ready = json.loads(self.json())
-            yaml.dump(ready, fp)
+            yaml.dump(ready, fp, indent=2)
