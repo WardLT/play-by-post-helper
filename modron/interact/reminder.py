@@ -78,10 +78,10 @@ class ReminderModule(InteractionModule):
 
         # Subcommand for snoozing the reminder
         subparser = subparsers.add_parser('break', help='Delay the reminder thread for a certain time')
-        subparser.add_argument('time', help='How long to delay the reminder for. ISO 8601 format', type=str)
+        subparser.add_argument('time', help='How long to delay the reminder for. ISO 8601 format (ex: P3d)', type=str)
 
     def interact(self, args: Namespace, payload: SlashCommandPayload):
-        if args.reminder_command == 'status':
+        if args.reminder_command is None or args.reminder_command == 'status':
             reply = self._generate_status(payload)
         elif args.reminder_command == 'break':
             reply = _add_delay(args.time)
@@ -90,8 +90,7 @@ class ReminderModule(InteractionModule):
 
         # Send reply back to user
         requests.post(payload.response_url, json={
-            'text': reply, 'mkdwn': True,
-            'response_type': 'in_channel',
+            'text': reply, 'mkdwn': True
         })
 
     def _generate_status(self, payload: SlashCommandPayload) -> str:
@@ -111,8 +110,7 @@ class ReminderModule(InteractionModule):
         # Get the reminder time
         state = ModronState.load()
         reminder_time = state.reminder_time.astimezone(user_tz)
-        reply = f'Next check for reminder: {humanize.naturaldate(reminder_time)} ' \
-                f'{reminder_time.strftime("%I:%M %p %Z")}\n'
+        reply = f'Next check for reminder: {reminder_time.strftime("%a %b %d, %I:%M %p")}\n'
 
         # Append thread status
         if config.REMINDER_THREAD is None:
