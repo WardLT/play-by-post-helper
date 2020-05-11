@@ -13,13 +13,14 @@ from modron.interact._argparse import NoExitParserError, NoExitParser
 from modron.interact.base import SlashCommandPayload, InteractionModule
 from modron.interact.dice_roll import DiceRollInteraction
 from modron.interact.npc import NPCGenerator
+from modron.interact.reminder import ReminderModule
 from modron.slack import BotClient
 from modron.utils import escape_slack_characters
 
 logger = logging.getLogger(__name__)
 
 
-_modules = (DiceRollInteraction, NPCGenerator)
+_modules = (DiceRollInteraction, NPCGenerator, ReminderModule)
 
 
 def _pause_then_run(func: Callable, *args, **kwargs):
@@ -32,7 +33,7 @@ def _pause_then_run(func: Callable, *args, **kwargs):
     func(*args, **kwargs)
 
 
-_description='''A Slack command to handle common D&D tasks'''
+_description = '''A Slack command to handle common D&D tasks'''
 
 
 def assemble_parser(client: BotClient, modules: Sequence[InteractionModule.__class__] = _modules) -> NoExitParser:

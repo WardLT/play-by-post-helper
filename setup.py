@@ -8,6 +8,7 @@ setup(
     install_requires=[
         'flask>=1.1',
         'humanize',
+        'isodate',
         'slackclient',
         'slackeventsapi',
         'pydantic',

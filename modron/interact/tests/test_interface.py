@@ -140,3 +140,15 @@ def test_npc_generator(parser, payload, caplog):
     # Print out an example to see how it looks
     example = generate_and_render_npcs('default', 2)
     print(json.dumps(example, indent=2))
+
+
+def test_delay_status(parser, payload):
+    args = parser.parse_args(['reminder', 'status'])
+    args.interact(args, payload)
+
+
+def test_delay_pause(parser, payload, caplog):
+    args = parser.parse_args(['reminder', 'break', 'PT1S'])
+    with caplog.at_level(logging.INFO):
+        args.interact(args, payload)
+    assert 'failed' not in caplog.messages[-1]

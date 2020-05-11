@@ -13,6 +13,7 @@ from modron import config
 from modron.db import ModronState
 from modron.events import status_check
 from modron.interact import assemble_parser, handle_slash_command, SlashCommandPayload
+from modron.interact.reminder import start_reminder_thread
 from modron.slack import BotClient
 
 logging.basicConfig(level=logging.INFO,
@@ -45,17 +46,8 @@ logger.info('Created web client')
 # Generate the slash command responder
 modron_cmd_parser = assemble_parser(client)
 
-# Get the channels to watch
-watch_channels = client.match_channels(config.WATCH_CHANNELS)
-
-# Watch the channel as a daemon thread
-reminder_thread = Thread(target=client.display_reminders_on_channel, name=f'watch_for_stalls',
-                         args=(config.REMINDER_CHANNEL, watch_channels),
-                         daemon=True)
-reminder_thread.start()
-
-# Register the events
-event_adapter.on('message', f=partial(status_check, client=client, start_time=start_time))
+# Start the reminder Thread
+start_reminder_thread(client)
 
 
 @app.route('/modron', methods=('POST',))
@@ -63,6 +55,9 @@ def modron_slash_cmd():
     payload = SlashCommandPayload(**request.form.to_dict())
     return handle_slash_command(payload, parser=modron_cmd_parser)
 
+
+# Register the events
+event_adapter.on('message', f=partial(status_check, client=client, start_time=start_time))
 
 if __name__ == "__name__":
     # Start the Slack Events API

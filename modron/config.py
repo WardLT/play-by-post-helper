@@ -11,6 +11,10 @@ REMINDER_CHANNEL = 'ic_all'
 WATCH_CHANNELS = r'ic_(?!mezu_gm)'
 """Regex used to determine which channels to watch"""
 
+# Reminder thread
+REMINDER_THREAD = None
+"""Reminder thread. Kept in the config to be a global state"""
+
 # Dice roll settings
 DICE_LOG = 'dice_rolls.csv'
 """Path where Modron should write the result of dice rolls. Set to ``None`` to skip saving"""
