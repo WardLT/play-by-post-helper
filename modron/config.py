@@ -1,4 +1,5 @@
 """"Configuration details"""
+from typing import Optional
 import os
 
 # Defining the Modron database
@@ -12,7 +13,7 @@ WATCH_CHANNELS = r'ic_(?!mezu_gm)'
 """Regex used to determine which channels to watch"""
 
 # Reminder thread
-REMINDER_THREAD = None
+REMINDER_THREAD: Optional['ReminderService'] = None
 """Reminder thread. Kept in the config to be a global state"""
 
 # Dice roll settings

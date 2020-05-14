@@ -2,15 +2,12 @@ import os
 import sys
 import logging
 from functools import partial
-from threading import Thread
-from datetime import timedelta, datetime
+from datetime import datetime
 from logging.handlers import RotatingFileHandler
 
 from flask import Flask, request
 from slackeventsapi import SlackEventAdapter
 
-from modron import config
-from modron.db import ModronState
 from modron.events import status_check
 from modron.interact import assemble_parser, handle_slash_command, SlashCommandPayload
 from modron.interact.reminder import start_reminder_thread
@@ -59,6 +56,6 @@ def modron_slash_cmd():
 # Register the events
 event_adapter.on('message', f=partial(status_check, client=client, start_time=start_time))
 
-if __name__ == "__name__":
+if __name__ == "__main__":
     # Start the Slack Events API
     app.run(port=3152, host='0.0.0.0', debug=False)

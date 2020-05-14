@@ -1,7 +1,6 @@
 """Interact with the channel sleep timer"""
 from argparse import ArgumentParser, Namespace
 from datetime import datetime, timezone, timedelta
-from threading import Thread
 import logging
 
 import humanize
@@ -11,6 +10,7 @@ from isodate import ISO8601Error
 
 from modron.db import ModronState
 from modron.interact import InteractionModule, SlashCommandPayload
+from modron.services import ReminderService
 from modron.slack import BotClient
 from modron import config
 
@@ -21,9 +21,7 @@ logger = logging.getLogger(__name__)
 
 def start_reminder_thread(client: BotClient):
     """Launch a reminder thread and store it in the global context"""
-    watch_channels = client.match_channels(config.WATCH_CHANNELS)
-    config.REMINDER_THREAD = Thread(target=client.display_reminders_on_channel, name=f'reminder_thread',
-                                    args=(config.REMINDER_CHANNEL, watch_channels), daemon=True)
+    config.REMINDER_THREAD = ReminderService(client)
     config.REMINDER_THREAD.start()
 
 
