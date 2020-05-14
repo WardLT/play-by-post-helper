@@ -1,2 +1,1 @@
-allowed_stall_time: 86400.0
-reminder_time: '2020-05-11T20:49:36.021300'
+{allowed_stall_time: 86400.0, reminder_time: '2020-05-11T20:49:36.021300'}
