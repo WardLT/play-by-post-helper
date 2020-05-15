@@ -3,7 +3,6 @@
 Holds logic of how Modron should respond a certain direct message"""
 import shlex
 import logging
-from argparse import ArgumentParser
 from threading import Thread
 from time import sleep
 from typing import Union, Sequence, Callable

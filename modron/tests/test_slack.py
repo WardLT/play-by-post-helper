@@ -36,4 +36,3 @@ def test_display_name(client, user_id):
     # Pick a user at random
     my_name = client.get_user_name(user_id)
     assert my_name == 'Slackbot'
-

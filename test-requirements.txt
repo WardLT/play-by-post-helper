@@ -1,2 +1,5 @@
 pytest>=5.3
 pytest-timeout
+pytest-cov
+flake8
+

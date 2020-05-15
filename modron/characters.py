@@ -1,7 +1,6 @@
 """Saving and using information about characters"""
 
 from enum import Enum
-from collections import defaultdict
 from typing import Dict, List
 
 from pydantic import BaseModel, Field, validator

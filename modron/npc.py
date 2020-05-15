@@ -30,7 +30,7 @@ def generate_npc(location='default') -> dict:
         'race': race,
         'age': age,
         'gender': gender,
-        'alignment': generate_alignment(), 
+        'alignment': generate_alignment(),
         'relationship_status': generate_relationship_status(),
         'eyes': _eye_color[randint(1, 6)],
         'hair': _hair_color[randint(1, 6)],
@@ -143,6 +143,3 @@ def generate_alignment() -> str:
             return 'chaotic good'
         else:
             return 'chaotic neutral'
-
-
-__all__ = [generate_npc]

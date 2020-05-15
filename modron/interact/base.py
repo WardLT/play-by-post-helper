@@ -2,7 +2,6 @@
 
 from argparse import ArgumentParser, Namespace
 
-from requests import Request
 from pydantic import BaseModel, Field, AnyHttpUrl
 
 from modron.slack import BotClient

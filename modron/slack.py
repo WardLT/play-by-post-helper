@@ -1,16 +1,12 @@
 """General utilities for working with the Slack client"""
-from datetime import timedelta, datetime
+from datetime import datetime
 from functools import lru_cache
-from time import sleep
 from typing import Optional, List, Tuple
 import logging
 import re
 
-import humanize
 from slack import WebClient
 from slack.web.slack_response import SlackResponse
-
-from modron.db import ModronState
 
 logger = logging.getLogger(__name__)
 

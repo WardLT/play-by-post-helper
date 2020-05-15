@@ -3,6 +3,9 @@ python:
   - "3.6"
 install:
   - pip install -e .
+  - pip install coveralls
   - pip install -r test-requirements.txt
 script:
-  - pytest
+  - flake8
+  - pytest --with-coverage --cover-package=modron
+after_success: coveralls
