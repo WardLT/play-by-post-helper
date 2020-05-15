@@ -73,9 +73,9 @@ class ReminderService(Thread):
 
         # Warn user if the bot does not write a channel watched for stalling
         if self._reminder_channel not in self._watch_channels:
-            logger.warning(f'Bot will write reminders to a channel not being watched for stalling, which '
-                           f'means it will issue reminders even if no other activity has occurred since the '
-                           f'previous reminder.')
+            logger.warning('Bot will write reminders to a channel not being watched for stalling, which '
+                           'means it will issue reminders even if no other activity has occurred since the '
+                           'previous reminder.')
 
         # Make sure I am in the channels to be watched and reminder channel
         self._client.add_self_to_channel(self._reminder_channel)

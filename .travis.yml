@@ -7,5 +7,5 @@ install:
   - pip install -r test-requirements.txt
 script:
   - flake8
-  - pytest --with-coverage --cover-package=modron
+  - pytest --ignore=server.py --cov=modron
 after_success: coveralls

@@ -37,7 +37,7 @@ def _render_dice_rolls(roll: DiceRoll) -> List[str]:
 
         # Render the roll value
         if value == 1:
-            value_str = f'*1*'
+            value_str = '*1*'
         elif value == d:
             value_str = f'_{value}_'
         else:
