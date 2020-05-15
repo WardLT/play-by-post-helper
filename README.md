@@ -1,6 +1,7 @@
 # Play-by-Post Helper
 
 [![Build Status](https://travis-ci.org/WardLT/play-by-post-helper.svg?branch=master)](https://travis-ci.org/WardLT/play-by-post-helper)
+[![Coverage Status](https://coveralls.io/repos/github/WardLT/play-by-post-helper/badge.svg?branch=master)](https://coveralls.io/github/WardLT/play-by-post-helper?branch=master)
 
 The Play-by-Post Helper (Modron) is a Slack bot that assists playing Role Playing Games (RPGs) with Slack.
 
