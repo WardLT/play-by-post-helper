@@ -81,6 +81,13 @@ def test_shortcut(parser, payload, caplog):
         sleep(5)  # Waits for the delayed thread to run
     assert '1d20' in caplog.messages[-2]
 
+    # Special shortcut for /roll
+    payload.command = '/roll'
+    with caplog.at_level(logging.INFO):
+        assert handle_slash_command(payload, parser) == {"response_type": "in_channel"}
+        sleep(5)  # Waits for the delayed thread to run
+    assert '1d20' in caplog.messages[-2]
+
 
 def test_roll_help(parser):
     with raises(NoExitParserError) as exc:

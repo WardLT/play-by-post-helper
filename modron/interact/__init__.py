@@ -78,15 +78,19 @@ def handle_slash_command(payload: SlashCommandPayload, parser: NoExitParser) -> 
     # Expand shortcut commands
     logger.info(f'Received command: {payload.command} {payload.text}')
     if payload.command != "/modron":
-        if not payload.command.startswith('/m'):
+        if payload.command.lower() == '/roll':
+            # Special case for /roll
+            payload.text = f'roll {payload.text}'
+            logger.info('Caught special case for /roll slash command. Changed in to /modron roll')
+        elif payload.command.startswith('/m'):
+            # Determine the sub command name
+            subcommand = payload.command[2:]
+            payload.text = f'{subcommand} {payload.text}'
+            logger.info(f'Expanded shortcut command to the longer-form "/modron {payload.text}')
+        else:
             return {
                 'text': 'ERROR: your command is not supported by Modron yet :('
             }
-
-        # Determine the sub command name
-        subcommand = payload.command[2:]
-        payload.text = f'{subcommand} {payload.text}'
-        logger.info(f'Expanded shortcut command to the longer-form "/modron {payload.text}')
 
     # Parse the command
     try:
