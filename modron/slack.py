@@ -7,7 +7,6 @@ from typing import Optional, List, Tuple, Union
 import logging
 import re
 
-from aiohttp import FormData
 from slack import WebClient
 from slack.web.slack_response import SlackResponse
 
