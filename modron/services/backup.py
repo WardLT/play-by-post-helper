@@ -70,7 +70,7 @@ class BackupService(BaseService):
 
         # Get the time of the last message
         output_path = os.path.join(self.backup_dir, f'{channel}.jsonld')
-        logging.info(f'Backup path: {output_path}')
+        logger.info(f'Backup path: {output_path}')
         if not os.path.isfile(output_path):
             start_time = 0
             os.makedirs(os.path.dirname(output_path), exist_ok=True)
@@ -86,7 +86,7 @@ class BackupService(BaseService):
         # Pulling the most recent message
         last_time, _ = self._client.get_last_activity(channel)
         if isclose(last_time.timestamp(), start_time):
-            logging.info(f'No new messages in {channel}')
+            logger.info(f'No new messages in {channel}')
             return 0
 
         # Get the ID of the channel to be backed up
