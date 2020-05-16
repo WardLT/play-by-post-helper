@@ -1,4 +1,5 @@
 """Persistent processes that perform pre-defined projects periodically"""
+from abc import ABCMeta, abstractmethod
 from datetime import datetime
 from math import inf
 from threading import Thread
@@ -15,36 +16,39 @@ from modron.slack import BotClient
 logger = logging.getLogger(__name__)
 
 
-class ReminderService(Thread):
-    """Thread that issues a reminder to players if play stalls"""
+class BaseService(Thread, metaclass=ABCMeta):
+    """Base class for persistent services
 
-    def __init__(self, client: BotClient, reminder_channel: str = config.REMINDER_CHANNEL,
-                 watch_channel_regex: str = config.WATCH_CHANNELS, daemon: bool = True,
-                 max_sleep_time: float = inf):
+    Start the thread to run asynchronously by calling
+    :meth:`start()`. The thread will then run until
+    the `stop` attribute is set to `True`. Note that the
+    thread will not terminate until the the active call
+    to `os.sleep` ends. If you would like the thread to terminate
+    sooner, define a `max_sleep_time`
+
+    Implementations of this class should define the `run` method,
+    which will perform some tasks periodically. When the task is
+    complete, the :meth:`_sleep_until` method can be used to
+    cause the thread
+
+    """
+    def __init__(self, client: BotClient, max_sleep_time: float = inf):
         """
         Args:
             client: Authenticated BotClient
-            reminder_channel: Channel on which to post reminders
-            watch_channel_regex: Pattern to match channels to watch for activity
-            daemon: Whether to launch as a daemon thread
-            max_sleep_time: Longest time the thread is allowed to sleep for
+            max_sleep_time: Longest allowed sleep call in seconds
         """
-        super().__init__(daemon=daemon)
+        super().__init__(daemon=True)
         self._client = client
-        self._reminder_channel = reminder_channel
-        self._watch_channels = client.match_channels(watch_channel_regex)
-        self._max_sleep_time = max_sleep_time
-
-        # Flag that tells the thread to throw an exception after it has waited for a certain amount of time
         self.stop = False
+        self._max_sleep_time = max_sleep_time
 
     def _sleep_until(self, wake_time: datetime):
         """Sleep until a certain time has been reached
 
         Args:
-            wake_time (str): When for the sleep loop to end
+            wake_time (datetime): When for the sleep loop to end
         """
-
         while not self.stop:
             # Compute the amount of remaining time
             remaining_time = (wake_time - datetime.utcnow()).total_seconds()
@@ -57,6 +61,27 @@ class ReminderService(Thread):
             sleep(sleep_time)
 
         raise ValueError('User has requested this thread to halt')
+
+    @abstractmethod
+    def run(self):
+        raise NotImplementedError()
+
+
+class ReminderService(BaseService):
+    """Thread that issues a reminder to players if play stalls"""
+
+    def __init__(self, client: BotClient, reminder_channel: str = config.REMINDER_CHANNEL,
+                 watch_channel_regex: str = config.WATCH_CHANNELS, max_sleep_time: float = inf):
+        """
+        Args:
+            client: Authenticated BotClient
+            reminder_channel: Channel on which to post reminders
+            watch_channel_regex: Pattern to match channels to watch for activity
+            max_sleep_time: Longest time the thread is allowed to sleep for
+        """
+        super().__init__(client, max_sleep_time)
+        self._reminder_channel = reminder_channel
+        self._watch_channels = client.match_channels(watch_channel_regex)
 
     def run(self) -> None:
         """Display reminders if the play-by-post stalls.
