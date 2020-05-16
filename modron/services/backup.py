@@ -118,6 +118,11 @@ class BackupService(BaseService):
         return dict((c, self.backup_messages(c)) for c in self.backup_channels)
 
     def run(self):
+        # Make sure I am a member of all the channels I am backing up
+        for channel in self.backup_channels:
+            self._client.add_self_to_channel(channel)
+
+        # Run the main loop
         logger.info('Starting backup thread')
         while True:
             result = self.backup_all_channels()
