@@ -10,7 +10,7 @@ from isodate import ISO8601Error
 
 from modron.db import ModronState
 from modron.interact import InteractionModule, SlashCommandPayload
-from modron.services import ReminderService
+from modron.services.reminder import ReminderService
 from modron.slack import BotClient
 from modron import config
 
