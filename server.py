@@ -2,15 +2,17 @@ import os
 import sys
 import logging
 from functools import partial
-from datetime import datetime
+from datetime import datetime, timedelta
 from logging.handlers import RotatingFileHandler
 
 from flask import Flask, request
 from slackeventsapi import SlackEventAdapter
 
+from modron import config
 from modron.events import status_check
 from modron.interact import assemble_parser, handle_slash_command, SlashCommandPayload
 from modron.interact.reminder import start_reminder_thread
+from modron.services.backup import BackupService
 from modron.slack import BotClient
 
 logging.basicConfig(level=logging.INFO,
@@ -43,8 +45,13 @@ logger.info('Created web client')
 # Generate the slash command responder
 modron_cmd_parser = assemble_parser(client)
 
-# Start the reminder Thread
+# Start the reminder thread
 start_reminder_thread(client)
+
+# Start the backup thread
+backup = BackupService(client, config.BACKUP_PATH, timedelta(days=1),
+                       channel_regex=config.BACKUP_CHANNELS)
+backup.start()
 
 
 @app.route('/modron', methods=('POST',))

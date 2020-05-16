@@ -15,6 +15,12 @@ WATCH_CHANNELS = r'ic_(?!mezu_gm)'
 REMINDER_THREAD = None
 """Reminder thread. Kept in the config to be a global state"""
 
+# Backup thread
+BACKUP_PATH = 'backup'
+"""Location where backup data will be stored"""
+BACKUP_CHANNELS = r'^(ic_.*|open_questions)$'
+"""Regex defining which channels to backup"""
+
 # Dice roll settings
 DICE_LOG = 'dice_rolls.csv'
 """Path where Modron should write the result of dice rolls. Set to ``None`` to skip saving"""

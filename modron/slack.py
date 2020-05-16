@@ -1,10 +1,13 @@
 """General utilities for working with the Slack client"""
+import asyncio
 from datetime import datetime
 from functools import lru_cache
-from typing import Optional, List, Tuple
+from threading import Lock
+from typing import Optional, List, Tuple, Union
 import logging
 import re
 
+from aiohttp import FormData
 from slack import WebClient
 from slack.web.slack_response import SlackResponse
 
@@ -29,6 +32,7 @@ class BotClient(WebClient):
     ):
         super().__init__(token, timeout=timeout)
         self._my_id = None
+        self._api_lock = Lock()
 
     @property
     def my_id(self) -> str:
@@ -128,3 +132,9 @@ class BotClient(WebClient):
                 matched.append(name)
 
         return matched
+
+    def api_call(
+        self, *args, **kwargs
+    ) -> Union[asyncio.Future, SlackResponse]:
+        with self._api_lock:
+            return super().api_call(*args, **kwargs)

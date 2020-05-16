@@ -118,7 +118,10 @@ class BackupService(BaseService):
         return dict((c, self.backup_messages(c)) for c in self.backup_channels)
 
     def run(self):
+        logger.info('Starting backup thread')
         while True:
-            self.backup_all_channels()
+            result = self.backup_all_channels()
+            logger.info(f'Backed up {sum(result.values())} messages in total. From: {", ".join(result.keys())}')
             wake_time = datetime.utcnow() + self.frequency
+            logger.info(f'Sleeping until {wake_time.isoformat()}')
             self._sleep_until(wake_time)
