@@ -80,7 +80,7 @@ class BackupService(BaseService):
             with open(output_path) as fp:
                 for line in fp:
                     msg = json.loads(line)
-                    start_time = max(start_time, float(msg["ts"]))
+                    start_time = max(start_time, int(msg["ts"]))
         logger.info(f'Starting timestamp {start_time}, which is {datetime.utcfromtimestamp(start_time)}')
 
         # Pulling the most recent message
