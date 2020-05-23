@@ -11,6 +11,8 @@ setup(
         'isodate',
         'slackclient',
         'slackeventsapi',
+        'tabulate',
+        'pdfkit',
         'pydantic',
         'pyyaml'
     ]

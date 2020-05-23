@@ -71,6 +71,8 @@ You will need to store the access token as an environment variable named ``OAUTH
 for the bot to use it. 
 My preferred method is to store it as an environment variable. 
 
+The NPC generator requires the [`wkhtmltopdf` command line tool](https://wkhtmltopdf.org/index.html) to be installed. 
+
 ### Running the App
 
 Launch the Bot by first activating the appropriate Conda environment, 
