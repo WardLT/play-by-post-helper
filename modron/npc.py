@@ -31,12 +31,12 @@ def generate_npc(location='default') -> dict:
         'age': age,
         'gender': gender,
         'alignment': generate_alignment(),
-        'relationship_status': generate_relationship_status(),
         'eyes': _eye_color[randint(1, 6)],
         'hair': _hair_color[randint(1, 6)],
         'skin_tone': randint(1, 6),  # Fitzpatrick scale
         'attractiveness': randint(1, 20),
-        'orientation': randint(1, 6)
+        'orientation': randint(1, 6),
+        'relationship_status': generate_relationship_status(),
     }
 
     # If race is a tiefling, make a few alterations
