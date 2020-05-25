@@ -142,14 +142,14 @@ class DiceRollInteraction(InteractionModule):
         purpose = ' '.join(args.purpose)
         if len(purpose) > 0:
             reply = f'<@{payload.user_id}> rolled for {purpose}\n' \
-                    f'{roll.roll_description} = _{roll.value}_'
+                    f'{roll.roll_description} = *{roll.value}*'
             logger.info(f'{payload.user_id} requested to roll {roll.roll_description} for {purpose}.'
                         f' Result = {roll.value}')
         else:
-            reply = f'<@{payload.user_id}> rolled {roll.roll_description} = _{roll.value}_'
+            reply = f'<@{payload.user_id}> rolled {roll.roll_description} = *{roll.value}*'
             logger.info(f'{payload.user_id} requested to roll {roll.roll_description}.'
                         f' Result = {roll.value}')
-        reply += f'\n*Rolls*: {", ".join(_render_dice_rolls(roll))}'
+        reply += f'\nRolls: {", ".join(_render_dice_rolls(roll))}'
 
         # POST the result back to the reply url
         requests.post(payload.response_url, json={
