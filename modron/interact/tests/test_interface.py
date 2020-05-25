@@ -120,6 +120,14 @@ def test_rolling(client, parser, payload, caplog, tmp_config):
     assert not os.path.isfile(config.DICE_LOG)
     assert 'skipped channel - True' in caplog.messages[-1]
 
+    # Run a test with a "direct message" channel
+    payload.channel_id = 'GNOTAREALCHANNEL'
+    args = parser.parse_args(['roll', '1d6+1', 'test', '-a'])
+    with caplog.at_level(logging.INFO):
+        args.interact(args, payload)
+    assert not os.path.isfile(config.DICE_LOG)
+    assert 'private channel - True' in caplog.messages[-1]
+
     # Run a test with ic_all to see if it saves the log
     payload.channel_id = client.get_channel_id('ic_all')
     args = parser.parse_args(['roll', '1d6+1', 'test', '-a'])

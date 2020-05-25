@@ -102,10 +102,15 @@ class DiceRollInteraction(InteractionModule):
         """
 
         # Determine if we should log or not
-        channel_name = self.client.get_channel_name(payload.channel_id)
+        if payload.channel_id.startswith('C'):
+            channel_name = self.client.get_channel_name(payload.channel_id)
+            skipped_channel = channel_name in config.DICE_SKIP_CHANNELS
+            private_channel = False
+        else:
+            skipped_channel = False
+            private_channel = True
         no_log = config.DICE_LOG is None
-        skipped_channel = channel_name in config.DICE_SKIP_CHANNELS
-        private_channel = not self.client.conversation_is_channel(payload.channel_id)
+
         if no_log or skipped_channel or private_channel:
             logger.info(f'Refusing to log dice roll. Reasons: No log - {no_log}, skipped channel - {skipped_channel},'
                         f' private channel - {private_channel}')
