@@ -77,11 +77,12 @@ def handle_slash_command(payload: SlashCommandPayload, parser: NoExitParser) -> 
 
     # Expand shortcut commands
     logger.info(f'Received command: {payload.command} {payload.text}')
+    logger.debug(f'Command was from user {payload.user_id} on {payload.channel_id}')
     if payload.command != "/modron":
         if payload.command.lower() == '/roll':
             # Special case for /roll
             payload.text = f'roll {payload.text}'
-            logger.info('Caught special case for /roll slash command. Changed in to /modron roll')
+            logger.info('Caught special case for /roll slash command. Changed it to /modron roll')
         elif payload.command.startswith('/m'):
             # Determine the sub command name
             subcommand = payload.command[2:]
