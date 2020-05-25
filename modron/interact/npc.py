@@ -92,6 +92,14 @@ class NPCGenerator(InteractionModule):
         # Make the HTML table
         npc_table = generate_and_render_npcs(args.location, args.n)
 
+        # Check if the command was invoked in a channel. If not, we must send file as a DM
+        if not self.client.conversation_is_channel(payload.channel_id):
+            logger.info('Command came from a private channel, will send it to them directly')
+            result = self.client.conversations_open(users=payload.user_id)
+            channel_id = result['channel']['id']
+        else:
+            channel_id = payload.channel_id
+
         with TemporaryDirectory() as td:
             # Convert the table to PDF
             pdf_path = os.path.join(td, f'npcs_{args.n}_{args.location}.pdf')
@@ -99,14 +107,6 @@ class NPCGenerator(InteractionModule):
                 'orientation': 'landscape',
                 'page-size': 'Letter'
             })
-
-            # Check if the command was invoked in a channel. If not, we must send file as a DM
-            if not self.client.conversation_is_channel(payload.channel_id):
-                logger.info('Command came from a private channel, will send it to them directly')
-                result = self.client.conversations_open(users=payload.user_id)
-                channel_id = result['channel']['id']
-            else:
-                channel_id = payload.channel_id
 
             # Upload it as a file
             self.client.files_upload(channels=channel_id, title=f'{args.n} NPCs from {args.location}',
