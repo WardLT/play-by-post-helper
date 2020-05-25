@@ -100,6 +100,14 @@ class NPCGenerator(InteractionModule):
                 'page-size': 'Letter'
             })
 
+            # Check if the command was invoked in a channel. If not, we must send file as a DM
+            if not self.client.conversation_is_channel(payload.channel_id):
+                logger.info('Command came from a private channel, will send it to them directly')
+                result = self.client.conversations_open(users=payload.user_id)
+                channel_id = result['channel']['id']
+            else:
+                channel_id = payload.channel_id
+
             # Upload it as a file
-            self.client.files_upload(channels=payload.channel_id, title=f'{args.n} NPCs from {args.location}',
+            self.client.files_upload(channels=channel_id, title=f'{args.n} NPCs from {args.location}',
                                      file=pdf_path, initial_comment=f'The {args.n} NPCs you requested')
