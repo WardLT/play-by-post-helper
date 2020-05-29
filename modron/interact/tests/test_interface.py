@@ -7,8 +7,8 @@ from time import sleep
 
 from pytest import fixture, raises
 
-from modron.interact import assemble_parser, NoExitParser, NoExitParserError, SlashCommandPayload, handle_slash_command, \
-    all_modules
+from modron.interact import assemble_parser, NoExitParser, NoExitParserError,\
+    SlashCommandPayload, handle_slash_command, all_modules
 from modron.interact.npc import generate_and_render_npcs
 from modron.slack import BotClient
 from modron.config import get_config

@@ -13,7 +13,6 @@ from modron.interact.base import SlashCommandPayload, InteractionModule
 from modron.interact.dice_roll import DiceRollInteraction
 from modron.interact.npc import NPCGenerator
 from modron.interact.reminder import ReminderModule
-from modron.slack import BotClient
 from modron.utils import escape_slack_characters
 
 logger = logging.getLogger(__name__)
@@ -39,7 +38,6 @@ def assemble_parser(modules: Sequence[InteractionModule]) -> NoExitParser:
     """Generate the argument parser and interaction models
 
     Args:
-        client (BotClient): Client to be used by the interaction modules
         modules ([InteractionModule]): List of modules to use for this parser
     Returns:
         (NoExitParser): Parser to use for receiving commands

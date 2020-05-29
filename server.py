@@ -10,7 +10,7 @@ from slackeventsapi import SlackEventAdapter
 
 from modron.config import get_config
 from modron.events import status_check
-from modron.interact import assemble_parser, handle_slash_command, SlashCommandPayload, all_modules, \
+from modron.interact import assemble_parser, handle_slash_command, SlashCommandPayload, \
     DiceRollInteraction, ReminderModule, NPCGenerator
 from modron.services.backup import BackupService
 from modron.services.reminder import ReminderService
