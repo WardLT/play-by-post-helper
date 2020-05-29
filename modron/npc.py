@@ -3,7 +3,7 @@ import logging
 from random import randint, choice
 from typing import Tuple
 
-from modron import config
+from modron.config import get_config
 
 logger = logging.getLogger(__name__)
 
@@ -12,6 +12,9 @@ _hair_color = {1: 'blonde', 2: 'blonde', 3: 'brown', 4: 'brown', 5: 'black', 6: 
 _tiefling_eye_colors = ['red', 'orange', 'yellow', 'green', 'blue', 'purple', 'black']
 _tiefling_horns = ['eyebrow', 'short stubs', 'gazelle', 'rams horns',
                    'malformed/mismatched', 'hooks', 'antlers', 'smooth arc']
+
+
+config = get_config()
 
 
 def generate_npc(location='default') -> dict:
@@ -61,12 +64,12 @@ def generate_race(distribution='default') -> str:
     """
 
     # Get the desired location based on the race
-    race_dist = config.RACE_DISTRIBUTION[distribution]
+    race_dist = config.npc_race_dist[distribution]
 
     # Make the lookup table
     lookup_table = []
     counter = 0
-    for tier_prob, tier_races in zip(config.RACE_TIER_WEIGHTS, race_dist):
+    for tier_prob, tier_races in zip(config.npc_race_weights, race_dist):
         for race in tier_races:
             counter += tier_prob
             lookup_table.append((counter, race))
@@ -98,7 +101,7 @@ def generate_age_and_gender() -> Tuple[str, str]:
         gender = 'female' if roll % 2 == 0 else 'male'
 
     # Determine the age
-    for threshold, age in config.AGE_DISTRIBUTION:
+    for threshold, age in config.npc_age_dist:
         if roll <= threshold:
             return age, gender
     raise Exception('Problem with age distribution table. Does it have entries up to 100?')
@@ -108,13 +111,14 @@ def generate_relationship_status() -> str:
     """Generate the relationship status for the NPC"""
 
     roll = randint(1, 20)
-    for threshold, status in config.RELATIONSHIP_DIST:
+    for threshold, status in config.npc_relationship_dist:
         if roll <= threshold:
             return status
     raise Exception('Problem with relationship table. Does it have entries up to 20?')
 
 
 def generate_alignment() -> str:
+    """Generate NPC alignment following Xanathar's distribution"""
     alignment_num = randint(3, 18)
 
     if alignment_num == 3:

@@ -1,16 +1,26 @@
 import os
 
+from pytest import fixture
+
 from modron.db import ModronState
-from modron import config
+from modron.config import get_config
 
 
-def test_save_and_load():
+@fixture
+def config(tmpdir):
+    config = get_config()
+    config.state_path = os.path.join(tmpdir, 'state.yml')
+    ModronState().save(config.state_path)
+    return config
+
+
+def test_save_and_load(config):
     # Test that it modifies the file
-    before_time = os.path.getmtime(config.STATE_PATH)
-    state = ModronState.load()
-    state.save()
-    after_time = os.path.getmtime(config.STATE_PATH)
+    before_time = os.path.getmtime(config.state_path)
+    state = ModronState.load(config.state_path)
+    state.save(config.state_path)
+    after_time = os.path.getmtime(config.state_path)
     assert after_time > before_time
 
     # Test that it still loads again
-    ModronState.load()
+    ModronState.load(config.state_path)

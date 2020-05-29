@@ -7,16 +7,14 @@ from time import sleep
 
 from pytest import fixture, raises
 
-from modron.interact import assemble_parser, NoExitParser, NoExitParserError, SlashCommandPayload, handle_slash_command
+from modron.interact import assemble_parser, NoExitParser, NoExitParserError, SlashCommandPayload, handle_slash_command, \
+    all_modules
 from modron.interact.npc import generate_and_render_npcs
 from modron.slack import BotClient
-from modron import config
+from modron.config import get_config
 
 
-@fixture
-def tmp_config(tmpdir):
-    config.DICE_LOG = os.path.join(tmpdir, 'dice_log.csv')
-    return config
+config = get_config()
 
 
 @fixture
@@ -41,7 +39,8 @@ def client() -> BotClient:
 
 @fixture()
 def parser(client) -> NoExitParser:
-    return assemble_parser(client)
+    modules = [x(client) for x in all_modules]
+    return assemble_parser(modules)
 
 
 def test_help(parser):
@@ -96,7 +95,11 @@ def test_roll_help(parser):
     assert exc.value.text_output.startswith('*usage*: /modron roll')
 
 
-def test_rolling(client, parser, payload, caplog, tmp_config):
+def test_rolling(client, parser, payload, caplog):
+    # Delete any existing log file
+    if os.path.isfile(config.dice_log):
+        os.unlink(config.dice_log)
+
     # Parse args and run the event
     args = parser.parse_args(['roll', '1d6+1'])
     with caplog.at_level(logging.INFO):
@@ -116,8 +119,8 @@ def test_rolling(client, parser, payload, caplog, tmp_config):
     assert '1d6+1 at advantage for test.' in caplog.messages[-2]
 
     # Make sure the log file does not yet exist
-    print(f'Checking for existence of {config.DICE_LOG}')
-    assert not os.path.isfile(config.DICE_LOG)
+    print(f'Checking for existence of {config.dice_log}')
+    assert not os.path.isfile(config.dice_log)
     assert 'skipped channel - True' in caplog.messages[-1]
 
     # Run a test with a "direct message" channel
@@ -125,14 +128,14 @@ def test_rolling(client, parser, payload, caplog, tmp_config):
     args = parser.parse_args(['roll', '1d6+1', 'test', '-a'])
     with caplog.at_level(logging.INFO):
         args.interact(args, payload)
-    assert not os.path.isfile(config.DICE_LOG)
+    assert not os.path.isfile(config.dice_log)
     assert 'private channel - True' in caplog.messages[-1]
 
     # Run a test with ic_all to see if it saves the log
     payload.channel_id = client.get_channel_id('ic_all')
     args = parser.parse_args(['roll', '1d6+1', 'test', '-a'])
     args.interact(args, payload)
-    with open(config.DICE_LOG) as fp:
+    with open(config.dice_log) as fp:
         reader = DictReader(fp)
         roll = next(reader)
         assert roll['reason'] == 'test'

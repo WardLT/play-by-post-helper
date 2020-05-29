@@ -13,7 +13,10 @@ import json
 import yaml
 from pydantic import BaseModel, Field
 
-from modron import config
+from modron.config import get_config
+
+
+config = get_config()
 
 
 class ModronState(BaseModel):
@@ -25,7 +28,7 @@ class ModronState(BaseModel):
     reminder_time: datetime = Field(None, description='Next time to check if a reminder is needed')
 
     @classmethod
-    def load(cls, path: str = config.STATE_PATH) -> 'ModronState':
+    def load(cls, path: str = config.state_path) -> 'ModronState':
         """Load the configuration from disk
 
         Args:
@@ -34,10 +37,10 @@ class ModronState(BaseModel):
             (ModronState) State from disk
         """
         with open(path, 'r') as fp:
-            data = yaml.load(fp)
+            data = yaml.load(fp, yaml.SafeLoader)
             return ModronState.parse_obj(data)
 
-    def save(self, path: str = config.STATE_PATH):
+    def save(self, path: str = config.state_path):
         """Save the state to disk in YML format
 
         Args:

@@ -83,7 +83,7 @@ class NPCGenerator(InteractionModule):
     def register_argparse(self, parser: ArgumentParser):
         parser.add_argument('n', help='Number of NPCs to generate', type=int, default=1)
         parser.add_argument('--location', '-l', help='Which demographic template to use',
-                            default='default', choices=config.RACE_DISTRIBUTION.keys(), type=str)
+                            default='default', choices=config._RACE_DISTRIBUTION.keys(), type=str)
 
     def interact(self, args: Namespace, payload: SlashCommandPayload):
         # Log the interaction

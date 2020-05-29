@@ -9,13 +9,14 @@ from typing import List, NoReturn
 
 import requests
 
-from modron import config
+from modron.config import get_config
 from modron.dice import DiceRoll
 from modron.interact import SlashCommandPayload
 from modron.interact.base import InteractionModule
 from modron.slack import BotClient
 
 logger = logging.getLogger(__name__)
+config = get_config()
 
 
 def _render_dice_rolls(roll: DiceRoll) -> List[str]:
@@ -104,12 +105,13 @@ class DiceRollInteraction(InteractionModule):
         # Determine if we should log or not
         if payload.channel_id.startswith('C'):
             channel_name = self.client.get_channel_name(payload.channel_id)
-            skipped_channel = channel_name in config.DICE_SKIP_CHANNELS
+            skipped_channel = channel_name in config.dice_skip_channels
             private_channel = False
         else:
             skipped_channel = False
             private_channel = True
-        no_log = config.DICE_LOG is None
+            channel_name = None
+        no_log = config.dice_log is None
 
         if no_log or skipped_channel or private_channel:
             logger.info(f'Refusing to log dice roll. Reasons: No log - {no_log}, skipped channel - {skipped_channel},'
@@ -131,8 +133,8 @@ class DiceRollInteraction(InteractionModule):
         }
 
         # If desired, save the dice roll
-        new_file = not os.path.isfile(config.DICE_LOG)
-        with open(config.DICE_LOG, 'a') as fp:
+        new_file = not os.path.isfile(config.dice_log)
+        with open(config.dice_log, 'a') as fp:
             writer = csv.DictWriter(fp, fieldnames=dice_info.keys())
             if new_file:
                 writer.writeheader()

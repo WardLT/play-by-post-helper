@@ -19,7 +19,7 @@ from modron.utils import escape_slack_characters
 logger = logging.getLogger(__name__)
 
 
-_modules = (DiceRollInteraction, NPCGenerator, ReminderModule)
+all_modules = (DiceRollInteraction, NPCGenerator, ReminderModule)
 
 
 def _pause_then_run(func: Callable, *args, **kwargs):
@@ -35,7 +35,7 @@ def _pause_then_run(func: Callable, *args, **kwargs):
 _description = '''A Slack command to handle common D&D tasks'''
 
 
-def assemble_parser(client: BotClient, modules: Sequence[InteractionModule.__class__] = _modules) -> NoExitParser:
+def assemble_parser(modules: Sequence[InteractionModule]) -> NoExitParser:
     """Generate the argument parser and interaction models
 
     Args:
@@ -53,13 +53,12 @@ def assemble_parser(client: BotClient, modules: Sequence[InteractionModule.__cla
                                        description='The different ways to interact with Modron.',
                                        dest='subcommand')
     for module in modules:
-        module_inst = module(client)
-        subparser = subparsers.add_parser(module_inst.name,
-                                          description=module_inst.description,
-                                          help=module_inst.help_string,
+        subparser = subparsers.add_parser(module.name,
+                                          description=module.description,
+                                          help=module.help_string,
                                           add_help=True)
-        module_inst.register_argparse(subparser)
-        subparser.set_defaults(interact=module_inst.interact)
+        module.register_argparse(subparser)
+        subparser.set_defaults(interact=module.interact)
 
     logger.info(f'Created a parse function with {len(modules)} interaction modules')
     return parser

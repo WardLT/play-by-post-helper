@@ -5,7 +5,7 @@ import logging
 
 import humanize
 
-from modron import config
+from modron.config import get_config
 from modron.db import ModronState
 from modron.services import BaseService
 from modron.slack import BotClient
@@ -13,11 +13,14 @@ from modron.slack import BotClient
 logger = logging.getLogger(__name__)
 
 
+config = get_config()
+
+
 class ReminderService(BaseService):
     """Thread that issues a reminder to players if play stalls"""
 
-    def __init__(self, client: BotClient, reminder_channel: str = config.REMINDER_CHANNEL,
-                 watch_channel_regex: str = config.WATCH_CHANNELS, max_sleep_time: float = inf):
+    def __init__(self, client: BotClient, reminder_channel: str = config.reminder_channel,
+                 watch_channel_regex: str = config.watch_channels, max_sleep_time: float = inf):
         """
         Args:
             client: Authenticated BotClient

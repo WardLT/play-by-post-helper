@@ -8,11 +8,12 @@ from logging.handlers import RotatingFileHandler
 from flask import Flask, request
 from slackeventsapi import SlackEventAdapter
 
-from modron import config
+from modron.config import get_config
 from modron.events import status_check
-from modron.interact import assemble_parser, handle_slash_command, SlashCommandPayload
-from modron.interact.reminder import start_reminder_thread
+from modron.interact import assemble_parser, handle_slash_command, SlashCommandPayload, all_modules, \
+    DiceRollInteraction, ReminderModule, NPCGenerator
 from modron.services.backup import BackupService
+from modron.services.reminder import ReminderService
 from modron.slack import BotClient
 
 logging.basicConfig(level=logging.INFO,
@@ -22,6 +23,9 @@ logging.basicConfig(level=logging.INFO,
                                                   backupCount=1),
                               logging.StreamHandler(sys.stdout)])
 logger = logging.getLogger(__name__)
+
+# Load the system configuration
+config = get_config()
 
 # Record the start time, used for status information
 start_time = datetime.now()
@@ -42,15 +46,21 @@ client = BotClient(token=OAUTH_ACCESS_TOKEN)
 event_adapter = SlackEventAdapter(SIGNING_SECRET, "/slack/events", app)
 logger.info('Created web client')
 
-# Generate the slash command responder
-modron_cmd_parser = assemble_parser(client)
+# Make the reminder thread
+reminder = ReminderService(client)
+reminder.start()
 
-# Start the reminder thread
-start_reminder_thread(client)
+# Generate the slash command responder
+modules = [
+    DiceRollInteraction(client),
+    ReminderModule(client, reminder),
+    NPCGenerator(client)
+]
+modron_cmd_parser = assemble_parser(modules)
 
 # Start the backup thread
-backup = BackupService(client, config.BACKUP_PATH, timedelta(days=1),
-                       channel_regex=config.BACKUP_CHANNELS)
+backup = BackupService(client, config.backup_path, timedelta(days=1),
+                       channel_regex=config.backup_channels)
 backup.start()
 
 

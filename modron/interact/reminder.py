@@ -2,6 +2,7 @@
 from argparse import ArgumentParser, Namespace
 from datetime import datetime, timezone, timedelta
 import logging
+from typing import Optional
 
 import humanize
 import isodate
@@ -12,17 +13,10 @@ from modron.db import ModronState
 from modron.interact import InteractionModule, SlashCommandPayload
 from modron.services.reminder import ReminderService
 from modron.slack import BotClient
-from modron import config
 
 _description = '''Interact with the reminder timer'''
 
 logger = logging.getLogger(__name__)
-
-
-def start_reminder_thread(client: BotClient):
-    """Launch a reminder thread and store it in the global context"""
-    config.REMINDER_THREAD = ReminderService(client)
-    config.REMINDER_THREAD.start()
 
 
 def _add_delay(time: str) -> str:
@@ -62,8 +56,14 @@ def _add_delay(time: str) -> str:
 class ReminderModule(InteractionModule):
     """Interact with the reminder timer"""
 
-    def __init__(self, client: BotClient):
+    def __init__(self, client: BotClient, reminder_thread: Optional[ReminderService] = None):
+        """
+        Args:
+            client: Authenticated BotClient
+            reminder_thread: Pointer to the reminder service
+        """
         super().__init__(client, 'reminder', 'View or snooze the reminder timer', _description)
+        self.reminder_thread = reminder_thread
 
     def register_argparse(self, parser: ArgumentParser):
         # Prepare to add subparsers
@@ -111,8 +111,8 @@ class ReminderModule(InteractionModule):
         reply = f'Next check for reminder: {reminder_time.strftime("%a %b %d, %I:%M %p")}\n'
 
         # Append thread status
-        if config.REMINDER_THREAD is None:
+        if self.reminder_thread is None:
             reply += 'No reminder thread detected'
         else:
-            reply += f'Thread status: {"Alive" if config.REMINDER_THREAD.is_alive() else "*Dead*"}'
+            reply += f'Thread status: {"Alive" if self.reminder_thread.is_alive() else "*Dead*"}'
         return reply
