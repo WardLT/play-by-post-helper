@@ -2,6 +2,7 @@
 import logging
 import platform
 from datetime import datetime
+from typing import Dict
 
 import humanize
 
@@ -10,14 +11,19 @@ from modron.slack import BotClient
 logger = logging.getLogger(__name__)
 
 
-def status_check(event, client: BotClient, start_time: datetime = datetime.now()):
+def status_check(event, clients: Dict[str, BotClient], start_time: datetime = datetime.now()):
     """Reply to a message event with a status check
 
     Args:
         event (dict): Event data
-        client (BotClient): Client to use when replying
+        clients: Client to use when replying, key is the team ID
         start_time (datetime): Date this server was started
     """
+    # Determine the team and get the appropriate client
+    team_id = event["event"]["team_id"]
+    client = clients[team_id]
+    logger.info(f'Received a status check event from {team_id}')
+
     # Figure out where this came from
     reply_channel = event["event"]["channel"]
     sender = event["event"]["user"]

@@ -2,7 +2,7 @@
 from argparse import ArgumentParser, Namespace
 from datetime import datetime, timezone, timedelta
 import logging
-from typing import Optional
+from typing import Optional, Dict
 
 import humanize
 import isodate
@@ -12,17 +12,17 @@ from isodate import ISO8601Error
 from modron.db import ModronState
 from modron.interact import InteractionModule, SlashCommandPayload
 from modron.services.reminder import ReminderService
-from modron.slack import BotClient
 
 _description = '''Interact with the reminder timer'''
 
 logger = logging.getLogger(__name__)
 
 
-def _add_delay(time: str) -> str:
+def _add_delay(team_id: str, time: str) -> str:
     """Update Modron reminder state
 
     Args:
+        team_id (str): Name of the team to adjust
         time (str): How long to snooze for
     Returns:
         (str) A reply to give to the user about the status
@@ -40,10 +40,10 @@ def _add_delay(time: str) -> str:
 
     # Update, if needed
     state = ModronState.load()
-    if new_time > state.reminder_time:
+    if new_time > state.reminder_time[team_id]:
         # Update the reminder time
         logger.info(f'Updating reminder time from {state.reminder_time} to {new_time}')
-        state.reminder_time = new_time
+        state.reminder_time[team_id] = new_time
         state.save()
 
         # Reply to user
@@ -56,14 +56,16 @@ def _add_delay(time: str) -> str:
 class ReminderModule(InteractionModule):
     """Interact with the reminder timer"""
 
-    def __init__(self, client: BotClient, reminder_thread: Optional[ReminderService] = None):
+    def __init__(self, clients, reminder_thread: Optional[Dict[str, ReminderService]] = None):
         """
         Args:
-            client: Authenticated BotClient
+            clients: Authenticated BotClients
             reminder_thread: Pointer to the reminder service
         """
-        super().__init__(client, 'reminder', 'View or snooze the reminder timer', _description)
-        self.reminder_thread = reminder_thread
+        super().__init__(clients, 'reminder', 'View or snooze the reminder timer', _description)
+        if reminder_thread is None:
+            reminder_thread = dict()
+        self.reminder_threads = reminder_thread
 
     def register_argparse(self, parser: ArgumentParser):
         # Prepare to add subparsers
@@ -82,7 +84,7 @@ class ReminderModule(InteractionModule):
         if args.reminder_command is None or args.reminder_command == 'status':
             reply = self._generate_status(payload)
         elif args.reminder_command == 'break':
-            reply = _add_delay(args.time)
+            reply = _add_delay(payload.team_id, args.time)
         else:
             reply = f'*ERROR*: Support for {args.reminder_command} has not been implemented (blame Logan)'
 
@@ -101,18 +103,19 @@ class ReminderModule(InteractionModule):
         """
 
         # Get the user's time zone
-        user_info = self.client.users_info(user=payload.user_id)
+        user_info = self.clients[payload.team_id].users_info(user=payload.user_id)
         user_tz = timezone(timedelta(seconds=user_info['user']['tz_offset']),
                            name=user_info['user']['tz_label'])
 
         # Get the reminder time
         state = ModronState.load()
-        reminder_time = state.reminder_time.astimezone(user_tz)
+        reminder_time = state.reminder_time[payload.team_id].astimezone(user_tz)
         reply = f'Next check for reminder: {reminder_time.strftime("%a %b %d, %I:%M %p")}\n'
 
         # Append thread status
-        if self.reminder_thread is None:
+        thread = self.reminder_threads.get(payload.team_id, None)
+        if thread is None:
             reply += 'No reminder thread detected'
         else:
-            reply += f'Thread status: {"Alive" if self.reminder_thread.is_alive() else "*Dead*"}'
+            reply += f'Thread status: {"Alive" if thread.is_alive() else "*Dead*"}'
         return reply

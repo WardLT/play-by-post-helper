@@ -4,6 +4,7 @@ import logging
 import os
 from csv import DictReader
 from time import sleep
+from typing import Dict
 
 from pytest import fixture, raises
 
@@ -18,28 +19,31 @@ config = get_config()
 
 
 @fixture
-def payload(client) -> SlashCommandPayload:
+def payload(clients: Dict[str, BotClient]) -> SlashCommandPayload:
+    team_id, client = next(iter(clients.items()))
     return SlashCommandPayload(
         command='/modron',
         text='{... define in test if you need ...}',
         response_url='https://httpstat.us/200',
         trigger_id='yes',
         user_id=client.my_id,
-        channel_id=client.get_channel_id('bot_test')
+        channel_id=client.get_channel_id('bot_test'),
+        team_id='TP3LCSL2Z'
     )
 
 
 @fixture()
-def client() -> BotClient:
-    token = os.environ.get('OAUTH_ACCESS_TOKEN', None)
+def clients() -> Dict[str, BotClient]:
+    token = os.environ.get('OAUTH_ACCESS_TOKENS', None)
     if token is None:
         raise ValueError('Cannot find Auth token')
-    return BotClient(token=token)
+    client = BotClient(token=token)
+    return {client.team_id: client}
 
 
 @fixture()
-def parser(client) -> NoExitParser:
-    modules = [x(client) for x in all_modules]
+def parser(clients) -> NoExitParser:
+    modules = [x(clients) for x in all_modules]
     return assemble_parser(modules)
 
 
@@ -95,10 +99,13 @@ def test_roll_help(parser):
     assert exc.value.text_output.startswith('*usage*: /modron roll')
 
 
-def test_rolling(client, parser, payload, caplog):
+def test_rolling(clients, parser, payload, caplog):
     # Delete any existing log file
-    if os.path.isfile(config.dice_log):
-        os.unlink(config.dice_log)
+    log_path = config.get_dice_log_path(payload.team_id)
+    if os.path.isfile(log_path):
+        original_time = os.path.getmtime(log_path)
+    else:
+        original_time = -1
 
     # Parse args and run the event
     args = parser.parse_args(['roll', '1d6+1'])
@@ -119,8 +126,8 @@ def test_rolling(client, parser, payload, caplog):
     assert '1d6+1 at advantage for test.' in caplog.messages[-2]
 
     # Make sure the log file does not yet exist
-    print(f'Checking for existence of {config.dice_log}')
-    assert not os.path.isfile(config.dice_log)
+    print(f'Checking if the log was created or modified at {log_path}')
+    assert not os.path.isfile(log_path) or os.path.getmtime(log_path) == original_time
     assert 'skipped channel - True' in caplog.messages[-1]
 
     # Run a test with a "direct message" channel
@@ -128,14 +135,14 @@ def test_rolling(client, parser, payload, caplog):
     args = parser.parse_args(['roll', '1d6+1', 'test', '-a'])
     with caplog.at_level(logging.INFO):
         args.interact(args, payload)
-    assert not os.path.isfile(config.dice_log)
+    assert not os.path.isfile(log_path) or os.path.getmtime(log_path) == original_time
     assert 'private channel - True' in caplog.messages[-1]
 
     # Run a test with ic_all to see if it saves the log
-    payload.channel_id = client.get_channel_id('ic_all')
+    payload.channel_id = clients[payload.team_id].get_channel_id('ic_all')
     args = parser.parse_args(['roll', '1d6+1', 'test', '-a'])
     args.interact(args, payload)
-    with open(config.dice_log) as fp:
+    with open(log_path) as fp:
         reader = DictReader(fp)
         roll = next(reader)
         assert roll['reason'] == 'test'

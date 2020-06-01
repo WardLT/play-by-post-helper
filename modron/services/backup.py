@@ -5,11 +5,13 @@ from datetime import datetime, timedelta
 from math import inf, isclose
 import logging
 from time import sleep
-from typing import List, Dict
+from typing import List, Dict, Optional
 
 from modron.services import BaseService
 from modron.slack import BotClient
+from modron.config import get_config
 
+config = get_config()
 logger = logging.getLogger(__name__)
 
 
@@ -43,7 +45,7 @@ class BackupService(BaseService):
     being backed up as separate json-ld files.
     """
 
-    def __init__(self, client: BotClient, backup_dir: str, frequency: timedelta,
+    def __init__(self, client: BotClient, backup_dir: Optional[str] = None, frequency: timedelta = timedelta(days=1),
                  channel_regex: str = "*", max_sleep_time: float = inf):
         """
 
@@ -53,8 +55,10 @@ class BackupService(BaseService):
             channel_regex: Regex which matches the channels to be backed up
             max_sleep_time: Longest time to sleep before
         """
-        super().__init__(client, max_sleep_time)
+        super().__init__(client, max_sleep_time, name=f'backup_{client.team_id}')
         self.frequency = frequency
+        if backup_dir is None:
+            backup_dir = config.get_backup_dir(client.team_id)
         self.backup_dir = backup_dir
         self.backup_channels = client.match_channels(channel_regex)
 

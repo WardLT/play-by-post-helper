@@ -10,8 +10,9 @@ import pdfkit
 
 from modron.interact import InteractionModule, SlashCommandPayload
 from modron.npc import generate_npc
-from modron.slack import BotClient
-from modron import config
+from modron.config import get_config
+
+config = get_config()
 
 _description = '''Generate a randomized NPC
 
@@ -72,9 +73,9 @@ def generate_and_render_npcs(location: str, n: int) -> str:
 class NPCGenerator(InteractionModule):
     """Module for generating randomized NPCs"""
 
-    def __init__(self, client: BotClient):
+    def __init__(self, clients):
         super().__init__(
-            client=client,
+            clients=clients,
             name='npcgen',
             help_string='Generate a new NPC',
             description=_description
@@ -83,7 +84,7 @@ class NPCGenerator(InteractionModule):
     def register_argparse(self, parser: ArgumentParser):
         parser.add_argument('n', help='Number of NPCs to generate', type=int, default=1)
         parser.add_argument('--location', '-l', help='Which demographic template to use',
-                            default='default', choices=config._RACE_DISTRIBUTION.keys(), type=str)
+                            default='default', choices=config.npc_race_dist.keys(), type=str)
 
     def interact(self, args: Namespace, payload: SlashCommandPayload):
         # Log the interaction
@@ -93,9 +94,9 @@ class NPCGenerator(InteractionModule):
         npc_table = generate_and_render_npcs(args.location, args.n)
 
         # Check if the command was invoked in a channel. If not, we must send file as a DM
-        if not self.client.conversation_is_channel(payload.channel_id):
+        if not self.clients[payload.team_id].conversation_is_channel(payload.channel_id):
             logger.info('Command came from a private channel, will send it to them directly')
-            result = self.client.conversations_open(users=payload.user_id)
+            result = self.clients[payload.team_id].conversations_open(users=payload.user_id)
             channel_id = result['channel']['id']
         else:
             channel_id = payload.channel_id
@@ -109,5 +110,6 @@ class NPCGenerator(InteractionModule):
             })
 
             # Upload it as a file
-            self.client.files_upload(channels=channel_id, title=f'{args.n} NPCs from {args.location}',
-                                     file=pdf_path, initial_comment=f'The {args.n} NPCs you requested')
+            self.clients[payload.team_id].files_upload(
+                channels=channel_id, title=f'{args.n} NPCs from {args.location}',
+                file=pdf_path, initial_comment=f'The {args.n} NPCs you requested')

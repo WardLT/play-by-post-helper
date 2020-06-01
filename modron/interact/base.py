@@ -1,6 +1,7 @@
 """Base class for interaction modules"""
 
 from argparse import ArgumentParser, Namespace
+from typing import Dict
 
 from pydantic import BaseModel, Field, AnyHttpUrl
 
@@ -17,6 +18,7 @@ class SlashCommandPayload(BaseModel):
     trigger_id: str = Field(..., description='A temporary ID that will let your app open a modal')
     user_id: str = Field(..., description='The ID of the user who triggered the command')
     channel_id: str = Field(..., description='Name of the channel from which this command was triggered')
+    team_id: str = Field(..., description='Name fo the team from which this command originated')
 
 
 class InteractionModule:
@@ -32,15 +34,15 @@ class InteractionModule:
     back to Slack.
     """
 
-    def __init__(self, client: BotClient, name: str, help_string: str, description: str):
+    def __init__(self, clients: Dict[str, BotClient], name: str, help_string: str, description: str):
         """
         Args:
-             client (BotClient): Active bot client used to make replies
+             clients: Map of team ID to appropriately-authenticated client
              name (str): Name of the interaction module, defines the subcommand name
              help_string (str): Short-form name description of the module. Used in the root parser description
              description (str): Long-form description of the module. Used in its detailed home command
         """
-        self.client = client
+        self.clients = clients
         self.name = name
         self.help_string = help_string
         self.description = description

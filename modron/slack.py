@@ -19,7 +19,7 @@ class BotClient(WebClient):
     Is a superclass of WebClient, so you can use it like a normal WebClient.
     and also use a few utility operations used often by my Bot.
 
-    The utility operations are all designed to use channel names as arguments.
+    Many utility operations are all designed to use channel names as arguments.
     The channel ids are stored in an LRU cache to prevent unnecessary calls to
     the Slack API.
     """
@@ -33,13 +33,12 @@ class BotClient(WebClient):
         self._my_id = None
         self._api_lock = Lock()
 
-    @property
-    def my_id(self) -> str:
-        """Get the ID of the bot user"""
-        if self._my_id is None:
-            self._my_id = self.auth_test()['user_id']
-            logger.info(f'Queried Slack to get my ID: {self._my_id}')
-        return self._my_id
+        # Get the team name
+        info = self.auth_test()
+        self.team_id = info['team_id']
+        self.team_name = info['team']
+        self.my_id = info['user_id']
+        logger.info(f'Created a client for {self.team_name} ({self.team_id}). User id {self.my_id}')
 
     @lru_cache(maxsize=128)
     def get_channel_id(self, channel_name: str) -> str:

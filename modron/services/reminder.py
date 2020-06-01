@@ -19,8 +19,7 @@ config = get_config()
 class ReminderService(BaseService):
     """Thread that issues a reminder to players if play stalls"""
 
-    def __init__(self, client: BotClient, reminder_channel: str = config.reminder_channel,
-                 watch_channel_regex: str = config.watch_channels, max_sleep_time: float = inf):
+    def __init__(self, client: BotClient, reminder_channel, watch_channel_regex, max_sleep_time: float = inf):
         """
         Args:
             client: Authenticated BotClient
@@ -28,7 +27,7 @@ class ReminderService(BaseService):
             watch_channel_regex: Pattern to match channels to watch for activity
             max_sleep_time: Longest time the thread is allowed to sleep for
         """
-        super().__init__(client, max_sleep_time)
+        super().__init__(client, max_sleep_time, name=f'reminder_{client.team_id}')
         self._reminder_channel = reminder_channel
         self._watch_channels = client.match_channels(watch_channel_regex)
 
@@ -71,21 +70,22 @@ class ReminderService(BaseService):
 
             # Determine when we would issue a reminder based on activity
             state = ModronState.load()
-            reminder_time = last_time + state.allowed_stall_time
+            allowed_stall_time = config.team_options[self._client.team_id].allowed_stall_time
+            reminder_time = last_time + allowed_stall_time
 
             # If it is after any previous reminder time, replace that reminder time
-            if state.reminder_time is None or reminder_time > state.reminder_time:
+            if state.reminder_time is None or reminder_time > state.reminder_time[self._client.team_id]:
                 logger.info(f'Moving up the next reminder time to: {reminder_time}')
-                state.reminder_time = reminder_time
+                state.reminder_time[self._client.team_id] = reminder_time
                 state.save()
             else:
                 logger.info(f'Activity-based reminder would be sooner '
                             f'than user-specified reminder: {state.reminder_time}. Not updating reminder time')
-                reminder_time = state.reminder_time
+                reminder_time = state.reminder_time[self._client.team_id]
 
             # Check if we are past the stall time
             if datetime.now() > reminder_time:
-                logger.info(f'Channel has been stalled for {stall_time - state.allowed_stall_time} too long')
+                logger.info(f'Channel has been stalled for {stall_time - allowed_stall_time} too long')
 
                 # Check if the bot was the last one to send a message
                 #  If not, then send a reminder to the channel
@@ -101,7 +101,7 @@ class ReminderService(BaseService):
                     )
 
                 # Sleep for the timeout length
-                wake_time = datetime.utcnow() + state.allowed_stall_time
+                wake_time = datetime.utcnow() + allowed_stall_time
                 logger.info(f'Sleeping until {wake_time}')
                 self._sleep_until(wake_time)
             else:

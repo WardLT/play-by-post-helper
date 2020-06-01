@@ -13,7 +13,6 @@ from modron.config import get_config
 from modron.dice import DiceRoll
 from modron.interact import SlashCommandPayload
 from modron.interact.base import InteractionModule
-from modron.slack import BotClient
 
 logger = logging.getLogger(__name__)
 config = get_config()
@@ -69,8 +68,8 @@ Call `/modron roll --help` for full details
 class DiceRollInteraction(InteractionModule):
     """Servicing requests to roll dice"""
 
-    def __init__(self, client: BotClient):
-        super().__init__(client, "roll", "Roll a set of dice. Ex: `/modron roll 1d20+4 --advantage`", _description)
+    def __init__(self, clients):
+        super().__init__(clients, "roll", "Roll a set of dice. Ex: `/modron roll 1d20+4 --advantage`", _description)
 
     def register_argparse(self, parser: ArgumentParser):
         # Add the roll definition
@@ -104,14 +103,14 @@ class DiceRollInteraction(InteractionModule):
 
         # Determine if we should log or not
         if payload.channel_id.startswith('C'):
-            channel_name = self.client.get_channel_name(payload.channel_id)
-            skipped_channel = channel_name in config.dice_skip_channels
+            channel_name = self.clients[payload.team_id].get_channel_name(payload.channel_id)
+            skipped_channel = channel_name in config.team_options[payload.team_id].dice_skip_channels
             private_channel = False
         else:
             skipped_channel = False
             private_channel = True
             channel_name = None
-        no_log = config.dice_log is None
+        no_log = not config.team_options[payload.team_id].dice_log
 
         if no_log or skipped_channel or private_channel:
             logger.info(f'Refusing to log dice roll. Reasons: No log - {no_log}, skipped channel - {skipped_channel},'
@@ -121,7 +120,7 @@ class DiceRollInteraction(InteractionModule):
         # Get the information about this dice roll
         dice_info = {
             'time': datetime.now().isoformat(),
-            'user': self.client.get_user_name(payload.user_id),
+            'user': self.clients[payload.team_id].get_user_name(payload.user_id),
             'channel': channel_name,
             'reason': purpose,
             'dice': roll.dice_description,
@@ -133,8 +132,10 @@ class DiceRollInteraction(InteractionModule):
         }
 
         # If desired, save the dice roll
-        new_file = not os.path.isfile(config.dice_log)
-        with open(config.dice_log, 'a') as fp:
+        dice_path = config.get_dice_log_path(payload.team_id)
+        new_file = not os.path.isfile(dice_path)
+        os.makedirs(os.path.dirname(dice_path), exist_ok=True)
+        with open(config.get_dice_log_path(payload.team_id), 'a') as fp:
             writer = csv.DictWriter(fp, fieldnames=dice_info.keys())
             if new_file:
                 writer.writeheader()

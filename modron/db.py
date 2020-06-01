@@ -7,8 +7,9 @@ that performance requirements will not require a formal database.
 Using YAML to store state on disk has the advantage of it being easy to
 assess and alter the server state from the command line.
 """
-from datetime import timedelta, datetime
+from datetime import datetime
 import json
+from typing import Dict
 
 import yaml
 from pydantic import BaseModel, Field
@@ -23,9 +24,7 @@ class ModronState(BaseModel):
     """Holder for elements of Modron's configuration that can change during runtime
     or need to be persistent across restarts"""
 
-    allowed_stall_time: timedelta = Field(timedelta(days=1),
-                                          description='How long to wait for activity before issuing reminders')
-    reminder_time: datetime = Field(None, description='Next time to check if a reminder is needed')
+    reminder_time: Dict[str, datetime] = Field(None, description='Next time to check if a reminder is needed')
 
     @classmethod
     def load(cls, path: str = config.state_path) -> 'ModronState':

@@ -16,9 +16,7 @@ The helper is designed to be a simple Slack Bot for performing tasks including:
 
 ![reminder](.img/reminder.png) 
 
-Modron will automatically watch the the channels to issue reminders as needed.
-Configure the channels that Modron watches for activity and which channel
-it writes reminders to in `server.py`
+Modron will automatically watch the Slack and issue reminders if play stalls.
 
 ### Rolling Dice
 
@@ -26,14 +24,12 @@ it writes reminders to in `server.py`
 
 Modron supports all of the D&D 5e rules for dice rolling, such
 as advantage and re-rolling ones.
-Roll dice by calling `/modron roll`.
+Roll dice by calling `/modron roll`, `/mroll`, or just `/roll`.
 A few examples include:
 
    - `/modron roll 1d20+5`: Rolling a single D20
    - `/modron roll 4d6 -1`: Roll 4d6 and re-roll any dice that are 1 on the first roll
    
-`/mroll` is a shortcut for `/modron roll` you can use to type less. 
-
 ### Status Checks
 
 ![status](.img/checkin.png)
@@ -62,18 +58,35 @@ The app requires at least the following Bot Token Scopes (refer back to the [tut
 - `channels:join`: Allow bot to add itself to channels
 - `channels:read`: Allows bot to figure out which channels it need add itself to
 - `chat:write`: Send chat messages as its own personality
+- `files:write`: Send users PDF summaries of NPC generation
+- `commands`: Support for the slash commands
+- `im:history`: (Not sure why this is required)
 - `im:write`: Send messages to people on private channels
+- `im:read`: Send messages to people on private channels
 - `mpim:write`: Send messages to groups of people
+- `users:read`: Get information about users
 
 _Note_: Some of the features alluded to by these permissions have not been implemented yet.
  
-You will need to store the access token as an environment variable named ``OAUTH_ACCESS_TOKEN``
-for the bot to use it. 
-My preferred method is to store it as an environment variable. 
-
 The NPC generator requires the [`wkhtmltopdf` command line tool](https://wkhtmltopdf.org/index.html) to be installed. 
 
 ### Running the App
+
+Before running Modron for the first time, you will need to access the access token
+and your team ID (it is the name beginning with "T" in your Slack URL.)
+Store the access token you received as an environment variable named ``OAUTH_ACCESS_TOKENS``
+for the bot to use it. 
+My preferred method is to store it in a shell script that launches the application.
+
+The team name needs to go in [`modron_config.yml`](./modron_config.yml)
+along with a human-friendly name for your team. 
+A minimal example for the configuration is as follows:
+
+```yaml
+team_options:
+  <team id>:
+    name: <team name>
+```
 
 Launch the Bot by first activating the appropriate Conda environment, 
 and then running:
@@ -85,6 +98,7 @@ flask run --host 0.0.0.0 --port <your choice>
 
 The app will run as a long-lived process (spending most of its time in a sleep state)
  and prints log messages to the screen.
+Depending on your configuration, the main server process will spawn several daemon threads.
 
 The application itself is designed to be very lightweight. 
 I run the application on a Raspberry Pi, but you could also easily run it on 
@@ -92,7 +106,10 @@ small instances on cloud compute providers if you do not have a home server.
 
 ### Registering a Web Service
 
-The interactive elements of Modron requires a webserver that can respond to incoming requests.
+Once your server runs, you will need to configure Slack and the server to be able to communicate with 
+each other.
+
+#### Creating an Accessible HTTPS Endpoint
 
 The Slack API recommends you use [`ngrok`](https://ngrok.com/) to start with, 
 which I would also recommend highly.
@@ -107,6 +124,8 @@ for details on how to get the certificates set up behind DuckDNS.
 You then will need to modify the above run command for the service to point to your certificates, 
 and would recommend you read [Miguel Grinberg's blog](https://blog.miguelgrinberg.com/post/running-your-flask-application-over-https)
 to understand how that could work.
+
+#### Configuring Slack
 
 Once you have the server ready to receive incoming requests, register the URL with Slack.
 See Slack's documentation on 
