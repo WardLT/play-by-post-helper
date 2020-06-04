@@ -112,6 +112,7 @@ def slack_auth():
     )
     with open('received-tokens.json', 'w') as fp:
         json.dump(res.json(), fp)
+    return "Success!"
 
 
 # Register the events
