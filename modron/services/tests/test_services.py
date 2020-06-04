@@ -1,5 +1,6 @@
 import os
 from datetime import timedelta
+from typing import Dict
 
 from pytest import fixture, mark, raises
 
@@ -10,15 +11,15 @@ from modron.slack import BotClient
 
 @fixture()
 def client() -> BotClient:
-    token = os.environ.get('OAUTH_ACCESS_TOKEN', None)
+    token = os.environ.get('OAUTH_ACCESS_TOKENS', None)
     if token is None:
         raise ValueError('Cannot find Auth token')
     return BotClient(token=token)
 
 
 @mark.timeout(60)
-def test_reminder(clients):
-    thread = ReminderService(clients, max_sleep_time=5)
+def test_reminder(client):
+    thread = ReminderService(client, "bot_test", "bot_test", max_sleep_time=5)
     thread.stop = True
 
     with raises(ValueError):
@@ -26,8 +27,8 @@ def test_reminder(clients):
 
 
 @mark.timeout(60)
-def test_backup(clients, tmpdir):
-    thread = BackupService(clients, tmpdir, timedelta(days=1), channel_regex='^bot_test$',
+def test_backup(client, tmpdir):
+    thread = BackupService(client, tmpdir, timedelta(days=1), channel_regex='^bot_test$',
                            max_sleep_time=5)
 
     # Run the code
