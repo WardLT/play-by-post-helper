@@ -69,11 +69,13 @@ for team_id, team_config in config.team_options.items():
     client = clients[team_id]
 
     # Start the reminder thread
-    if team_config.reminder_channel is not None:
+    if team_config.reminders:
         reminder = ReminderService(clients[team_id], team_config.reminder_channel,
                                    team_config.watch_channels)
         reminder.start()
         reminder_threads[team_id] = reminder
+    else:
+        logger.info(f'No reminders for {team_config.name}')
 
     # Start the backup thread
     backup = BackupService(client, frequency=timedelta(days=1), channel_regex=team_config.backup_channels)
