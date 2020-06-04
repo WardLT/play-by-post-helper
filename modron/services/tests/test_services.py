@@ -1,6 +1,5 @@
 import os
 from datetime import timedelta
-from typing import Dict
 
 from pytest import fixture, mark, raises
 

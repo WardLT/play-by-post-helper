@@ -1,26 +1,24 @@
 import os
+from datetime import datetime
 
 from pytest import fixture
 
 from modron.db import ModronState
-from modron.config import get_config
 
 
 @fixture
-def config(tmpdir):
-    config = get_config()
-    config.state_path = os.path.join(tmpdir, 'state.yml')
-    ModronState().save(config.state_path)
-    return config
+def state_path(tmpdir):
+    state_path = os.path.join(tmpdir, 'state.yml')
+    ModronState().save(state_path)
+    return state_path
 
 
-def test_save_and_load(config):
-    # Test that it modifies the file
-    before_time = os.path.getmtime(config.state_path)
-    state = ModronState.load(config.state_path)
-    state.save(config.state_path)
-    after_time = os.path.getmtime(config.state_path)
-    assert after_time > before_time
+def test_save_and_load(state_path):
+    # Modify the file
+    state = ModronState.load(state_path)
+    state.reminder_time = {'TID': datetime.now()}
+    state.save(state_path)
 
-    # Test that it still loads again
-    ModronState.load(config.state_path)
+    # Get the changes back
+    state = ModronState.load(state_path)
+    assert 'TID' in state.reminder_time
