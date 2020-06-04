@@ -11,6 +11,7 @@ from slack import WebClient
 from slack.web.slack_response import SlackResponse
 
 logger = logging.getLogger(__name__)
+_api_lock = Lock()
 
 
 class BotClient(WebClient):
@@ -31,7 +32,6 @@ class BotClient(WebClient):
     ):
         super().__init__(token, timeout=timeout)
         self._my_id = None
-        self._api_lock = Lock()
 
         # Get the team name
         info = self.auth_test()
@@ -139,5 +139,5 @@ class BotClient(WebClient):
     def api_call(
         self, *args, **kwargs
     ) -> Union[asyncio.Future, SlackResponse]:
-        with self._api_lock:
+        with _api_lock:
             return super().api_call(*args, **kwargs)
