@@ -1,10 +1,12 @@
 import os
 import sys
+import json
 import logging
 from functools import partial
 from datetime import datetime, timedelta
 from logging.handlers import RotatingFileHandler
 
+import requests
 from flask import Flask, request
 from slackeventsapi import SlackEventAdapter
 
@@ -37,6 +39,12 @@ if OAUTH_ACCESS_TOKENS is None:
 SIGNING_SECRET = os.environ.get('SLACK_SIGNING_SECRET')
 if SIGNING_SECRET is None:
     raise ValueError('Cannot find signing secret')
+CLIENT_SECRET = os.environ.get('CLIENT_SECRET')
+if CLIENT_SECRET is None:
+    raise ValueError('Cannot find client secret')
+CLIENT_ID = os.environ.get('CLIENT_ID')
+if CLIENT_ID is None:
+    raise ValueError('Cannot find the client ID')
 
 # Make the Flask app
 app = Flask('modron')
@@ -84,6 +92,26 @@ modron_cmd_parser = assemble_parser(modules)
 def modron_slash_cmd():
     payload = SlashCommandPayload(**request.form.to_dict())
     return handle_slash_command(payload, parser=modron_cmd_parser)
+
+
+@app.route('/oauth', methods=('GET',))
+def slack_auth():
+    # Get the request code from the user
+    code = request.args.get('code', None)
+    logger.info('Received an authorization code. About to exchange it for a token')
+
+    # Query Slack to get the token
+    res = requests.post(
+        url="https://slack.com/api/oauth.v2.access",
+        data={
+            'code': code,
+            'client_secret': CLIENT_SECRET,
+            'client_id': CLIENT_ID,
+            'redirect_uri': request.base_url
+        }
+    )
+    with open('received-tokens.json', 'w') as fp:
+        json.dump(res.json(), fp)
 
 
 # Register the events
