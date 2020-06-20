@@ -20,7 +20,7 @@ def status_check(event, clients: Dict[str, BotClient], start_time: datetime = da
         start_time (datetime): Date this server was started
     """
     # Determine the team and get the appropriate client
-    team_id = event["event"]["team_id"]
+    team_id = event["team_id"]
     client = clients[team_id]
     logger.info(f'Received a status check event from {team_id}')
 
