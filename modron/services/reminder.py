@@ -27,7 +27,8 @@ class ReminderService(BaseService):
             watch_channel_regex: Pattern to match channels to watch for activity
             max_sleep_time: Longest time the thread is allowed to sleep for
         """
-        super().__init__(client, max_sleep_time, name=f'reminder_{client.team_id}')
+        short_name = config.team_options[client.team_id].name
+        super().__init__(client, max_sleep_time, name=f'reminder_{short_name}')
         self._reminder_channel = reminder_channel
         self._watch_channels = client.match_channels(watch_channel_regex)
 

@@ -55,7 +55,8 @@ class BackupService(BaseService):
             channel_regex: Regex which matches the channels to be backed up
             max_sleep_time: Longest time to sleep before
         """
-        super().__init__(client, max_sleep_time, name=f'backup_{client.team_id}')
+        short_name = config.team_options[client.team_id].name
+        super().__init__(client, max_sleep_time, name=f'backup_{short_name}')
         self.frequency = frequency
         if backup_dir is None:
             backup_dir = config.get_backup_dir(client.team_id)
