@@ -74,7 +74,8 @@ class ReminderService(BaseService):
             reminder_time = last_time + allowed_stall_time
 
             # If it is after any previous reminder time, replace that reminder time
-            if state.reminder_time is None or reminder_time > state.reminder_time[self._client.team_id]:
+            team_reminder_time = state.reminder_time.get(self._client.team_id, None)
+            if team_reminder_time is None or reminder_time > team_reminder_time:
                 logger.info(f'Moving up the next reminder time to: {reminder_time}')
                 state.reminder_time[self._client.team_id] = reminder_time
                 state.save()
