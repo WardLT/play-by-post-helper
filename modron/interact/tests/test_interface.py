@@ -150,6 +150,27 @@ def test_rolling(clients, parser, payload, caplog):
         assert roll['channel'] == 'ic_all'
 
 
+def test_ability_roll(parser, payload, caplog):
+    # Test a roll w/o a registered character
+    args = parser.parse_args(['roll', 'ability', 'check'])
+    with caplog.at_level(logging.INFO):
+        args.interact(args, payload)
+    assert "needs to register" in caplog.messages[-1]
+
+    # Test an unknown ability
+    payload.user_id = 'UP4K437HT'
+    args = parser.parse_args(['roll', 'ability', 'check'])
+    with raises(ValueError) as exc:
+        args.interact(args, payload)
+    assert str(exc.value).startswith('Unrecognized')
+
+    # Test a real ability
+    args = parser.parse_args(['roll', '-a', 'str', 'save'])
+    with caplog.at_level(logging.INFO):
+        args.interact(args, payload)
+    assert '1d20+7 at advantage for str save.' in caplog.messages[-2]
+
+
 def test_payload_error(parser, payload):
     payload.text = 'roll'
     result = handle_slash_command(payload, parser)

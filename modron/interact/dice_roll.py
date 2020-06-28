@@ -9,8 +9,9 @@ from typing import List, NoReturn
 
 import requests
 
+from modron.characters import list_available_characters, load_character
 from modron.config import get_config
-from modron.dice import DiceRoll
+from modron.dice import DiceRoll, dice_regex
 from modron.interact import SlashCommandPayload
 from modron.interact.base import InteractionModule
 
@@ -61,6 +62,10 @@ A common dice roll, with a defined purpose: `/modron roll 10d6+5 sneak attack da
 
 Option flags alter rules when rolling. Example: rolling at disadvantage: `/roll -d 1d20+2`
 
+If you have a character sheet registered, (call `/modron character` to find out) you can 
+instead list the name of the ability you wish to roll. For example, `/roll str save` to 
+roll a strength save.
+
 Call `/modron roll --help` for full details
 """
 
@@ -76,7 +81,9 @@ class DiceRollInteraction(InteractionModule):
         parser.add_argument("dice", help='List of dice to roll and a modifier. There should be no spaces in this'
                                          ' list of dice. Separate multiple types of dice with a plus sign.'
                                          ' For example, "1d6+4d6+4" would be accepted and "1d6+4d6 + 4"'
-                                         ' would not.',
+                                         ' would not.\n'
+                                         'Alternatively, you can omit the dice and instead have Modron lookup '
+                                         'your roll modifier based on the purpose (e.g., "stealth")',
                             type=str)
         parser.add_argument("purpose", help='Purpose of the roll. Used for making the reply prettier '
                                             'and tracking player statistics.',
@@ -142,6 +149,30 @@ class DiceRollInteraction(InteractionModule):
             writer.writerow(dice_info)
 
     def interact(self, args: Namespace, payload: SlashCommandPayload):
+        # Check if the user is requesting a roll by name
+        if dice_regex.match(args.dice) is None:
+            logger.info('Dice did not match regex, attempting to match to character ability')
+            available_chars = list_available_characters(payload.team_id, payload.user_id)
+            if len(available_chars) == 0:
+                logging.info(f'Seems like user {payload.user_id} needs to register a character')
+                payload.send_reply(
+                    f'Did you mean to request a character roll? {args.dice} does not seem like a dice roll, '
+                    f'but you have not registered a character yet. Talk to Logan about registering your sheet.'
+                )
+                return
+            elif len(available_chars) == 1:
+                # Reformat command to use a specific character roll
+                sheet = load_character(payload.team_id, available_chars[0])
+                ability_name = ' '.join([args.dice] + args.purpose)
+
+                # Lookup the ability
+                modifier = sheet.lookup_modifier(ability_name)
+                args.dice = f'1d20{modifier:+d}'
+                args.purpose = [ability_name]
+                logger.info(f'Reformatted command to be for {ability_name} for {sheet.name}')
+            else:
+                raise ValueError('Multi-character support is not yet implemented')
+
         # Make the dice roll
         roll = DiceRoll.make_roll(args.dice, advantage=args.advantage, disadvantage=args.disadvantage,
                                   reroll_ones=args.reroll_ones)

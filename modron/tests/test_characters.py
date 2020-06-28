@@ -63,4 +63,5 @@ def test_hit_die(joe):
 def test_lookup_modifier(joe):
     assert joe.lookup_modifier("strength") == 2
     assert joe.lookup_modifier("strength save") == 4
+    assert joe.lookup_modifier("str save") == 4
     assert joe.lookup_modifier("medicine") == 4

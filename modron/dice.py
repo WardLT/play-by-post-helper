@@ -5,7 +5,7 @@ from random import randint
 from collections import Counter
 
 
-_dice_regex = re.compile(r"(?P<sign>[-+]?)(?P<number>\d*)d(?P<sides>\d+)")
+dice_regex = re.compile(r"(?P<sign>[-+]?)(?P<number>\d*)d(?P<sides>\d+)")
 _modifer_regex = re.compile(r"(?P<sign>[-+])(?P<value>\d+)([^d]|$)")
 
 
@@ -118,7 +118,7 @@ class DiceRoll:
 
         # Match the dice components
         dice = []
-        for match in _dice_regex.finditer(roll):
+        for match in dice_regex.finditer(roll):
             groups = match.groupdict()
             if groups["sign"] == "-":
                 raise ValueError('We do not yet support subtracting dice off the roll')

@@ -191,8 +191,11 @@ class Character(BaseModel):
         # Get the modifier
         mod = self.ability_modifier(ability)
 
+        # Match the name of the ability
+        matched_ability = Ability.match(ability)
+
         # Add any proficiency bonus
-        if ability.lower() in self.saving_throws:
+        if matched_ability.lower() in self.saving_throws:
             mod += self.proficiency_bonus
         return mod
 
