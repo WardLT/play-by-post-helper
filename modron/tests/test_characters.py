@@ -11,8 +11,7 @@ _joe_path = os.path.join(os.path.dirname(__file__), 'joe.yaml')
 
 @fixture
 def joe() -> Character:
-    with open(_joe_path) as fp:
-        return Character.parse_obj(yaml.load(fp))
+    return Character.from_yaml(_joe_path)
 
 
 def test_level(joe):
@@ -45,11 +44,11 @@ def test_skills(joe):
     assert joe.custom_skills['tomfoolery'] == 'charisma'
 
     # Check the modifiers
-    assert joe.skill_mod('tomfoolery') == 0
-    assert joe.skill_mod('medicine') == 4
-    assert joe.skill_mod('athletics') == 6
+    assert joe.skill_modifier('tomfoolery') == 0
+    assert joe.skill_modifier('medicine') == 4
+    assert joe.skill_modifier('athletics') == 6
     with raises(ValueError):
-        assert joe.skill_mod('not a skill')
+        assert joe.skill_modifier('not a skill')
 
 
 def test_hit_die(joe):
@@ -60,3 +59,9 @@ def test_hit_die(joe):
     joe.classes['paladin'] = 1
     hit_die = joe.get_hit_die()
     assert hit_die == {'d8': 3, 'd10': 2}
+
+
+def test_lookup_modifier(joe):
+    assert joe.lookup_modifier("strength") == 2
+    assert joe.lookup_modifier("strength save") == 4
+    assert joe.lookup_modifier("medicine") == 4

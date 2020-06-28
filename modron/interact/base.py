@@ -3,9 +3,11 @@
 from argparse import ArgumentParser, Namespace
 from typing import Dict
 
+import requests
 from pydantic import BaseModel, Field, AnyHttpUrl
 
 from modron.slack import BotClient
+from modron.utils import escape_slack_characters
 
 
 class SlashCommandPayload(BaseModel):
@@ -20,12 +22,35 @@ class SlashCommandPayload(BaseModel):
     channel_id: str = Field(..., description='Name of the channel from which this command was triggered')
     team_id: str = Field(..., description='Name fo the team from which this command originated')
 
+    def send_reply(self, text: str, mrkdwn: bool = True, ephemeral: bool = False):
+        """Reply to an event.
+
+        Sends a POST request to the URL specified in the payload
+
+        Args:
+            text (str): Text of the reply
+            mrkdwn (bool): Whether to format the reply using Slack's markdown variant
+            ephemeral (bool): Whether the message should be only viewable temporarily
+        """
+
+        requests.post(
+            self.response_url,
+            json={
+                'text': escape_slack_characters(text),
+                'mrkdwn': mrkdwn,
+                'response_type': 'ephemeral' if ephemeral else 'in_channel'
+            }
+        )
+
 
 class InteractionModule:
     """Base class for actions that Modron can perform.
 
     This class defines an interface for calling these actions
-    and for registering this action in the argument parser
+    and for registering this action in the argument parser.
+
+    When registering the argument parser, you may not use the words ``interact`` or
+    ``subcommand`` in your arguments because they are used by the main parser.
 
     See `documentation on slash commands <https://api.slack.com/interactivity/slash-commands>`_
     for how to respond to a slack command. Note the part about replying immediately

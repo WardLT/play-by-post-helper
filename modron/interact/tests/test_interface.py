@@ -192,3 +192,30 @@ def test_delay_pause(parser, payload, caplog):
     with caplog.at_level(logging.INFO):
         args.interact(args, payload)
     assert 'failed' not in caplog.messages[-1]
+
+
+def test_character(parser, payload, caplog):
+    # Test with the bot user, who has no characters
+    args = parser.parse_args(['character'])
+    with caplog.at_level(logging.INFO):
+        args.interact(args, payload)
+    assert "No character" in caplog.messages[-1]
+
+    # Test with a real player
+    payload.user_id = 'UP4K437HT'
+    with caplog.at_level(logging.INFO):
+        args.interact(args, payload)
+    assert "Adrianna" in caplog.messages[-2]
+    assert "Reminding" in caplog.messages[-1]
+
+    # Print out the help
+    with raises(NoExitParserError) as exc:
+        parser.parse_args(['character', 'ability', '--help'])
+    print(exc.value.text_output)
+    assert exc.value.text_output.startswith('*usage*: /modron character')
+
+    # Test looking up an ability
+    with caplog.at_level(logging.INFO):
+        args = parser.parse_args(['character', 'ability', 'str'])
+        args.interact(args, payload)
+    assert '+3' in caplog.messages[-1]

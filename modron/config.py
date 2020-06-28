@@ -1,6 +1,7 @@
 """"Configuration details"""
 import os
 import logging
+from glob import glob
 from datetime import timedelta
 from typing import List, Dict, Tuple
 
@@ -79,6 +80,7 @@ class ModronConfig(BaseModel):
                                                 'labelled with name of team defined in this config file.')
     backup_dir: str = Field('backup', help='Path to where to store the backup. Each team will get its own '
                                            'subdirectory')
+    character_dir: str = Field('characters', help='Path to the character sheets. Each team has its own subdirectory')
 
     # Team-specific options
     team_options: Dict[str, TeamConfig] = Field({}, help='Settings for the different Slack teams configured to '
@@ -126,6 +128,32 @@ class ModronConfig(BaseModel):
             Path to the log
         """
         return os.path.join(self.dice_log_dir, f'{self.team_options[team_id].name}.csv')
+
+    def list_character_sheets(self, team_id: str) -> List[str]:
+        """List all of paths to the character sheets for a certain workspace
+
+        Args:
+            team_id (str): Name of the team
+        Returns:
+            ([str]): List paths to all of the character sheets
+        """
+
+        team_name = self.team_options[team_id].name
+        paths = glob(os.path.join(self.character_dir, team_name, '*.yml'))
+        return paths
+
+    def get_character_sheet_path(self, team_id: str, name: str) -> str:
+        """Get the path to a certain character sheet
+
+        Args:
+            team_id (str): ID of the Slack team
+            name (str): Name of the character
+
+        Returns:
+            (str): Path to the character sheet
+        """
+        team_name = self.team_options[team_id].name
+        return os.path.join(self.character_dir, team_name, f'{name}.yml')
 
 
 def get_config() -> ModronConfig:

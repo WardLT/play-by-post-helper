@@ -1,9 +1,13 @@
 """Saving and using information about characters"""
 
+import os
 from enum import Enum
-from typing import Dict, List
+from typing import Dict, List, Tuple
 
+import yaml
 from pydantic import BaseModel, Field, validator
+
+from modron.config import get_config
 
 
 def _compute_mod(score: int) -> int:
@@ -79,6 +83,7 @@ class Character(BaseModel):
 
     # Basic information about the character
     name: str = Field(..., description='Name of the character')
+    player: str = Field(None, description='Slack user ID of the player')
     classes: Dict[str, int] = Field(..., description='Levels in different classes')
     background: str = Field(None, description='Character background')
     race: str = Field(None, description='Race of the character')
@@ -102,7 +107,13 @@ class Character(BaseModel):
     custom_skills: Dict[str, Ability] = Field(dict(), description='Skills not included in 5e. '
                                                                   'Dictionary of skill names and associated ability')
     proficiencies: List[str] = Field(..., description='Names of skills in which the characters is proficient.')
-    expertise: List[str] = Field(..., description='Skills in which the character is an expert')
+    expertise: List[str] = Field([], description='Skills in which the character is an expert')
+
+    @classmethod
+    def from_yaml(cls, path: str) -> 'Character':
+        with open(path) as fp:
+            data = yaml.load(fp, yaml.SafeLoader)
+            return cls.parse_obj(data)
 
     # Validators for different fields
     @validator('proficiencies', 'expertise', each_item=True)
@@ -177,17 +188,31 @@ class Character(BaseModel):
              (int) Modifier for the roll
         """
 
-        # Attempt to match the ability to the pre-defined lis
+        # Get the modifier
+        mod = self.ability_modifier(ability)
+
+        # Add any proficiency bonus
+        if ability.lower() in self.saving_throws:
+            mod += self.proficiency_bonus
+        return mod
+
+    def ability_modifier(self, ability: str) -> int:
+        """Get the modifier for a certain ability
+
+        Args:
+            ability (str): Ability to check. You can use the full name or
+                the first three letters. Not case-sensitive
+        Returns:
+            (int) Modifier for the roll
+        """
+        # Attempt to match the ability to the pre-defined list
         ability = ability.lower()
         matched_ability = Ability.match(ability)
 
         # Look up the ability modifier
-        mod = getattr(self, f'{matched_ability}_mod')
-        if ability in self.saving_throws:
-            mod += self.proficiency_bonus
-        return mod
+        return getattr(self, f'{matched_ability}_mod')
 
-    def skill_mod(self, name) -> int:
+    def skill_modifier(self, name: str) -> int:
         """Get the skill modifier for a certain skill
 
         First looks in custom skill list and then in the standard 5e skills.
@@ -215,3 +240,66 @@ class Character(BaseModel):
             return mod + self.proficiency_bonus
         else:
             return mod
+
+    def lookup_modifier(self, check: str) -> int:
+        """Get the modifier for certain roll
+
+        Args:
+            check (str): Description of which check to make
+        Returns:
+            (int) Modifier for the d20 roll
+        """
+
+        # Make it all lowercase
+        check = check.lower()
+        words = check.split(" ")
+
+        # Save
+        if 'save' in words:
+            return self.save_modifier(words[0])
+
+        # Ability check
+        try:
+            return self.ability_modifier(check)
+        except AssertionError:
+            pass  # and try something else
+
+        # Skill
+        return self.skill_modifier(check)
+
+
+def list_available_characters(team_id: str, user_id: str) -> List[str]:
+    """List the names of character sheets that are available to a user
+
+    Args:
+        team_id (str): ID of the Slack workspace
+        user_id (str): ID of the user in question
+    Returns:
+        ([str]): List of characters available to this player
+    """
+
+    # Get all characters for this team
+    config = get_config()
+    sheets = config.list_character_sheets(team_id)
+
+    # Return only the sheets
+    return [
+        os.path.basename(s)[:-4]  # Remove the ".yml"
+        for s in sheets
+        if Character.from_yaml(s).player == user_id
+    ]
+
+
+def load_character(team_id: str, name: str) -> Character:
+    """Load a character sheet
+
+    Arg:
+        team_id (str): ID of the Slack workspace
+        name (str): Name of the character
+    Returns:
+        (Character) Desired character sheet
+    """
+
+    # Get the path to the character sheet
+    config = get_config()
+    return Character.from_yaml(config.get_character_sheet_path(team_id, name))

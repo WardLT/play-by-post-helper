@@ -3,13 +3,16 @@
 Holds logic of how Modron should respond a certain direct message"""
 import shlex
 import logging
+from argparse import Namespace
 from threading import Thread
 from time import sleep
 from typing import Union, Sequence, Callable
 
-from modron.interact._argparse import NoExitParserError, NoExitParser
+import requests
 
+from modron.interact._argparse import NoExitParserError, NoExitParser
 from modron.interact.base import SlashCommandPayload, InteractionModule
+from modron.interact.character import CharacterSheet
 from modron.interact.dice_roll import DiceRollInteraction
 from modron.interact.npc import NPCGenerator
 from modron.interact.reminder import ReminderModule
@@ -18,17 +21,28 @@ from modron.utils import escape_slack_characters
 logger = logging.getLogger(__name__)
 
 
-all_modules = (DiceRollInteraction, NPCGenerator, ReminderModule)
+all_modules = (DiceRollInteraction, NPCGenerator, ReminderModule, CharacterSheet)
 
 
-def _pause_then_run(func: Callable, *args, **kwargs):
-    """Pause for a short period and then run a function
+def _pause_then_run_interaction(func: Callable, args: Namespace, payload: SlashCommandPayload):
+    """Pause for a short period and then run the interaction
+
+    Used to allow the `return` from the interaction handler to respond to message first
+    with an empty, "messaged received" reply.
+    Otherwise, any actions from a command could display before the user's message to invoke a commend.
 
     Args:
         func (Callable): Function to run
+        args (Namespace): Parsed arguments
+        payload (SlashCommandPayload): Slash command payload
     """
     sleep(0.1)
-    func(*args, **kwargs)
+    try:
+        func(args, payload)
+    except Exception as exc:
+        reason = str(exc)
+        logger.info('Caught an exception from an interaction')
+        payload.send_reply(f'Caught an error in your command:\n\n{reason}')
 
 
 _description = '''A Slack command to handle common D&D tasks'''
@@ -120,7 +134,8 @@ def handle_slash_command(payload: SlashCommandPayload, parser: NoExitParser) -> 
 
     # Run the specified command in a Thread
     #  Allows this function
-    responder = Thread(target=_pause_then_run, args=(args.interact, args, payload))
+    responder = Thread(target=_pause_then_run_interaction, args=(args.interact, args, payload),
+                       name='slash-cmd-interact')
     responder.start()
 
     return {"response_type": "in_channel"}
