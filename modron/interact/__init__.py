@@ -8,8 +8,6 @@ from threading import Thread
 from time import sleep
 from typing import Union, Sequence, Callable
 
-import requests
-
 from modron.interact._argparse import NoExitParserError, NoExitParser
 from modron.interact.base import SlashCommandPayload, InteractionModule
 from modron.interact.character import CharacterSheet

@@ -68,7 +68,7 @@ class CharacterSheet(InteractionModule):
         # Switch on the chosen subcommand
         if args.char_subcommand is None:
             # Return the character sheet
-            logger.info(f'Reminding the user which character they are currently playing')
+            logger.info('Reminding the user which character they are currently playing')
             payload.send_reply(f'You are playing {sheet.name} (lvl {sheet.level})')
         elif args.char_subcommand == "ability":
             ability_name = ' '.join(args.name)

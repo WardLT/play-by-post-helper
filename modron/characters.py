@@ -2,7 +2,7 @@
 
 import os
 from enum import Enum
-from typing import Dict, List, Tuple
+from typing import Dict, List
 
 import yaml
 from pydantic import BaseModel, Field, validator

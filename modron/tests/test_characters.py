@@ -1,6 +1,5 @@
 import os
 
-import yaml
 from pytest import fixture, raises
 
 from modron.characters import Character

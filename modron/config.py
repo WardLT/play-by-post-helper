@@ -163,4 +163,5 @@ def get_config() -> ModronConfig:
         with open(cfg_path) as fp:
             return ModronConfig.parse_obj(yaml.load(fp, yaml.SafeLoader))
     else:
+        logger.info(f'Creating default configuration')
         return ModronConfig()
