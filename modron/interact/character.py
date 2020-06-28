@@ -69,7 +69,7 @@ class CharacterSheet(InteractionModule):
         if args.char_subcommand is None:
             # Return the character sheet
             logger.info('Reminding the user which character they are currently playing')
-            payload.send_reply(f'You are playing {sheet.name} (lvl {sheet.level})')
+            payload.send_reply(f'You are playing {sheet.name} (lvl {sheet.level})', ephemeral=True)
         elif args.char_subcommand == "ability":
             ability_name = ' '.join(args.name)
             try:
@@ -79,6 +79,6 @@ class CharacterSheet(InteractionModule):
                 payload.send_reply(f'Could not find a modifier for "{ability_name}"')
                 return
             logger.info(f'Retrieved modifier for {ability_name} rolls: {modifier:+d}')
-            payload.send_reply(f'{sheet.name}\'s modifier for {ability_name} is {modifier:+d}')
+            payload.send_reply(f'{sheet.name}\'s modifier for {ability_name} is {modifier:+d}', ephemeral=True)
         else:
             raise ValueError(f'Subcommand {args.char_subcommand} not yet implemented')

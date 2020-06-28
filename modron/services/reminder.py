@@ -82,7 +82,7 @@ class ReminderService(BaseService):
                 state.save()
             else:
                 logger.info(f'Activity-based reminder would be sooner '
-                            f'than user-specified reminder: {state.reminder_time}. Not updating reminder time')
+                            f'than user-specified reminder: {team_reminder_time}. Not updating reminder time')
                 reminder_time = state.reminder_time[self._client.team_id]
 
             # Check if we are past the stall time

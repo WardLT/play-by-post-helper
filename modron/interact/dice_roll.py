@@ -157,7 +157,8 @@ class DiceRollInteraction(InteractionModule):
                 logging.info(f'Seems like user {payload.user_id} needs to register a character')
                 payload.send_reply(
                     f'Did you mean to request a character roll? {args.dice} does not seem like a dice roll, '
-                    f'but you have not registered a character yet. Talk to Logan about registering your sheet.'
+                    f'but you have not registered a character yet. Talk to Logan about registering your sheet.',
+                    ephemeral=True
                 )
                 return
             elif len(available_chars) == 1:
