@@ -86,6 +86,7 @@ def test_shortcut(parser, payload, caplog):
 
     # Special shortcut for /roll
     payload.command = '/roll'
+    payload.text = '1d20 test'
     with caplog.at_level(logging.INFO):
         assert handle_slash_command(payload, parser) == {"response_type": "in_channel"}
         sleep(5)  # Waits for the delayed thread to run

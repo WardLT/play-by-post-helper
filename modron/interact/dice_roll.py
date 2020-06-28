@@ -62,8 +62,8 @@ A common dice roll, with a defined purpose: `/modron roll 10d6+5 sneak attack da
 
 Option flags alter rules when rolling. Example: rolling at disadvantage: `/roll -d 1d20+2`
 
-If you have a character sheet registered, (call `/modron character` to find out) you can 
-instead list the name of the ability you wish to roll. For example, `/roll str save` to 
+If you have a character sheet registered, (call `/modron character` to find out) you can
+instead list the name of the ability you wish to roll. For example, `/roll str save` to
 roll a strength save.
 
 Call `/modron roll --help` for full details
