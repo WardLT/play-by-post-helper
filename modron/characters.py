@@ -68,7 +68,7 @@ class Alignment(str, Enum):
 
 
 _class_hit_die = {
-    'barbarian': 12, 'bard': 8, 'cleric': 8, 'druid': 8, 'fighter': 10, 'monk': 8, 'paladin': 10,
+    'artificer': 8, 'barbarian': 12, 'bard': 8, 'cleric': 8, 'druid': 8, 'fighter': 10, 'monk': 8, 'paladin': 10,
     'ranger': 10, 'rogue': 8, 'sorcerer': 6, 'warlock': 8, 'wizard': 6
 }
 """Hit die for each 5E class"""
