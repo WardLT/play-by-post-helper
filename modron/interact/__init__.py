@@ -19,9 +19,6 @@ from modron.utils import escape_slack_characters
 logger = logging.getLogger(__name__)
 
 
-all_modules = (DiceRollInteraction, NPCGenerator, ReminderModule, CharacterSheet)
-
-
 def _pause_then_run_interaction(func: Callable, args: Namespace, payload: SlashCommandPayload):
     """Pause for a short period and then run the interaction
 

@@ -13,7 +13,7 @@ from slackeventsapi import SlackEventAdapter
 from modron.config import get_config
 from modron.events import status_check
 from modron.interact import assemble_parser, handle_slash_command, SlashCommandPayload, \
-    DiceRollInteraction, ReminderModule, NPCGenerator
+    DiceRollInteraction, ReminderModule, NPCGenerator, CharacterSheet
 from modron.services.backup import BackupService
 from modron.services.reminder import ReminderService
 from modron.slack import BotClient
@@ -85,7 +85,8 @@ for team_id, team_config in config.team_options.items():
 modules = [
     DiceRollInteraction(clients),
     ReminderModule(clients, reminder_threads),
-    NPCGenerator(clients)
+    NPCGenerator(clients),
+    CharacterSheet(clients)
 ]
 modron_cmd_parser = assemble_parser(modules)
 
