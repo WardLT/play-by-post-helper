@@ -9,12 +9,16 @@ from typing import Dict
 from pytest import fixture, raises
 
 from modron.interact import assemble_parser, NoExitParser, NoExitParserError,\
-    SlashCommandPayload, handle_slash_command, all_modules
-from modron.interact.npc import generate_and_render_npcs
+    SlashCommandPayload, handle_slash_command
+from modron.interact.npc import generate_and_render_npcs, NPCGenerator
+from modron.interact.reminder import ReminderModule
+from modron.interact.dice_roll import DiceRollInteraction
+from modron.interact.character import CharacterSheet
 from modron.slack import BotClient
 from modron.config import get_config
 
 
+_test_modules = [NPCGenerator, ReminderModule, DiceRollInteraction, CharacterSheet]
 config = get_config()
 
 
@@ -43,7 +47,7 @@ def clients() -> Dict[str, BotClient]:
 
 @fixture()
 def parser(clients) -> NoExitParser:
-    modules = [x(clients) for x in all_modules]
+    modules = [x(clients) for x in _test_modules]
     return assemble_parser(modules)
 
 
