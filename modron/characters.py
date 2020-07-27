@@ -9,6 +9,8 @@ from pydantic import BaseModel, Field, validator
 
 from modron.config import get_config
 
+_config = get_config()
+
 
 def _compute_mod(score: int) -> int:
     """Compute a mod given an ability score
@@ -282,8 +284,7 @@ def list_available_characters(team_id: str, user_id: str) -> List[str]:
     """
 
     # Get all characters for this team
-    config = get_config()
-    sheets = config.list_character_sheets(team_id)
+    sheets = _config.list_character_sheets(team_id)
 
     # Return only the sheets
     return [
@@ -304,5 +305,4 @@ def load_character(team_id: str, name: str) -> Character:
     """
 
     # Get the path to the character sheet
-    config = get_config()
-    return Character.from_yaml(config.get_character_sheet_path(team_id, name))
+    return Character.from_yaml(_config.get_character_sheet_path(team_id, name))
