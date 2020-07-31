@@ -81,6 +81,11 @@ class ModronConfig(BaseModel):
     backup_dir: str = Field('backup', help='Path to where to store the backup. Each team will get its own '
                                            'subdirectory')
     character_dir: str = Field('characters', help='Path to the character sheets. Each team has its own subdirectory')
+    credentials_dir: str = Field('creds', help='Path to the credentials for third-party (i.e., non-Slack) apps')
+
+    # Miscellaneous options
+    gdrive_backup_folder: str = Field('1Ea1rjA0bonW1Y9_ACbcd1WqigMeru5lb',
+                                      help='Where to upload folders on Google drive. Expects a Google Drive folder ID')
 
     # Team-specific options
     team_options: Dict[str, TeamConfig] = Field({}, help='Settings for the different Slack teams configured to '
@@ -154,6 +159,12 @@ class ModronConfig(BaseModel):
         """
         team_name = self.team_options[team_id].name
         return os.path.join(self.character_dir, team_name, f'{name}.yml')
+
+    def get_gdrive_credentials_path(self) -> str:
+        """Get the path to the Google Drive credentials,
+        which are stored as a pickle file"""
+
+        return os.path.join(self.credentials_dir, 'gdrive', 'token.pickle')
 
 
 def get_config() -> ModronConfig:

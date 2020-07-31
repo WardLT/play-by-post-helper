@@ -9,3 +9,6 @@ script:
   - flake8
   - pytest --ignore=server.py --cov=modron
 after_success: coveralls
+before_install:
+  - openssl aes-256-cbc -K $encrypted_e14e3c23c644_key -iv $encrypted_e14e3c23c644_iv
+    -in token.pickle.enc -out token.pickle -d
