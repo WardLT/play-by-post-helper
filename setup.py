@@ -1,19 +1,13 @@
 from setuptools import setup, find_packages
 
+# Open the requirements
+with open('requirements.txt') as fp:
+    req_list = fp.read().strip().split("\n")
+
 setup(
     name='modron',
     version='0.0.1',
     packages=find_packages(),
     description='Bot to help manage play-by-post campaigns hosted on Slack',
-    install_requires=[
-        'flask>=1.1',
-        'humanize',
-        'isodate',
-        'slackclient',
-        'slackeventsapi',
-        'tabulate',
-        'pdfkit',
-        'pydantic',
-        'pyyaml'
-    ]
+    install_requires=req_list
 )

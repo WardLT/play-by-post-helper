@@ -1,0 +1,12 @@
+flask>=1.1
+humanize
+isodate
+slackclient
+slackeventsapi
+tabulate
+pdfkit
+pydantic
+pyyaml
+google-api-python-client
+google-auth-httplib2
+google-auth-oauthlib
