@@ -3,7 +3,7 @@ from math import isclose
 from random import seed
 
 seed(1)
-_default_rolls = 10 ** 6
+_default_rolls = 2 * 10 ** 6
 
 
 def _measure_probability(sides: int, target_val: int, n_trials: int = _default_rolls, **kwargs) -> float:
