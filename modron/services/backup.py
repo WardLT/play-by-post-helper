@@ -11,6 +11,7 @@ import logging
 from time import sleep
 from typing import List, Dict, Optional, Tuple
 
+import humanize
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
 
@@ -38,8 +39,6 @@ def _write_messages(messages: List[Dict], output_path: str):
             msg = dict(msg)
             if 'team' in msg:
                 msg.pop('team')
-            my_time = datetime.fromtimestamp(float(msg['ts'])).astimezone()
-            msg['ts'] = (my_time - my_time.utcoffset()).timestamp()
 
             # Write it out
             print(json.dumps(msg), file=fp)
@@ -105,12 +104,12 @@ class BackupService(BaseService):
             with open(output_path) as fp:
                 for line in fp:
                     msg = json.loads(line)
-                    start_time = max(start_time, int(msg["ts"]))
-        logger.info(f'Starting timestamp {start_time}, which is {datetime.utcfromtimestamp(start_time)}')
+                    start_time = max(start_time, float(msg["ts"]))
+        logger.info(f'Starting timestamp {start_time}, which is {datetime.fromtimestamp(start_time)}')
 
         # Pulling the most recent message
         last_time, _ = self._client.get_last_activity(channel)
-        if isclose(last_time.timestamp(), start_time):
+        if isclose((last_time - datetime.utcfromtimestamp(start_time)).total_seconds(), 0.0):
             logger.info(f'No new messages in {channel}')
             return 0
 
@@ -281,8 +280,15 @@ class BackupService(BaseService):
         # Run the main loop
         logger.info('Starting backup thread')
         while True:
+            # Run the backup
             result = self.backup_all_channels()
             logger.info(f'Backed up {sum(result.values())} messages in total. From: {", ".join(result.keys())}')
+
+            # Upload backed-up files to GoogleDrive
+            if self.gdrive_service is not None:
+                count, data_size = self.upload_to_gdrive()
+                logger.info(f'Updated {count} files. Uploaded {humanize.naturalsize(data_size, binary=True)}')
+
             wake_time = datetime.utcnow() + self.frequency
             logger.info(f'Sleeping until {wake_time.isoformat()}')
             self._sleep_until(wake_time)
