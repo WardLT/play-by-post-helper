@@ -72,7 +72,7 @@ def test_backup(client, tmpdir):
     client.chat_postMessage(channel=channel_id, text="Test message")
 
     count = thread.backup_messages('bot_test')
-    assert count == 1
+    assert count > 1
 
     n_uploaded, file_sizes = thread.upload_to_gdrive()
     assert n_uploaded == 1
