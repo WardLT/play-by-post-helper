@@ -12,4 +12,4 @@ after_success: coveralls
 before_install:
   - export TEST_CRED_DIR=./modron/services/tests/creds
   - openssl aes-256-cbc -K $encrypted_e14e3c23c644_key -iv $encrypted_e14e3c23c644_iv
-    -in $TEST_CRED_DIR/gdrive/sertoken.pickle.enc -out $TEST_CRED_DIR/gdrive/token.pickle -d
+    -in $TEST_CRED_DIR/gdrive/token.pickle.enc -out $TEST_CRED_DIR/gdrive/token.pickle -d
