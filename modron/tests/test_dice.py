@@ -23,6 +23,13 @@ def _measure_probability(sides: int, target_val: int, n_trials: int = _default_r
     return hits / n_trials
 
 
+def test_d20():
+    """Players doubted that natural 1s were just as commons as 20s or 10s"""
+    assert isclose(_measure_probability(20, 1), 0.05, rel_tol=1e-2)
+    assert isclose(_measure_probability(20, 20), 0.05, rel_tol=1e-2)
+    assert isclose(_measure_probability(20, 10), 0.05, rel_tol=1e-2)
+
+
 def test_simple_roll():
     assert isclose(_measure_probability(2, 1), 0.5, abs_tol=1e-3)
 
