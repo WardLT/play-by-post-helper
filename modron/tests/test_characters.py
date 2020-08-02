@@ -65,3 +65,67 @@ def test_lookup_modifier(joe):
     assert joe.lookup_modifier("strength save") == 4
     assert joe.lookup_modifier("str save") == 4
     assert joe.lookup_modifier("medicine") == 4
+
+
+def test_hp_changes(joe):
+    # Make sure it starts out at full health
+    assert joe.current_hit_points == joe.hit_points
+
+    # Make sure over-healing does not go above maximum
+    joe.heal(1)
+    assert joe.current_hit_points == joe.hit_points
+
+    # Test out damage
+    joe.harm(1)
+    assert joe.current_hit_points + 1 == joe.hit_points
+
+    # Make sure the damage stops at zero
+    joe.harm(joe.current_hit_points * 2)
+    assert joe.current_hit_points == 0
+
+    # Test healing
+    joe.heal(1)
+    assert joe.current_hit_points == 1
+
+    # Test the "full heal"
+    joe.full_heal()
+    assert joe.current_hit_points == joe.hit_points
+
+
+def test_temporary_hit_points(joe):
+    # Give some temporary hit points
+    joe.grant_temporary_hit_points(4)
+    assert joe.temporary_hit_points == 4
+    assert joe.total_hit_points == joe.current_hit_points + 4
+    assert joe.current_hit_points == joe.hit_points
+
+    # Make sure damage less than the temp only comes from the temp
+    joe.harm(2)
+    assert joe.temporary_hit_points == 2
+    assert joe.total_hit_points == joe.current_hit_points + 2
+    assert joe.current_hit_points == joe.hit_points
+
+    # Make sure damage that exceeds the temp hits both
+    joe.harm(4)
+    assert joe.temporary_hit_points == 0
+    assert joe.total_hit_points == joe.current_hit_points
+    assert joe.current_hit_points == joe.hit_points - 2
+
+    # Damage his hit point maximum
+    joe.adjust_hit_point_maximum(-16)
+    assert joe.current_hit_point_maximum == joe.hit_points - 16
+    assert joe.current_hit_points == joe.current_hit_point_maximum
+
+    # Ensure that you cannot heal above it
+    joe.heal(1)
+    assert joe.current_hit_point_maximum == joe.hit_points - 16
+    assert joe.current_hit_points == joe.current_hit_point_maximum
+
+    # Update the maximum, which should not change the hit points
+    joe.adjust_hit_point_maximum(1)
+    assert joe.current_hit_point_maximum == joe.hit_points - 15
+    assert joe.current_hit_points == joe.current_hit_point_maximum - 1
+
+    # Reset
+    joe.reset_hit_point_maximum()
+    assert joe.current_hit_point_maximum == joe.hit_points
