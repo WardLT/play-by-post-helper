@@ -10,6 +10,7 @@ intelligence: 10
 wisdom: 14
 charisma: 11
 hit_points: 45
+current_hit_points: 45
 armor_class: 14
 saving_throws:
   - wisdom

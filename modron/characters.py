@@ -1,8 +1,8 @@
 """Saving and using information about characters"""
-
+import json
 import os
 from enum import Enum
-from typing import Dict, List
+from typing import Dict, List, Optional, Tuple
 
 import yaml
 from pydantic import BaseModel, Field, validator
@@ -100,9 +100,13 @@ class Character(BaseModel):
     charisma: int = Field(..., description='Proficiency with bringing people to agreement with you', ge=0)
 
     # Combat attributes
-    speed: int = Field(30, description='Speed in feet per round. Default: 30')
+    speed: int = Field(30, description='Speed in feet per round')
     armor_class: int = Field(..., description='Resistance to physical attacks.')  # Eventually make derived
-    hit_points: int = Field(..., description='Maximum number of hit points')
+    current_hit_points: Optional[int] = Field(..., description='Current hit points. Does not include temporary', ge=0)
+    hit_points: int = Field(..., description='Maximum number of hit points', gt=0)
+    temporary_hit_points: int = Field(0, description='Amount of temporary hit points.', ge=0)
+    hit_points_adjustment: int = Field(0, description='Adjustments to the hit point maximum. '
+                                                      'Can be positive or negative')
 
     # Abilities
     saving_throws: List[Ability] = Field(..., description='Saving throws for which the character is proficient')
@@ -113,9 +117,21 @@ class Character(BaseModel):
 
     @classmethod
     def from_yaml(cls, path: str) -> 'Character':
+        """Parse the character sheet from YAML
+
+        Args:
+            path: Path to the YAML file
+        """
         with open(path) as fp:
             data = yaml.load(fp, yaml.SafeLoader)
             return cls.parse_obj(data)
+
+    def to_yaml(self, path: str):
+        """Save character sheet to a YAML file"""
+
+        with open(path, 'w') as fp:
+            data = json.loads(self.json())
+            yaml.dump(data, fp)
 
     # Validators for different fields
     @validator('proficiencies', 'expertise', each_item=True)
@@ -161,8 +177,87 @@ class Character(BaseModel):
         return (self.level - 1) // 4 + 2
 
     @property
-    def initiative(self):
-        return self.initiative
+    def initiative(self) -> int:
+        return self.dexterity_mod
+
+    @property
+    def total_hit_points(self) -> int:
+        """Current hit point amount, including temporary hit points"""
+        return self.current_hit_points + self.temporary_hit_points
+
+    @property
+    def current_hit_point_maximum(self) -> int:
+        """Current hit point maximum"""
+        return self.hit_points + self.hit_points_adjustment
+
+    def heal(self, amount: int):
+        """Heal the character by a certain amount
+
+        Args:
+            amount (int): Amount of healing
+        """
+        assert amount >= 0, "Amount must be nonnegative"
+        if self.current_hit_points is None:
+            self.full_heal()
+        self.current_hit_points += amount
+        self.current_hit_points = min(self.current_hit_points, self.current_hit_point_maximum)
+
+    def harm(self, amount: int):
+        """Apply damage to this character
+
+        Args:
+            amount (int): Amount of damage
+        """
+        assert amount >= 0, "Damage must be nonnegative"
+        if self.current_hit_points is None:
+            self.full_heal()
+
+        # Damage hits the temporary first
+        amount_to_temp = min(self.temporary_hit_points, amount)
+        amount_to_base = amount - amount_to_temp
+        self.temporary_hit_points -= amount_to_temp
+
+        # Subtract off the remaining damage from the base hit points
+        self.current_hit_points -= amount_to_base
+        self.current_hit_points = max(0, self.current_hit_points)
+
+    def full_heal(self):
+        """Heal character up to hit point maximum"""
+        self.current_hit_points = self.current_hit_point_maximum
+
+    def grant_temporary_hit_points(self, amount: int):
+        """Grant temporary hit points
+
+        Args:
+            amount: Amount of HP to give to the character
+        """
+        assert amount > 0, "Amount must be positive"
+        self.temporary_hit_points += amount
+
+    def remove_temporary_hit_points(self):
+        """Remove all temporary hit points"""
+        self.temporary_hit_points = 0
+
+    def adjust_hit_point_maximum(self, amount: int):
+        """Apply a change to the hit point maximum
+
+        Args:
+            amount: Amount to change the HP maximum
+        """
+        self.hit_points_adjustment += amount
+
+        # Make sure the hit point maximum is zero or more
+        self.hit_points_adjustment = max(-self.hit_points, self.hit_points_adjustment)
+
+        # Make sure the hit points stays below the maximum
+        self.current_hit_points = min(
+            self.current_hit_point_maximum,
+            self.current_hit_points
+        )
+
+    def reset_hit_point_maximum(self):
+        """Remove any adjustments to the hit point maximum"""
+        self.hit_points_adjustment = 0
 
     def get_hit_die(self) -> Dict[str, int]:
         """Maximum hit die, computed based on class
@@ -294,15 +389,17 @@ def list_available_characters(team_id: str, user_id: str) -> List[str]:
     ]
 
 
-def load_character(team_id: str, name: str) -> Character:
+def load_character(team_id: str, name: str) -> Tuple[Character, str]:
     """Load a character sheet
 
     Arg:
         team_id (str): ID of the Slack workspace
         name (str): Name of the character
     Returns:
-        (Character) Desired character sheet
+        - (Character) Desired character sheet
+        - (str): Absolute path to the character sheet, in case you must save it later
     """
 
-    # Get the path to the character sheet
-    return Character.from_yaml(_config.get_character_sheet_path(team_id, name))
+    config = get_config()
+    sheet_path = config.get_character_sheet_path(team_id, name)
+    return Character.from_yaml(sheet_path), os.path.abspath(sheet_path)
