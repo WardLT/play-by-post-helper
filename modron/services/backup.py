@@ -286,8 +286,11 @@ class BackupService(BaseService):
 
             # Upload backed-up files to GoogleDrive
             if self.gdrive_service is not None:
-                count, data_size = self.upload_to_gdrive()
-                logger.info(f'Updated {count} files. Uploaded {humanize.naturalsize(data_size, binary=True)}')
+                try:
+                    count, data_size = self.upload_to_gdrive()
+                    logger.info(f'Updated {count} files. Uploaded {humanize.naturalsize(data_size, binary=True)}')
+                except Exception as e:
+                    logger.info(f'Error during GDrive upload: {e}')
 
             wake_time = datetime.utcnow() + self.frequency
             logger.info(f'Sleeping until {wake_time.isoformat()}')
