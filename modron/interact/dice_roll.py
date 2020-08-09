@@ -163,7 +163,7 @@ class DiceRollInteraction(InteractionModule):
                 return
             elif len(available_chars) == 1:
                 # Reformat command to use a specific character roll
-                sheet = load_character(payload.team_id, available_chars[0])
+                sheet, _ = load_character(payload.team_id, available_chars[0])
                 ability_name = ' '.join([args.dice] + args.purpose)
 
                 # Lookup the ability

@@ -1,5 +1,5 @@
 """Saving and using information about characters"""
-
+import json
 import os
 from enum import Enum
 from typing import Dict, List, Optional, Tuple
@@ -100,7 +100,7 @@ class Character(BaseModel):
     charisma: int = Field(..., description='Proficiency with bringing people to agreement with you', ge=0)
 
     # Combat attributes
-    speed: int = Field(30, description='Speed in feet per round. Default: 30')
+    speed: int = Field(30, description='Speed in feet per round')
     armor_class: int = Field(..., description='Resistance to physical attacks.')  # Eventually make derived
     current_hit_points: Optional[int] = Field(..., description='Current hit points. Does not include temporary', ge=0)
     hit_points: int = Field(..., description='Maximum number of hit points', gt=0)
@@ -117,9 +117,21 @@ class Character(BaseModel):
 
     @classmethod
     def from_yaml(cls, path: str) -> 'Character':
+        """Parse the character sheet from YAML
+
+        Args:
+            path: Path to the YAML file
+        """
         with open(path) as fp:
             data = yaml.load(fp, yaml.SafeLoader)
             return cls.parse_obj(data)
+
+    def to_yaml(self, path: str):
+        """Save character sheet to a YAML file"""
+
+        with open(path, 'w') as fp:
+            data = json.loads(self.json())
+            yaml.dump(data, fp)
 
     # Validators for different fields
     @validator('proficiencies', 'expertise', each_item=True)
@@ -222,6 +234,10 @@ class Character(BaseModel):
         assert amount > 0, "Amount must be positive"
         self.temporary_hit_points += amount
 
+    def remove_temporary_hit_points(self):
+        """Remove all temporary hit points"""
+        self.temporary_hit_points = 0
+
     def adjust_hit_point_maximum(self, amount: int):
         """Apply a change to the hit point maximum
 
@@ -229,6 +245,9 @@ class Character(BaseModel):
             amount: Amount to change the HP maximum
         """
         self.hit_points_adjustment += amount
+
+        # Make sure the hit point maximum is zero or more
+        self.hit_points_adjustment = max(-self.hit_points, self.hit_points_adjustment)
 
         # Make sure the hit points stays below the maximum
         self.current_hit_points = min(

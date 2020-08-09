@@ -155,7 +155,7 @@ class BackupService(BaseService):
         # Make sure the target folder exists
         output = self.gdrive_service.files().get(fileId=config.gdrive_backup_folder).execute()
         assert output.get('mimeType', None) == 'application/vnd.google-apps.folder'
-        logger.info(f'Ready to upload to \"{output["name"]})\" ({config.gdrive_backup_folder})')
+        logger.info(f'Ready to upload to \"{output["name"]}\" ({config.gdrive_backup_folder})')
 
         # List out all of the files to be backed-up
         files = glob(os.path.join(self.backup_dir, '**', '*.jsonld'), recursive=True)
