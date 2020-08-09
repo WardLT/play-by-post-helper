@@ -197,3 +197,5 @@ class CharacterSheet(InteractionModule):
         msg += f'{sheet.name} has {sheet.total_hit_points}/{sheet.current_hit_point_maximum} hit points'
         if sheet.hit_points_adjustment != 0:
             msg += f" including a {sheet.hit_points_adjustment} change to HP maximum"
+
+        payload.send_reply(msg, ephemeral=True)
