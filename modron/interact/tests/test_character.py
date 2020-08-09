@@ -1,10 +1,11 @@
+from time import sleep
 import logging
 
 from pytest import raises, fixture
 
 from modron.characters import Character
 from modron.config import get_config
-from modron.interact import NoExitParserError
+from modron.interact import NoExitParserError, handle_slash_command
 
 
 @fixture()
@@ -127,3 +128,14 @@ def test_harm_and_heal(parser, payload, caplog, test_sheet_path):
         with caplog.at_level(logging.INFO):
             args.interact(args, payload)
         assert 'Parse error' in caplog.messages[-1]
+
+
+def test_hp_shortcut(payload, parser, caplog):
+    # Special shortcut for /roll
+    payload.command = '/hp'
+    payload.text = ''
+    payload.user_id = 'UP4K437HT'
+    with caplog.at_level(logging.INFO):
+        assert handle_slash_command(payload, parser) == {"response_type": "in_channel"}
+        sleep(5)  # Waits for the delayed thread to run
+    assert caplog.messages[-1].startswith('No changes.')

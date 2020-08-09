@@ -84,7 +84,10 @@ def handle_slash_command(payload: SlashCommandPayload, parser: NoExitParser) -> 
         if payload.command.lower() == '/roll':
             # Special case for /roll
             payload.text = f'roll {payload.text}'
-            logger.info('Caught special case for /roll slash command. Changed it to /modron roll')
+            logger.info('Caught special case for /roll slash command. Changed payload to /modron roll')
+        elif payload.command.lower() == '/hp':
+            payload.text = f'character hp {payload.text}'
+            logger.info('Caught special case for /hp slash command. Changed payload to /modron character hp')
         elif payload.command.startswith('/m'):
             # Determine the sub command name
             subcommand = payload.command[2:]
