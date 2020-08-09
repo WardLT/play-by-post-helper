@@ -30,7 +30,7 @@ Modron will attempt to infer the what you are looking for from the following opt
 
 _hp_description = '''Keep track of the HP for a character
 
-This command can be used to get current HP, apply damage or healing, or 
+This command can be used to get current HP, apply damage or healing, or
 make temporary changes to the HP'''
 
 

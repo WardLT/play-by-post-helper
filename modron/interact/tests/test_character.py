@@ -127,5 +127,3 @@ def test_harm_and_heal(parser, payload, caplog, test_sheet_path):
         with caplog.at_level(logging.INFO):
             args.interact(args, payload)
         assert 'Parse error' in caplog.messages[-1]
-
-

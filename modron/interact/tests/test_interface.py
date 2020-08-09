@@ -1,9 +1,6 @@
 """Tests the functions used to interface with interaction modules"""
 import logging
-import os
-from csv import DictReader
 from time import sleep
-
 
 from pytest import raises
 
