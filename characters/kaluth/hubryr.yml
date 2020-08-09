@@ -1,0 +1,29 @@
+name: Hubryr Goldstone
+player: UP6ERQ4BZ
+alignment: good
+background: Guild Artisan
+race: Half-elf
+classes:
+  artificer: 9
+strength: 8
+dexterity: 16
+constitution: 10
+intelligence: 20
+wisdom: 14
+charisma: 10
+hit_points: 51
+current_hit_points: 51
+armor_class: 16
+speed: 30
+saving_throws:
+  - intelligence
+  - constitution
+proficiencies:
+  - insight
+  - perception
+  - arcana
+  - investigation
+  - perception
+  - stealth
+  - persuasion
+

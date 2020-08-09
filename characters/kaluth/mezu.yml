@@ -1,0 +1,26 @@
+name: Mezu Kuranes
+player: UP682UJFR
+alignment: chaotic good
+background: Sage
+race: Human
+classes:
+  warlock: 9
+strength: 11
+dexterity: 16
+constitution: 12
+intelligence: 12
+wisdom: 12
+charisma: 18
+hit_points: 44
+current_hit_points: 44
+armor_class: 13
+speed: 30
+saving_throws:
+  - wisdom
+  - charisma
+proficiencies:
+  - deception 
+  - investigation
+  - perception
+  - stealth
+
