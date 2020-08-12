@@ -66,7 +66,7 @@ class ReminderService(BaseService):
             active_channel_ind = last_times.index(last_time)
             active_channel = self._watch_channels[active_channel_ind]
             active_poster_was_me = last_was_me[active_channel_ind]
-            stall_time = datetime.utcnow() - last_time
+            stall_time = datetime.now() - last_time
             logger.info(f'Most recent post was {stall_time} ago in {active_channel}')
 
             # Determine when we would issue a reminder based on activity
@@ -103,10 +103,8 @@ class ReminderService(BaseService):
                     )
 
                 # Sleep for the timeout length
-                wake_time = datetime.utcnow() + allowed_stall_time
-                logger.info(f'Sleeping until {wake_time}')
+                wake_time = datetime.now() + allowed_stall_time
                 self._sleep_until(wake_time)
             else:
                 # If we are not past the stall time, wait for the remaining time
-                logger.info(f'Reminder will be sent at {reminder_time}')
                 self._sleep_until(reminder_time)

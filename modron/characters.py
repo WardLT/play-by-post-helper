@@ -131,7 +131,7 @@ class Character(BaseModel):
 
         with open(path, 'w') as fp:
             data = json.loads(self.json())
-            yaml.dump(data, fp)
+            yaml.dump(data, fp, indent=2)
 
     # Validators for different fields
     @validator('proficiencies', 'expertise', each_item=True)

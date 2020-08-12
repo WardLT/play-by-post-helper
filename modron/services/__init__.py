@@ -7,6 +7,8 @@ from time import sleep
 import logging
 from typing import Optional
 
+import humanize
+
 from modron.slack import BotClient
 
 
@@ -46,10 +48,12 @@ class BaseService(Thread, metaclass=ABCMeta):
         Args:
             wake_time (datetime): When for the sleep loop to end (UTC)
         """
+        logger.info(f'Sleeping until {wake_time.isoformat()}, {humanize.naturaltime(wake_time)}.')
         while not self.stop:
             # Compute the amount of remaining time
-            remaining_time = (wake_time - datetime.utcnow()).total_seconds()
+            remaining_time = (wake_time - datetime.now()).total_seconds()
             if remaining_time <= 0:
+                logger.warn(f'Requested a wake time that is {-remaining_time:.2f}s in the past.')
                 return
 
             # Sleep for the maximum allowable time smaller

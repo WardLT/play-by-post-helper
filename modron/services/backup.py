@@ -109,7 +109,7 @@ class BackupService(BaseService):
 
         # Pulling the most recent message
         last_time, _ = self._client.get_last_activity(channel)
-        if isclose((last_time - datetime.utcfromtimestamp(start_time)).total_seconds(), 0.0):
+        if isclose((last_time - datetime.fromtimestamp(start_time)).total_seconds(), 0.0):
             logger.info(f'No new messages in {channel}')
             return 0
 
@@ -292,6 +292,5 @@ class BackupService(BaseService):
                 except Exception as e:
                     logger.info(f'Error during GDrive upload: {e}')
 
-            wake_time = datetime.utcnow() + self.frequency
-            logger.info(f'Sleeping until {wake_time.isoformat()}')
+            wake_time = datetime.now() + self.frequency
             self._sleep_until(wake_time)

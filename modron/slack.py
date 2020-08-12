@@ -103,9 +103,9 @@ class BotClient(WebClient):
         channel_info = self.channels_info(channel=channel_id)['channel']
 
         # Get the last message time
-        last_time = channel_info['latest']['ts']
-        last_time = datetime.utcfromtimestamp(float(last_time))
-        stall_time = datetime.utcnow() - last_time
+        last_time = float(channel_info['latest']['ts'])
+        last_time = datetime.fromtimestamp(last_time)
+        stall_time = datetime.now() - last_time
         logger.info(f'Last message was in {channel_name} was {last_time.isoformat()}, {stall_time} ago')
 
         # Determine if Modron posted last
