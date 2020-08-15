@@ -12,7 +12,7 @@ from time import sleep
 from typing import List, Dict, Optional, Tuple
 
 import humanize
-from googleapiclient.discovery import build
+from googleapiclient.discovery import build, Resource
 from googleapiclient.http import MediaFileUpload
 
 from modron.services import BaseService
@@ -71,16 +71,16 @@ class BackupService(BaseService):
 
         # Create a Google-drive page, if credentials are available
         cred_path = config.get_gdrive_credentials_path()
-        self.gdrive_service = None
         if os.path.isfile(cred_path):
             with open(cred_path, 'rb') as fp:
-                creds = pkl.load(fp)
-
-            # Load in the GDrive service
-            self.gdrive_service = build('drive', 'v3', credentials=creds)
-            logger.info('Created a Google Drive client')
+                self._creds = pkl.load(fp)
+            logger.info('Loaded Google Drive credentials')
         else:
             logger.info('No Google Drive conventions available')
+
+    def get_gdrive_client(self) -> Resource:
+        """Build the GDrive client with stored credentials"""
+        return build('drive', 'v3', credentials=self._creds)
 
     def backup_messages(self, channel: str) -> int:
         """Backup all messages from a certain channel
@@ -150,10 +150,11 @@ class BackupService(BaseService):
         """
 
         # Make sure the gdrive credentials are available
-        assert self.gdrive_service is not None, "Google Drive credentials are unavailable"
+        assert self._creds is not None, "Google Drive credentials are unavailable"
+        gdrive_service = self.get_gdrive_client()
 
         # Make sure the target folder exists
-        output = self.gdrive_service.files().get(fileId=config.gdrive_backup_folder).execute()
+        output = gdrive_service.files().get(fileId=config.gdrive_backup_folder).execute()
         assert output.get('mimeType', None) == 'application/vnd.google-apps.folder'
         logger.info(f'Ready to upload to \"{output["name"]}\" ({config.gdrive_backup_folder})')
 
@@ -164,23 +165,24 @@ class BackupService(BaseService):
 
         # Make the folders for each of the Slacks
         folder_ids = dict(
-            (f, self._get_folder_id(f)) for f in folders
+            (f, self._get_folder_id(gdrive_service, f)) for f in folders
         )
 
         # Upload the documents
         updated_count = 0
         uploaded_size = 0
         for file in files:
-            was_updated, file_size = self._upload_file(file, folder_ids)
+            was_updated, file_size = self._upload_file(gdrive_service, file, folder_ids)
             if was_updated:
                 updated_count += 1
                 uploaded_size += file_size
         return updated_count, uploaded_size
 
-    def _upload_file(self, file: str, folder_ids: Dict[str, str]) -> Tuple[bool, int]:
+    def _upload_file(self, gdrive_service: Resource, file: str, folder_ids: Dict[str, str]) -> Tuple[bool, int]:
         """Upload a file if it has changed
 
         Args:
+            gdrive_service: Authenticated GDrive client
             file (str): Path to the file to be uploaded
             folder_ids (dict): Map of the workspace name to folder ids
         Returns:
@@ -194,7 +196,7 @@ class BackupService(BaseService):
 
         # See if the file already exists
         # Lookup the folder
-        result = self.gdrive_service.files().list(
+        result = gdrive_service.files().list(
             q=f"name = '{file_path.name}' and '{folder_id}' in parents and trashed = false",
             pageSize=2, fields='files/id,files/md5Checksum,files/size'
         ).execute()
@@ -222,7 +224,7 @@ class BackupService(BaseService):
             # Update the file
             file_metadata = {'name': file_path.name}
             media = MediaFileUpload(file, mimetype='application/ld+json')
-            result = self.gdrive_service.files().update(
+            result = gdrive_service.files().update(
                 fileId=file_id, body=file_metadata, media_body=media, fields='id,size').execute()
             logger.info(f'Uploaded {file} to {result.get("id")}')
             return True, int(result.get('size'))
@@ -231,23 +233,24 @@ class BackupService(BaseService):
             file_metadata = {'name': file_path.name,
                              'parents': [folder_id]}
             media = MediaFileUpload(file, mimetype='application/ld+json')
-            result = self.gdrive_service.files().create(body=file_metadata,
-                                                        media_body=media,
-                                                        fields='id,size').execute()
+            result = gdrive_service.files().create(body=file_metadata,
+                                                   media_body=media,
+                                                   fields='id,size').execute()
             logger.info(f'Uploaded {file} to {result.get("id")}')
             return True, int(result.get('size'))
 
-    def _get_folder_id(self, name: str) -> str:
+    def _get_folder_id(self, gdrive_service: Resource, name: str) -> str:
         """Get ID for the folder to hold logs for a certain Slack
 
         Args:
+            gdrive_service (Resource): Authenticated GDrive client
             name (str): Name of the folder
         Returns:
             (str) ID of the folder
         """
 
         # Lookup the folder
-        result = self.gdrive_service.files().list(
+        result = gdrive_service.files().list(
             q=f"name = '{name}' and '{config.gdrive_backup_folder}' in parents and trashed = false",
             pageSize=2
         ).execute()
@@ -265,7 +268,7 @@ class BackupService(BaseService):
                 'mimeType': 'application/vnd.google-apps.folder',
                 'parents': [config.gdrive_backup_folder]
             }
-            result = self.gdrive_service.files().create(
+            result = gdrive_service.files().create(
                 body=file_metadata
             ).execute()
             output = result.get('id')
@@ -285,7 +288,7 @@ class BackupService(BaseService):
             logger.info(f'Backed up {sum(result.values())} messages in total. From: {", ".join(result.keys())}')
 
             # Upload backed-up files to GoogleDrive
-            if self.gdrive_service is not None:
+            if self._creds is not None:
                 try:
                     count, data_size = self.upload_to_gdrive()
                     logger.info(f'Updated {count} files. Uploaded {humanize.naturalsize(data_size, binary=True)}')

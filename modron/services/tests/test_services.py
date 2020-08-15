@@ -49,13 +49,14 @@ def test_backup(client, tmpdir):
     assert counts == {'bot_test': 0}
 
     # Delete the previously-uploaded folder
-    result = thread.gdrive_service.files().list(
+    gd_client = thread.get_gdrive_client()
+    result = gd_client.files().list(
         q=f"name = 'test_slack' and '{config.gdrive_backup_folder}' in parents and trashed = false",
         pageSize=1
     ).execute()
     hits = result.get('files', [])
     if len(hits) == 1:
-        thread.gdrive_service.files().delete(fileId=hits[0]['id']).execute()
+        gd_client.files().delete(fileId=hits[0]['id']).execute()
 
     # Upload once, which should get the files
     n_uploaded, file_sizes = thread.upload_to_gdrive()
