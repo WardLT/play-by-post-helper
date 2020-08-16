@@ -5,6 +5,7 @@ Installing Modron requires:
 1. [Installing the Computational Environment](#installing-python-requirements)
 1. [Creating Authorization Credentials](#creating-the-slack-app)
 1. [Registering Server with Slack](#registering-with-slack)
+1. [Adding Character Sheets](#adding-character-sheets)
 
 ## Where to Install and Run Modron
 
@@ -150,3 +151,11 @@ The `token.pickle` file produced by your application contains the credentials ne
 Modron to access Google Drive on your behalf. 
 Then, change the `backup_folder` configuration to point to a folder in your Google Drive.
 Folder IDs are available from the URL: `https://drive.google.com/drive/u/0/folders/<folder id>`
+
+### Adding Character Sheets
+
+Character sheets for Modron are stored in a YAML format on your server. 
+See [`Adrianna`](../characters/kaluth/adrianna.yml) as an example.
+Add your own characters by first creating a subdirectory in `characters` named
+after your campaign and then add characters following the schema described 
+in [`characters.py`](../modron/characters.py).
