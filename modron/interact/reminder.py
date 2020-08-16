@@ -42,7 +42,7 @@ def _add_delay(team_id: str, time: str) -> str:
     state = ModronState.load()
     if new_time > state.reminder_time[team_id]:
         # Update the reminder time
-        logger.info(f'Updating reminder time from {state.reminder_time} to {new_time}')
+        logger.info(f'Updating reminder time from {state.reminder_time[team_id]} to {new_time}')
         state.reminder_time[team_id] = new_time
         state.save()
 
