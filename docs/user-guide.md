@@ -103,10 +103,7 @@ Send direct messages to Modron and it will reply with status information.
 
 Modron will automatically watch the Slack and issue reminders if play stalls.
 
-### Back-up
+### Message Back-up
 
 Modron will automatically download recent messages to disk and, 
 [if configured](installation.md#backing-up-to-google-drive), upload them to Google drive for later use.
-
-## Other Interactivity
-   
