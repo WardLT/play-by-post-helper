@@ -76,6 +76,8 @@ team_options:
 Once the configuration is set, run Modron with the default settings by 
 first activating the Anaconda environment and then calling: `./start-services.sh`
 
+_Advanced_: Separate multiple access tokens with a ":" for a multi-team deployment of Modron.
+
 ## Registering with Slack
 
 At this point, Modron is able to communicate *to* Slack but will require more
