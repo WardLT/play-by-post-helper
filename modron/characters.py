@@ -51,7 +51,7 @@ _5e_skills = {
     'acrobatics': Ability.DEX, 'animal handling': Ability.WIS, 'arcana': Ability.INT, 'athletics': Ability.STR,
     'deception': Ability.CHA, 'history': Ability.INT, 'insight': Ability.WIS, 'intimidation': Ability.CHA,
     'investigation': Ability.INT, 'medicine': Ability.WIS, 'nature': Ability.INT, 'perception': Ability.WIS,
-    'performance': Ability.CHA, 'persuasion': Ability.CHA, 'religion': Ability.INT, 'slight of hand': Ability.DEX,
+    'performance': Ability.CHA, 'persuasion': Ability.CHA, 'religion': Ability.INT, 'sleight of hand': Ability.DEX,
     'stealth': Ability.DEX, 'survival': Ability.WIS
 }
 
