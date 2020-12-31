@@ -24,7 +24,7 @@ The `/modron` slash commands provide in-chat interaction for Modron.
 Slack [slash commands](https://api.slack.com/interactivity/slash-commands)
 are received by Modron using a single HTTP endpoint `/modron` which 
 routes the command to a single Python function for responding to the command, 
-which is registered to Flask in `server.py`.
+which is registered to Flask in the `create_app` function for Modron.
 
 The [`handle_slash_command`](../modron/interact/__init__.py) function parses
 the input command, launches a thread to handle the more detailed processing, 
@@ -41,7 +41,7 @@ Implementations of this class provide a `register_argparse` that configure
 a argument parser to read the user's command and an `interact` function 
 that perform the desired command given the the parsed arguments and
 the Slash command payload. 
-The `server.py` launch script instantiates these modules with
+The `create_app` launch script instantiates these modules with
 the Slack authentication client(s) and uses their `register_argparse`
 functions to create the "master parser" used by `handle_slash_command`.
 
@@ -71,4 +71,4 @@ for more details.)
 ### Status Checker
 
 We use Slack's events API to provide a simple status-check in.
-It is registered using Slack's event API classes in `server.py`.
+It is registered using Slack's event API classes in `create_app`.
