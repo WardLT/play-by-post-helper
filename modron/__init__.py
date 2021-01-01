@@ -40,29 +40,37 @@ def create_app(test_config=None):
     start_time = datetime.now()
 
     # Get the secure tokens
-    OAUTH_ACCESS_TOKENS = os.environ.get('OAUTH_ACCESS_TOKENS', None)
-    if OAUTH_ACCESS_TOKENS is None:
-        raise ValueError('Cannot find Auth token')
+    OAUTH_ACCESS_TOKENS = os.environ.get('OAUTH_ACCESS_TOKENS')
     SIGNING_SECRET = os.environ.get('SLACK_SIGNING_SECRET')
-    if SIGNING_SECRET is None:
-        raise ValueError('Cannot find signing secret')
     CLIENT_SECRET = os.environ.get('CLIENT_SECRET')
-    if CLIENT_SECRET is None:
-        raise ValueError('Cannot find client secret')
     CLIENT_ID = os.environ.get('CLIENT_ID')
-    if CLIENT_ID is None:
-        raise ValueError('Cannot find the client ID')
 
     # Make the Flask app
-    app = Flask('modron')
+    app = Flask('modron', template_folder='./views/templates', static_folder="./views/static")
+
+    # Store when the app was launched and team configuration information
+    app.config['start_time'] = start_time
+    app.config['team_config'] = config
+
+    # Register the views
+    from .views import status
+    app.register_blueprint(status.bp)
+
+    # Store the clients
+    clients = {}
+    app.config['clients'] = clients
 
     # Make the Slack client and Events adapter
-    clients = {}
+    if OAUTH_ACCESS_TOKENS is None:
+        logger.warning('OAUTH_ACCESS_TOKENS was unset. Skipping all Slack-related functionality')
+        return app
+
     for token in OAUTH_ACCESS_TOKENS.split(":"):
         client = BotClient(token=token)
+        client.team_info()
         clients[client.team_id] = client
     event_adapter = SlackEventAdapter(SIGNING_SECRET, "/slack/events", app)
-    logger.info('Finished initializing clients')
+    logger.info(f'Finished initializing {len(clients)} Slack clients')
 
     # Check that we have configurations for each team
     authed_teams = set(clients.keys())
@@ -85,8 +93,11 @@ def create_app(test_config=None):
             logger.info(f'No reminders for {team_config.name}')
 
         # Start the backup thread
-        backup = BackupService(client, frequency=timedelta(days=1), channel_regex=team_config.backup_channels)
-        backup.start()
+        if team_config.backup_channels is not None:
+            backup = BackupService(client, frequency=timedelta(days=1), channel_regex=team_config.backup_channels)
+            backup.start()
+        else:
+            logger.info(f'No backup for {team_config.name}')
 
     # Generate the slash command responder
     modules = [

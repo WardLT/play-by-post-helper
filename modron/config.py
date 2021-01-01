@@ -3,7 +3,7 @@ import os
 import logging
 from glob import glob
 from datetime import timedelta
-from typing import List, Dict, Tuple
+from typing import List, Dict, Tuple, Optional
 
 import yaml
 from pydantic import BaseModel, Field
@@ -60,7 +60,7 @@ class TeamConfig(BaseModel):
                                           description='How long to wait for activity before issuing reminders')
 
     # Backing up messages
-    backup_channels: str = Field(r'^ic_.*', help='Regex defining which channels to backup')
+    backup_channels: Optional[str] = Field(r'^ic_.*', help='Regex defining which channels to backup')
 
     # Logging dice rolls
     dice_log: bool = Field(True, help='Whether to log dice rolls for this team')
