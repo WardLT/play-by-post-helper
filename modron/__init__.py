@@ -2,9 +2,11 @@ import os
 import sys
 import json
 import logging
+from urllib.parse import quote_plus, urlparse
 from functools import partial
 from datetime import datetime, timedelta
 from logging.handlers import RotatingFileHandler
+from uuid import uuid4
 
 import requests
 from flask import Flask, request
@@ -47,14 +49,24 @@ def create_app(test_config=None):
 
     # Make the Flask app
     app = Flask('modron', template_folder='./views/templates', static_folder="./views/static")
+    app.jinja_env.filters['quote_plus'] = quote_plus
+    app.secret_key = str(uuid4())
 
-    # Store when the app was launched and team configuration information
+    def get_netloc(url):
+        p = urlparse(url)
+        return f'{p.scheme}://{p.netloc}'
+    app.jinja_env.filters['get_netloc'] = get_netloc
+
+    # Store some details about the runtime configuration
     app.config['start_time'] = start_time
     app.config['team_config'] = config
+    app.config['CLIENT_SECRET'] = CLIENT_SECRET
+    app.config['CLIENT_ID'] = CLIENT_ID
 
     # Register the views
-    from .views import status
+    from .views import status, auth
     app.register_blueprint(status.bp)
+    app.register_blueprint(auth.bp)
 
     # Store the clients
     clients = {}
@@ -81,6 +93,9 @@ def create_app(test_config=None):
     # Make the services
     reminder_threads = {}
     for team_id, team_config in config.team_options.items():
+        if team_id not in clients:
+            logging.warning(f'Missing OAuth Token for {team_id}')
+            continue
         client = clients[team_id]
 
         # Start the reminder thread

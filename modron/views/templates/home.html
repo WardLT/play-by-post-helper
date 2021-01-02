@@ -12,7 +12,7 @@ and can be found on <a href="https://github.com/WardLT/play-by-post-helper">GitH
 <ol>
  {%for name, client in config['clients'].items()%}
   <li><a href="https://{{client.team_info()['team']['domain']}}.slack.com/">{{config['team_config'].team_options[name].name}}</a></li>
-  {%endfor%}
+ {%endfor%}
 </ol>
 
 {%endblock%}
