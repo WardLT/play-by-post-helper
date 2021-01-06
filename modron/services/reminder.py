@@ -1,5 +1,5 @@
 """Services related to reminding players when it is their turn"""
-from datetime import datetime
+from datetime import datetime, timedelta
 from math import inf
 import logging
 
@@ -29,8 +29,39 @@ class ReminderService(BaseService):
         """
         short_name = config.team_options[client.team_id].name
         super().__init__(client, max_sleep_time, name=f'reminder_{short_name}')
-        self._reminder_channel = reminder_channel
-        self._watch_channels = client.match_channels(watch_channel_regex)
+        self.reminder_channel = reminder_channel
+        self.watch_channels = client.match_channels(watch_channel_regex)
+        self.allowed_stall_time = config.team_options[self._client.team_id].allowed_stall_time
+
+        # Status attributes
+        self.active_channel = None
+        self.last_updated_time = datetime.now()
+        self.last_channel_poll = datetime.now()
+
+    @property
+    def is_expired(self) -> bool:
+        """Whether the played has stalled for the specified amount of time"""
+        return datetime.now() > self.team_reminder_time
+    
+    @property
+    def stall_time(self) -> timedelta:
+        """How long play has been stalled, at most"""
+        return datetime.now() - self.last_updated_time
+
+    @property
+    def since_last_poll(self) -> timedelta:
+        """How long since we have polled for new messages"""
+        return datetime.now() - self.last_channel_poll
+
+    @property
+    def time_until_reminder(self) -> timedelta:
+        """How long until a reminder"""
+        return self.team_reminder_time - datetime.now()
+
+    @property
+    def team_reminder_time(self):
+        state = ModronState.load()
+        return state.reminder_time.get(self._client.team_id, None)
 
     def run(self) -> None:
         """Display reminders if the play-by-post stalls.
@@ -43,36 +74,37 @@ class ReminderService(BaseService):
         be best run from a separate thread.
         """
         # Get the channel ID for the reminder channel
-        reminder_channel_id = self._client.get_channel_id(self._reminder_channel)
+        reminder_channel_id = self._client.get_channel_id(self.reminder_channel)
 
         # Warn user if the bot does not write a channel watched for stalling
-        if self._reminder_channel not in self._watch_channels:
+        if self.reminder_channel not in self.watch_channels:
             logger.warning('Bot will write reminders to a channel not being watched for stalling, which '
                            'means it will issue reminders even if no other activity has occurred since the '
                            'previous reminder.')
 
         # Make sure I am in the channels to be watched and reminder channel
-        self._client.add_self_to_channel(self._reminder_channel)
-        for channel in self._watch_channels:
+        self._client.add_self_to_channel(self.reminder_channel)
+        for channel in self.watch_channels:
             self._client.add_self_to_channel(channel)
 
         # Main loop: Wait for messages
         while True:
             # Check every channel
-            last_times, last_was_me = zip(*map(self._client.get_last_activity, self._watch_channels))
+            last_times, last_was_me = zip(*map(self._client.get_last_activity, self.watch_channels))
 
             # Get the most recent activity and info on most recent channel
             last_time = max(last_times)
+            self.last_updated_time = last_time
             active_channel_ind = last_times.index(last_time)
-            active_channel = self._watch_channels[active_channel_ind]
+            self.active_channel = self.watch_channels[active_channel_ind]
             active_poster_was_me = last_was_me[active_channel_ind]
             stall_time = datetime.now() - last_time
-            logger.info(f'Most recent post was {stall_time} ago in {active_channel}')
+            logger.info(f'Most recent post was {stall_time} ago in {self.active_channel}')
+            self.last_channel_poll = datetime.now()
 
             # Determine when we would issue a reminder based on activity
             state = ModronState.load()
-            allowed_stall_time = config.team_options[self._client.team_id].allowed_stall_time
-            reminder_time = last_time + allowed_stall_time
+            reminder_time = last_time + self.allowed_stall_time
 
             # If it is after any previous reminder time, replace that reminder time
             team_reminder_time = state.reminder_time.get(self._client.team_id, None)
@@ -87,7 +119,7 @@ class ReminderService(BaseService):
 
             # Check if we are past the stall time
             if datetime.now() > reminder_time:
-                logger.info(f'Channel has been stalled for {stall_time - allowed_stall_time} too long')
+                logger.info(f'Channel has been stalled for {stall_time - self.allowed_stall_time} too long')
 
                 # Check if the bot was the last one to send a message
                 #  If not, then send a reminder to the channel
@@ -103,7 +135,7 @@ class ReminderService(BaseService):
                     )
 
                 # Sleep for the timeout length
-                wake_time = datetime.now() + allowed_stall_time
+                wake_time = datetime.now() + self.allowed_stall_time
                 self._sleep_until(wake_time)
             else:
                 # If we are not past the stall time, wait for the remaining time

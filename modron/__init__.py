@@ -6,8 +6,8 @@ from urllib.parse import quote_plus, urlparse
 from functools import partial
 from datetime import datetime, timedelta
 from logging.handlers import RotatingFileHandler
-from uuid import uuid4
 
+import humanize
 import requests
 from flask import Flask, request
 from slackeventsapi import SlackEventAdapter
@@ -50,12 +50,13 @@ def create_app(test_config=None):
     # Make the Flask app
     app = Flask('modron', template_folder='./views/templates', static_folder="./views/static")
     app.jinja_env.filters['quote_plus'] = quote_plus
-    app.secret_key = str(uuid4())
+    app.secret_key = CLIENT_SECRET
 
     def get_netloc(url):
         p = urlparse(url)
         return f'{p.scheme}://{p.netloc}'
     app.jinja_env.filters['get_netloc'] = get_netloc
+    app.jinja_env.filters['humanize_td'] = humanize.naturaldelta
 
     # Store some details about the runtime configuration
     app.config['start_time'] = start_time
@@ -91,6 +92,7 @@ def create_app(test_config=None):
         raise ValueError(f'Missing configuration data for {len(missing_config)} teams: {", ".join(missing_config)}')
 
     # Make the services
+    app.config['services'] = {'reminder': {}, 'backup': {}}
     reminder_threads = {}
     for team_id, team_config in config.team_options.items():
         if team_id not in clients:
@@ -104,6 +106,7 @@ def create_app(test_config=None):
                                        team_config.watch_channels)
             reminder.start()
             reminder_threads[team_id] = reminder
+            app.config['services']['reminder'][team_config.name] = reminder
         else:
             logger.info(f'No reminders for {team_config.name}')
 
@@ -111,6 +114,7 @@ def create_app(test_config=None):
         if team_config.backup_channels is not None:
             backup = BackupService(client, frequency=timedelta(days=1), channel_regex=team_config.backup_channels)
             backup.start()
+            app.config['services']['backup'][team_config.name] = backup
         else:
             logger.info(f'No backup for {team_config.name}')
 

@@ -138,7 +138,6 @@ class BackupService(BaseService):
         Returns:
             (dict) Number of messages downloaded per channel
         """
-
         return dict((c, self.backup_messages(c)) for c in self.backup_channels)
 
     def upload_to_gdrive(self) -> Tuple[int, int]:
