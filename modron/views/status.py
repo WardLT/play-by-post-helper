@@ -6,7 +6,7 @@ import humanize
 from flask import Blueprint, render_template, current_app, redirect, url_for, flash
 
 from .decorators import enforce_login
-from .. import ReminderService
+from .. import ReminderService, BackupService
 
 bp = Blueprint('status', __name__)
 
@@ -31,3 +31,17 @@ def reminder(team_name):
     reminder: ReminderService = threads[team_name]
 
     return render_template("reminder.html", team=team_name, reminder=reminder)
+
+
+@bp.route('/services/backup/<team_name>')
+def backup(team_name):
+    # Get the configuration for the current application
+    threads = current_app.config['services']['backup']
+
+    # Get the service object
+    if team_name not in threads:
+        flash(f'No backup service for team "{team_name}"', "danger")
+        return redirect(url_for('status.homepage'))
+    backup: BackupService = threads[team_name]
+
+    return render_template("backup.html", team=team_name, backup=backup)

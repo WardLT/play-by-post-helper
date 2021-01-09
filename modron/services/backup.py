@@ -78,6 +78,33 @@ class BackupService(BaseService):
         else:
             logger.info('No Google Drive conventions available')
 
+        # Store status information
+        self.last_backup_date = datetime.now()
+        self.last_backup_successful = True
+        self.total_uploaded = 0
+        self.next_run_time = datetime.now()
+        self.gdrive_backup_folder = None
+        if self._creds is not None:
+            gdc = self.get_gdrive_client()
+            self.gdrive_backup_folder = self._get_folder_id(gdc, short_name)
+
+    @property
+    def since_last_backup(self) -> timedelta:
+        """Time since the last backup"""
+        return datetime.now() - self.last_backup_date
+
+    @property
+    def backup_url(self) -> str:
+        """URL for the backup folder"""
+        if self.gdrive_backup_folder is None:
+            return None
+        return f'https://drive.google.com/drive/folders/{self.gdrive_backup_folder}'
+
+    @property
+    def until_next_backup(self) -> timedelta:
+        """Time until the next backup"""
+        return self.next_run_time - datetime.now()
+
     def get_gdrive_client(self) -> Resource:
         """Build the GDrive client with stored credentials"""
         return build('drive', 'v3', credentials=self._creds)
@@ -285,14 +312,17 @@ class BackupService(BaseService):
             # Run the backup
             result = self.backup_all_channels()
             logger.info(f'Backed up {sum(result.values())} messages in total. From: {", ".join(result.keys())}')
+            self.last_backup_successful = False
 
             # Upload backed-up files to GoogleDrive
             if self._creds is not None:
                 try:
                     count, data_size = self.upload_to_gdrive()
+                    self.last_backup_successful = True
                     logger.info(f'Updated {count} files. Uploaded {humanize.naturalsize(data_size, binary=True)}')
+                    self.total_uploaded += data_size
                 except Exception as e:
                     logger.info(f'Error during GDrive upload: {e}')
 
-            wake_time = datetime.now() + self.frequency
-            self._sleep_until(wake_time)
+            self.next_run_time = datetime.now() + self.frequency
+            self._sleep_until(self.next_run_time)

@@ -57,6 +57,7 @@ def create_app(test_config=None):
         return f'{p.scheme}://{p.netloc}'
     app.jinja_env.filters['get_netloc'] = get_netloc
     app.jinja_env.filters['humanize_td'] = humanize.naturaldelta
+    app.jinja_env.filters['humanize_size'] = humanize.naturalsize
 
     # Store some details about the runtime configuration
     app.config['start_time'] = start_time
