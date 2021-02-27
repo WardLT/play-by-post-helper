@@ -87,7 +87,8 @@ class BotClient(WebClient):
              (dict) Reply from server on request to add
         """
         logger.info(f'Adding myself to the channel: {channel_name}')
-        return self.channels_join(name=channel_name)
+        channel_id = self.get_channel_id(channel_name)
+        return self.conversations_join(channel=channel_id)
 
     def get_last_activity(self, channel_name: str) -> Tuple[datetime, bool]:
         """Determine the most recent time a message was sent in a channel
@@ -100,16 +101,17 @@ class BotClient(WebClient):
         """
         # Query the channel information
         channel_id = self.get_channel_id(channel_name)
-        channel_info = self.channels_info(channel=channel_id)['channel']
+        channel_history = self.conversations_history(channel=channel_id, limit=1)
 
         # Get the last message time
-        last_time = float(channel_info['latest']['ts'])
+        last_message = channel_history['messages'][0]
+        last_time = float(last_message['ts'])
         last_time = datetime.fromtimestamp(last_time)
         stall_time = datetime.now() - last_time
         logger.info(f'Last message was in {channel_name} was {last_time.isoformat()}, {stall_time} ago')
 
         # Determine if Modron posted last
-        last_was_me = channel_info['latest'].get('user', None) == self.my_id
+        last_was_me = last_message.get('user', None) == self.my_id
 
         return last_time, last_was_me
 
