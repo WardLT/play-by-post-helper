@@ -367,6 +367,37 @@ class Character(BaseModel):
         # Skill
         return self.skill_modifier(check)
 
+    def get_skills_by_ability(self, ability: str) -> Dict[str, str]:
+        """List out the skills for this character that use a certain base ability
+
+        Args:
+            ability: Name of the ability
+        Returns:
+            Dictionary of the skill mapped to the level of skill (expert, proficient, untrained)
+        """
+
+        # Match the ability
+        matched_ability = Ability.match(ability)
+
+        # Loop over the 5e skills
+        matched_skills = [skill for skill, attr in _5e_skills.items() if attr == matched_ability]
+
+        # Match the custom skills
+        matched_skills.extend([
+            skill for skill, attr in self.custom_skills.items() if attr == matched_ability
+        ])
+
+        # Return the outputs
+        output = {}
+        for skill in matched_skills:
+            if skill in self.proficiencies:
+                output[skill] = "proficient"
+            elif skill in self.expertise:
+                output[skill] = "expert"
+            else:
+                output[skill] = "untrained"
+        return output
+
 
 def list_available_characters(team_id: str, user_id: str) -> List[str]:
     """List the names of character sheets that are available to a user

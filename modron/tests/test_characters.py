@@ -67,6 +67,18 @@ def test_lookup_modifier(joe):
     assert joe.lookup_modifier("medicine") == 4
 
 
+def test_skill_list(joe):
+    skills = joe.get_skills_by_ability("strength")
+    assert skills["athletics"] == "expert"
+    assert len(skills) == 1
+
+    skills = joe.get_skills_by_ability("charisma")
+    assert skills["tomfoolery"] == "untrained"
+
+    skills = joe.get_skills_by_ability("wisdom")
+    assert skills["medicine"] == "proficient"
+
+
 def test_hp_changes(joe):
     # Make sure it starts out at full health
     assert joe.current_hit_points == joe.hit_points
