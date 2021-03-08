@@ -66,9 +66,10 @@ def create_app(test_config=None):
     app.config['CLIENT_ID'] = CLIENT_ID
 
     # Register the views
-    from .views import status, auth
+    from .views import status, auth, players
     app.register_blueprint(status.bp)
     app.register_blueprint(auth.bp)
+    app.register_blueprint(players.bp)
 
     # Store the clients
     clients = {}

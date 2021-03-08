@@ -1,0 +1,91 @@
+{%extends "base.html"%}
+
+{%block content%}
+<h1 class="mt-4">
+  {%block title%}{{sheet.name}}{%endblock%}
+  <small class="text-muted">{{sheet.race}} {{sheet.background}}</small>
+</h1>
+
+<p><i>
+  {% for name, level in sheet.classes.items() %}
+  {% if not loop.first %}
+  <span>&#183;</span>
+  {% endif %}
+  {{name.capitalize()}} {{level}}
+  {% endfor %}
+</i></p>
+
+<p><div class="container">
+  <div class="row">
+    <div class="col-sm-3"><b>Alignment</b>: {{sheet.alignment.value}}</div>
+    <div class="col-sm-3"><b>Armor Class</b>: {{sheet.armor_class}}</div>
+    <div class="col-sm-3"><b>Speed</b>: {{sheet.speed}}</div>
+  </div>
+  <div class="row">
+    <div class="col-sm-3"><b>Initiative</b>: {{"{:+1d}".format(sheet.initiative)}}</div>
+    <div class="col-sm-3"><b>Proficiency</b>: {{"{:+1d}".format(sheet.proficiency_bonus)}}</div>
+  </div>
+  <div class="row">
+    <div class="col-md-auto"><b>Hit points</b>: {{sheet.total_hit_points}} /
+      {% if sheet.hit_points_adjustment == 0 %}
+        {{sheet.current_hit_point_maximum}}
+      {% else %}
+        <span style="color:{{'red' if sheet.hit_points_adjustment < 0 else 'green'}};font-weight:bold;"
+              data-toggle="tooltip" data-placement="top" title="Adjustment: {{sheet.hit_points_adjustment}}">
+          {{sheet.current_hit_point_maximum}}
+        </span>
+      {% endif %}
+    </div>
+    <div class="col-sm-2">
+      <div class="progress">
+        {% set bar_max = sheet.current_hit_point_maximum + sheet.temporary_hit_points %}
+        {% set fraction = sheet.total_hit_points / bar_max %}
+        <div class="progress-bar" style="width: {{'{:.3f}'.format(fraction * 100)}}%;"></div>
+      </div>
+    </div>
+  </div>
+
+</div></p>
+
+<h2>Attributes and Abilities</h2>
+
+<p>Key characteristics and their associated skills</p>
+
+{% macro print_skills(attribute) -%}
+<p>
+  <h5 style="card-text">Skills</h5>
+</p>
+<p style="card-text">
+{% for skill, level in sheet.get_skills_by_ability(attribute).items() %}
+  {% if level == "untrained" %}<i>{{skill.capitalize()}}</i>:
+  {% elif level == "proficient" %}{{skill.capitalize()}}:
+  {% else %}<b>{{skill.capitalize()}}</b>:
+  {% endif %}
+  {{"{:+1d}".format(sheet.skill_modifier(skill))}}</br>
+{% endfor %}
+</p>
+{%- endmacro %}
+
+{% macro make_stat_card(attribute) -%}
+<div class="card">
+  <div class="card-body">
+    <h4 class="card-title">{{attribute.capitalize()}}</h4>
+    <h6 class="card-subtitle md-2 text-muted"><b>Score</b>: {{sheet | attr(attribute)}} ({{"{:+d}".format(sheet.ability_modifier(attribute))}})</h6>
+
+    <p><h5 class="card-text">Save: {{"{:+1}".format(sheet.save_modifier(attribute))}}</h5></p>
+    {{print_skills(attribute)}}
+  </div>
+</div>
+{%- endmacro %}
+
+<div class="card-deck">
+  {% for attr in ["strength", "dexterity", "constitution"] %}
+  {{ make_stat_card(attr) }}
+  {% endfor %}
+</div>
+<div class="card-deck">
+  {% for attr in ["intelligence", "wisdom", "charisma"] %}
+  {{ make_stat_card(attr) }}
+  {% endfor %}
+</div>
+{%endblock%}
