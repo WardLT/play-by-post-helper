@@ -1,16 +1,12 @@
 """Utilities for evaluating the fairness of die"""
-from pathlib import Path
-from csv import DictReader
-from typing import List, Union, Tuple, Optional
+from typing import List, Union, Tuple
 
+from scipy.linalg import solve
 from scipy.optimize import minimize
 import numpy as np
 
 
 # Dice models
-from modron.dice import DiceRoll
-
-
 class DieModel:
     """Model for the rolls of the dice"""
 
@@ -106,6 +102,46 @@ class SlantedDie(DieModel):
 
         # Compute the probability for each roll
         return np.multiply(1. / self.n_faces, start + np.multiply(slope, np.subtract(rolls, 1)))
+
+
+class ExtremeDie(DieModel):
+    """Die that prefer to roll extreme values"""
+
+    def __init__(self, n_faces: int, extremity: float = 1):
+        """
+        Args:
+            n_faces: Number of faces on the die
+            extremity: Ratio between extreme and middle value
+        """
+        super().__init__(n_faces)
+        self.extremity = extremity
+
+    def set_params(self, x: List[float]):
+        self.extremity, = x
+
+    def get_params(self) -> List[float]:
+        return [self.extremity]
+
+    def get_bounds(self) -> List[Tuple[float, float]]:
+        return [(0.001, 1000)]
+
+    def compute_likelihood(self, rolls: Union[np.ndarray, int, List[int]]) -> np.ndarray:
+        # Compute the curvature
+        #  Let m be the average value: m = (d - 1) / 2 + 1 = 0.5 * (d + 1)
+        #  Assume p(x) ~ a * (x - m) ** 2 + c
+        #  Let p(m) = c
+        #  Let p(1) = e * p(m)
+        #   a * (1 - m) ** 2 + c = e * c
+        #  Eq 1: (1 - m) ** 2 * a - (1 - e) * c = 0
+        #  Let: sum_i=1^d p(i) = 1
+        #  Eq 2: a * sum_i=1^d (i - m) ** 2 + d * c = 1
+        m = 0.5 * (self.n_faces + 1)
+        a, c = solve([
+            [(1 - m) ** 2, 1 - self.extremity],
+            [np.power(np.arange(1, self.n_faces + 1) - m, 2).sum(), self.n_faces]
+        ], [0, 1])
+
+        return a * np.power(np.subtract(rolls, m), 2) + c
 
 
 def fit_model(rolls: List[int], die_model: DieModel) -> float:
