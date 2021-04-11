@@ -2,7 +2,8 @@ language: python
 python:
   - "3.6"
 install:
-  - pip install -e . --upgrade
+  - pip install -r requirements.txt --upgrade
+  - pip install -e .
   - pip install coveralls
   - pip install -r test-requirements.txt
   - pip list
