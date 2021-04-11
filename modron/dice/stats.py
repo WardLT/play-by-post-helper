@@ -129,7 +129,6 @@ class ExtremeDie(DieModel):
         # Compute the curvature
         #  Let m be the average value: m = (d - 1) / 2 + 1 = 0.5 * (d + 1)
         #  Assume p(x) ~ a * (x - m) ** 2 + c
-        #  Let p(m) = c
         #  Let p(1) = e * p(m)
         #   a * (1 - m) ** 2 + c = e * c
         #  Eq 1: (1 - m) ** 2 * a - (1 - e) * c = 0

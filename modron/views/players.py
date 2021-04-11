@@ -27,4 +27,3 @@ def display_sheet():
 
     # Render the character sheet
     return render_template('sheet.html', sheet=sheet)
-

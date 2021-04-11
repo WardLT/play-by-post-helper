@@ -42,7 +42,7 @@ class ReminderService(BaseService):
     def is_expired(self) -> bool:
         """Whether the played has stalled for the specified amount of time"""
         return datetime.now() > self.team_reminder_time
-    
+
     @property
     def stall_time(self) -> timedelta:
         """How long play has been stalled, at most"""
