@@ -1,3 +1,4 @@
+six<2dev,>=1.13.0  # Manually specified to fix Travis environment
 pytest>=5.3
 pytest-flask
 pytest-timeout
