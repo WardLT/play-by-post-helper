@@ -8,9 +8,10 @@ from modron.interact.npc import NPCGenerator
 from modron.interact.reminder import ReminderModule
 from modron.interact.dice_roll import DiceRollInteraction
 from modron.interact.character import CharacterSheet
+from modron.interact.stats import StatisticModule
 from modron.interact import assemble_parser, NoExitParser, SlashCommandPayload
 
-_test_modules = [NPCGenerator, ReminderModule, DiceRollInteraction, CharacterSheet]
+_test_modules = [NPCGenerator, ReminderModule, DiceRollInteraction, CharacterSheet, StatisticModule]
 
 
 @fixture

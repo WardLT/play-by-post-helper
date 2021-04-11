@@ -19,6 +19,7 @@ from modron.interact.dice_roll import DiceRollInteraction
 from modron.interact.reminder import ReminderModule
 from modron.interact.npc import NPCGenerator
 from modron.interact.character import CharacterSheet
+from modron.interact.stats import StatisticModule
 from modron.services.backup import BackupService
 from modron.services.reminder import ReminderService
 from modron.slack import BotClient
@@ -123,6 +124,7 @@ def create_app(test_config=None):
     # Generate the slash command responder
     modules = [
         DiceRollInteraction(clients),
+        StatisticModule(clients),
         ReminderModule(clients, reminder_threads),
         NPCGenerator(clients),
         CharacterSheet(clients)

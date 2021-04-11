@@ -1,5 +1,5 @@
 """Utilities for evaluating the fairness of die"""
-from typing import List, Union, Tuple, Dict, Any
+from typing import List, Union, Tuple
 
 from scipy.linalg import solve
 from scipy.optimize import minimize
