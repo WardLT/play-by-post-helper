@@ -5,8 +5,9 @@ import shutil
 
 # Copy over the full logs before running the test
 cur_path = Path(__file__).parent
+cur_path.joinpath('dice-logs').mkdir(exist_ok=True)
 shutil.copy(
-    cur_path.parent.parent.parent.joinpath('dice-logs/kaluth.csv'),
+    cur_path.parent.parent.parent.joinpath('dice-logs/kaluth-test.csv'),
     cur_path.joinpath('dice-logs/kaluth.csv')
 )
 
