@@ -1,8 +1,9 @@
 """Utilities for evaluating the fairness of die"""
-from typing import List, Union, Tuple
+from typing import List, Union, Tuple, Dict, Any
 
 from scipy.linalg import solve
 from scipy.optimize import minimize
+from pydantic import BaseModel, Field
 import numpy as np
 
 
@@ -16,6 +17,14 @@ class DieModel:
             n_faces: Number of faces on the dice
         """
         self.n_faces = n_faces
+
+    @property
+    def description(self) -> str:
+        raise NotImplementedError()
+
+    @property
+    def likelihoods(self) -> List[float]:
+        return self.compute_likelihood(np.arange(1, self.n_faces + 1)).tolist()
 
     def get_params(self) -> List[float]:
         """Get the parameters for the model
@@ -58,6 +67,10 @@ class DieModel:
 class FairDie(DieModel):
     """Model for a fair dice"""
 
+    @property
+    def description(self) -> str:
+        return "A fair die."
+
     def get_params(self) -> List[float]:
         return []
 
@@ -80,11 +93,18 @@ class SlantedDie(DieModel):
         """
         Args:
             n_faces: Number of faces on the dice
-            weight: Factor
+            weight: Large values are this factor more likely than small values
         """
         super().__init__(n_faces)
         assert weight > 0, "The weight value must be positive"
         self.weight = weight
+
+    @property
+    def description(self) -> str:
+        if self.weight > 1:
+            return f"Large values are {self.weight:.1g}x more likely than small."
+        else:
+            return f"Small values are {1./self.weight:.1g}x more likely than large."
 
     def get_params(self) -> List[float]:
         return [self.weight]
@@ -115,6 +135,13 @@ class ExtremeDie(DieModel):
         """
         super().__init__(n_faces)
         self.extremity = extremity
+
+    @property
+    def description(self) -> str:
+        if self.extremity > 1:
+            return f"Extreme values are {self.extremity:.1g}x more likely than average."
+        else:
+            return f"Average values are {1. / self.extremity:.1g}x more likely than extreme."
 
     def set_params(self, x: List[float]):
         self.extremity, = x
@@ -153,6 +180,10 @@ def fit_model(rolls: List[int], die_model: DieModel) -> float:
         Negative log-likelihood of the dice model
     """
 
+    # Special case: FairDie
+    if isinstance(die_model, FairDie):
+        return die_model.compute_neg_log_likelihood(rolls)
+
     # Set up the optimization problem
     def nll(x):
         die_model.set_params(x)
@@ -162,3 +193,61 @@ def fit_model(rolls: List[int], die_model: DieModel) -> float:
     # Set the parameters
     die_model.set_params(fx.x)
     return fx.fun
+
+
+# Summary functions
+class DieModelSummary(BaseModel):
+    """Results of a dice model fitting"""
+
+    model_name: str = Field(..., description="Name of the model")
+    nll: float = Field(..., description="Negative log-likelihood of the model fitting")
+    description: str = Field(..., description="Short description for the model")
+    likelihoods: List[float] = Field(..., description="Likelihoods for each value of die")
+
+    @classmethod
+    def from_fitting(cls, rolls: List[int], model: DieModel) -> 'DieModelSummary':
+        """Create a die summary
+
+        Args:
+            model: Model to fit and summarize
+            rolls: Observed rolls
+        """
+
+        # Fit the model
+        nll = fit_model(rolls, model)
+
+        # Create the summary
+        return cls(
+            model_name=model.__class__.__name__,
+            nll=nll,
+            description=model.description,
+            likelihoods=model.likelihoods
+        )
+
+
+class DiceRollStatistics(BaseModel):
+    """Statistics about dice rolls"""
+
+    rolls: List[int] = Field(..., description="Values of all of the rolls")
+    num_faces: int = Field(..., description="Number of faces on the die")
+    models: List[DieModelSummary] = Field(..., description="Description of the models. Sorted by fitness")
+
+    @classmethod
+    def from_rolls(cls, num_faces: int, rolls: List[int]) -> 'DiceRollStatistics':
+        """Generate a summary of a series of rolls
+
+        Args:
+            num_faces: Number of faces on the die
+            rolls: Value of the rolls
+        """
+
+        # Run the models
+        fits = [DieModelSummary.from_fitting(rolls, model)
+                for model in [FairDie(num_faces), SlantedDie(num_faces), ExtremeDie(num_faces)]]
+        fits = sorted(fits, key=lambda x: x.nll)  # Sort by fitness
+
+        return DiceRollStatistics(
+            rolls=rolls,
+            num_faces=num_faces,
+            models=fits
+        )

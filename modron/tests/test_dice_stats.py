@@ -3,7 +3,7 @@ from math import isclose
 from pytest import mark
 import numpy as np
 
-from modron.dice.stats import SlantedDie, FairDie, DieModel, ExtremeDie, fit_model
+from modron.dice.stats import SlantedDie, FairDie, DieModel, ExtremeDie, fit_model, DiceRollStatistics
 
 
 def test_fair():
@@ -15,17 +15,19 @@ def test_fair():
 def test_slanted():
     m = SlantedDie(6, 1)
     assert isclose(m.compute_likelihood(6), 1. / 6)
-    for w in [0.5, 1., 2.]:
+    for w in [0.5, 2.]:
         m.set_params([w])
         assert isclose(m.compute_likelihood(6) / m.compute_likelihood(1), w)
+        assert m.description.startswith('Large' if w > 1 else 'Small')
 
 
 def test_extreme():
     m = ExtremeDie(6, 1)
     assert isclose(m.compute_likelihood(6), 1. / 6)
-    for w in [0.5, 1., 2.]:
+    for w in [0.5, 2.]:
         m.set_params([w])
         assert isclose(m.compute_likelihood(6) / m.compute_likelihood(3.5), w)
+        assert m.description.startswith('Extreme' if w > 1 else 'Average')
 
 
 @mark.parametrize(
@@ -45,5 +47,12 @@ def test_fit():
     # Test an unfair die
     r = [1, 2, 3, 6, 3, 1]
     fit_model(r, m)
-    print(m.weight)
     assert m.weight < 1.
+
+
+def test_summary():
+    rolls = [1, 2, 5, 5, 8, 12, 16, 13, 20]
+    summary = DiceRollStatistics.from_rolls(20, rolls)
+
+    # The fair die is always the least likely
+    assert summary.models[-1].model_name == "FairDie"
