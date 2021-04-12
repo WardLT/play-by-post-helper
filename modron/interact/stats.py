@@ -73,6 +73,7 @@ class StatisticModule(InteractionModule):
             logger.info(f'Reduced to {len(dice_log)} records without any modifiers')
 
         # Extract the values of interest
+        dice_log = dice_log.copy()  # Avoid copy warnings
         dice_log["dice_values"] = dice_log["dice_values"].apply(json.loads)
         rolls = []
         for _, row in dice_log.iterrows():
@@ -93,12 +94,12 @@ class StatisticModule(InteractionModule):
             payload.send_reply(header, ephemeral=True)
             return
 
-        output = [header, f'**Last {min(5, len(rolls))} rolls**: {", ".join(map(str, rolls))}']
+        output = [header, f'*Last {min(5, len(rolls))} rolls*: {", ".join(map(str, rolls[-5:]))}']
         if args.reason is None:
             common_rolls = dice_log[~dice_log['reason'].isnull()].reason.value_counts()
-            output.append(f'**Most common rolls**: {", ".join(common_rolls.iloc[:3].index)}')
+            output.append(f'*Most common rolls*: {", ".join(common_rolls.iloc[:3].index)}')
 
-        output.append(f'**Die description**: {summary.models[0].description}')
+        output.append(f'*Die description*: {summary.models[0].description}')
 
         # Send outputs to user
         payload.send_reply("\n".join(output), ephemeral=True)

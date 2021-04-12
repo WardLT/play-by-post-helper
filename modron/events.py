@@ -19,6 +19,7 @@ def status_check(event, clients: Dict[str, BotClient], start_time: datetime = da
         clients: Client to use when replying, key is the team ID
         start_time (datetime): Date this server was started
     """
+
     # Determine the team and get the appropriate client
     team_id = event["team_id"]
     client = clients[team_id]
@@ -26,8 +27,8 @@ def status_check(event, clients: Dict[str, BotClient], start_time: datetime = da
 
     # Figure out where this came from
     reply_channel = event["event"]["channel"]
-    sender = event["event"]["user"]
-    if sender == client.my_id:
+    sender = event["event"].get("user_id")
+    if sender == client.my_id or sender is None:
         logger.info("The message is me. Not going to talk to myself!")
         return
 
