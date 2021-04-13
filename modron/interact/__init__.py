@@ -32,8 +32,9 @@ def _pause_then_run_interaction(func: Callable, args: Namespace, payload: SlashC
         func(args, payload)
     except Exception as exc:
         reason = str(exc)
-        logger.info('Caught an exception from an interaction')
+        logger.info('Caught an exception from an interaction.')
         payload.send_reply(f'Caught an error in your command:\n\n{reason}')
+        raise exc
 
 
 _description = '''A Slack command to handle common D&D tasks'''
