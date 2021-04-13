@@ -72,6 +72,11 @@ class StatisticModule(InteractionModule):
             dice_log.query('not (advantage or disadvantage or reroll_ones)', inplace=True)
             logger.info(f'Reduced to {len(dice_log)} records without any modifiers')
 
+        # If necessary, match dice rolls
+        if len(dice_log) == 0:
+            payload.send_reply('No matching dice rolls.', ephemeral=True)
+            return
+
         # Extract the values of interest
         dice_log = dice_log.copy()  # Avoid copy warnings
         dice_log["dice_values"] = dice_log["dice_values"].apply(json.loads)
