@@ -27,6 +27,10 @@ def test_stats(parser, payload):
     args = parser.parse_args(['stats', '--reason', 'perception', '--no-modifiers'])
     args.interact(args, payload)
 
-    # Test where there should not be an
+    # Test where there should not be any rolls
     args = parser.parse_args(['stats', '--reason', 'no way', '--no-modifiers'])
+    args.interact(args, payload)
+
+    # Screen by channel
+    args = parser.parse_args(['stats', '--channel', 'ic_all'])
     args.interact(args, payload)

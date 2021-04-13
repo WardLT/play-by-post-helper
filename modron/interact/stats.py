@@ -35,6 +35,7 @@ class StatisticModule(InteractionModule):
         parser.add_argument("--all-players", action='store_true', help="Get actions from all players")
         parser.add_argument("--reason", type=str, default=None, help="Purpose of the roll (e.g., perception)")
         parser.add_argument("--die", type=str, default="d20", help="Type of the dice")
+        parser.add_argument("--channel", type=str, help="Which channel(s) to draw from. Can be a regex")
         parser.add_argument("--no-modifiers", action='store_true',
                             help="Only get dice performed without any modification")
 
@@ -72,6 +73,13 @@ class StatisticModule(InteractionModule):
             dice_log.query('not (advantage or disadvantage or reroll_ones)', inplace=True)
             logger.info(f'Reduced to {len(dice_log)} records without any modifiers')
 
+        if args.channel:
+            dice_log = dice_log[dice_log['channel'].str.contains(args.channel)]
+            match_channels = dice_log['channel'].value_counts().index.tolist()
+            logger.info(f'Downselected to channels that match "{args.channel}"')
+        else:
+            match_channels = None
+
         # If necessary, match dice rolls
         if len(dice_log) == 0:
             payload.send_reply('No matching dice rolls.', ephemeral=True)
@@ -93,6 +101,8 @@ class StatisticModule(InteractionModule):
         if args.reason is not None:
             header += f' for {args.reason}'
         header += ' from all players' if args.all_players else f' from {user_name}'
+        if match_channels is not None:
+            header += f' in channels: {", ".join(match_channels)}'
 
         #   Special case: Only the output
         if len(rolls) == 0:
