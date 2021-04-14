@@ -33,7 +33,7 @@ def _pause_then_run_interaction(func: Callable, args: Namespace, payload: SlashC
     except Exception as exc:
         reason = str(exc)
         logger.info('Caught an exception from an interaction.')
-        payload.send_reply(f'Caught an error in your command:\n\n{reason}')
+        payload.send_reply(f'Caught an error in your command:\n\n{reason}', ephemeral=True)
         raise exc
 
 
