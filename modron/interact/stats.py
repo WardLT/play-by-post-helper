@@ -33,6 +33,7 @@ class StatisticModule(InteractionModule):
     def register_argparse(self, parser: ArgumentParser):
         # Add in a dice statistics command
         parser.add_argument("--all-players", action='store_true', help="Get actions from all players")
+        parser.add_argument("--character", "-c", type=str, default=None, help="Name of the character to query")
         parser.add_argument("--reason", type=str, default=None, help="Purpose of the roll (e.g., perception)")
         parser.add_argument("--die", type=str, default="d20", help="Type of the dice")
         parser.add_argument("--channel", type=str, help="Which channel(s) to draw from. Can be a regex")
@@ -56,24 +57,29 @@ class StatisticModule(InteractionModule):
             raise ValueError(f'Bad dice value: {args.die}')
 
         # Screen down to the desired dice rolls
-        user_name = self.clients[payload.team_id].get_user_name(payload.user_id)
-        if not args.all_players:
+        if args.character is None:
+            user_name = self.clients[payload.team_id].get_user_name(payload.user_id)
+        else:
+            user_name = args.character
+
+        if not args.all_players and len(dice_log) > 0:
             dice_log.query(f'user=="{user_name}"', inplace=True)
             logger.info(f'Reduced to {len(dice_log)} records from {user_name}')
 
-        dice_log['dice_faces'] = dice_log['dice'].apply(lambda x: DiceRoll.make_roll(x).dice)
-        dice_log = dice_log[dice_log['dice_faces'].apply(lambda x: die_choice in x)]
-        logger.info(f'Reduced to {len(dice_log)} records that rolled a d{die_choice}')
+        if len(dice_log) > 0:
+            dice_log['dice_faces'] = dice_log['dice'].apply(lambda x: DiceRoll.make_roll(x).dice)
+            dice_log = dice_log[dice_log['dice_faces'].apply(lambda x: die_choice in x)]
+            logger.info(f'Reduced to {len(dice_log)} records that rolled a d{die_choice}')
 
-        if args.reason is not None:
+        if args.reason is not None and len(dice_log) > 0:
             dice_log.query(f'reason=="{args.reason}"', inplace=True)
             logger.info(f'Reduced to {len(dice_log)} records with purpose "{args.reason}"')
 
-        if args.no_modifiers:
+        if args.no_modifiers and len(dice_log) > 0:
             dice_log.query('not (advantage or disadvantage or reroll_ones)', inplace=True)
             logger.info(f'Reduced to {len(dice_log)} records without any modifiers')
 
-        if args.channel:
+        if args.channel and len(dice_log) > 0:
             dice_log = dice_log[dice_log['channel'].str.contains(args.channel)]
             match_channels = dice_log['channel'].value_counts().index.tolist()
             logger.info(f'Downselected to channels that match "{args.channel}"')

@@ -34,3 +34,8 @@ def test_stats(parser, payload):
     # Screen by channel
     args = parser.parse_args(['stats', '--channel', 'ic_all'])
     args.interact(args, payload)
+
+    # Screen by player
+    args = parser.parse_args(['stats', '--character', 'Hubryr'])
+    args.interact(args, payload)
+
