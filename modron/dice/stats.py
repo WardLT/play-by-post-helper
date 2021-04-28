@@ -7,6 +7,21 @@ from pydantic import BaseModel, Field
 import numpy as np
 
 
+def _pretty_multiplier(x: float) -> str:
+    """Make a prettier version of a multiplier value
+
+    Args:
+        x: Value for a multiplicative factor (e.g., b = x * a)
+    Returns:
+        A humanized version of it
+    """
+    if x > 100:
+        return f'{x:.0f}x'
+    elif x > 2:
+        return f'{x:.1f}x'
+    return f'{x*100:.1f}%'
+
+
 # Dice models
 class DieModel:
     """Model for the rolls of the dice"""
@@ -102,9 +117,9 @@ class SlantedDie(DieModel):
     @property
     def description(self) -> str:
         if self.weight > 1:
-            return f"Large values are {self.weight:.1g}x more likely than small."
+            return f"Large values are {_pretty_multiplier(self.weight)} more likely than small."
         else:
-            return f"Small values are {1./self.weight:.1g}x more likely than large."
+            return f"Small values are {_pretty_multiplier(1. / self.weight)} more likely than large."
 
     def get_params(self) -> List[float]:
         return [self.weight]
@@ -139,9 +154,9 @@ class ExtremeDie(DieModel):
     @property
     def description(self) -> str:
         if self.extremity > 1:
-            return f"Extreme values are {self.extremity:.1g}x more likely than average."
+            return f"Extreme values are {_pretty_multiplier(self.extremity)} more likely than average."
         else:
-            return f"Average values are {1. / self.extremity:.1g}x more likely than extreme."
+            return f"Average values are {_pretty_multiplier(1. / self.extremity)} more likely than extreme."
 
     def set_params(self, x: List[float]):
         self.extremity, = x
