@@ -38,4 +38,3 @@ def test_stats(parser, payload):
     # Screen by player
     args = parser.parse_args(['stats', '--character', 'Hubryr'])
     args.interact(args, payload)
-
