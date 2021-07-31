@@ -129,6 +129,7 @@ class DiceRollInteraction(InteractionModule):
         dice_info = {
             'time': datetime.now().isoformat(),
             'user': context.author.name,
+            'character': context.author.nick,
             'channel': channel_name,
             'reason': purpose,
             'dice': roll.dice_description,
@@ -136,7 +137,8 @@ class DiceRollInteraction(InteractionModule):
             'disadvantage': roll.disadvantage,
             'reroll_ones': roll.reroll_ones,
             'total_value': roll.value,
-            'dice_values': json.dumps(roll.dice_values)
+            'dice_values': json.dumps(roll.dice_values),
+            'raw_rolls': json.dumps(roll.raw_rolls)
         }
 
         # If desired, save the dice roll
@@ -144,7 +146,7 @@ class DiceRollInteraction(InteractionModule):
         new_file = not os.path.isfile(dice_path)
         os.makedirs(os.path.dirname(dice_path), exist_ok=True)
         with open(config.get_dice_log_path(context.guild.id), 'a') as fp:
-            writer = csv.DictWriter(fp, fieldnames=dice_info.keys())
+            writer = csv.DictWriter(fp, fieldnames=list(dice_info.keys()))
             if new_file:
                 writer.writeheader()
             writer.writerow(dice_info)
@@ -182,12 +184,12 @@ class DiceRollInteraction(InteractionModule):
         # Make the reply
         purpose = ' '.join(args.purpose)
         if len(purpose) > 0:
-            reply = f'{{.author}} rolled for {purpose}\n' \
+            reply = f'<@!{context.author.id}> rolled for {purpose}\n' \
                     f'{roll.roll_description} = *{roll.value}*'
             logger.info(f'{context.author.name} requested to roll {roll.roll_description} for {purpose}.'
                         f' Result = {roll.value}')
         else:
-            reply = f'{{.author}} rolled {roll.roll_description} = *{roll.value}*'
+            reply = f'<@!{context.author.id}> rolled {roll.roll_description} = *{roll.value}*'
             logger.info(f'{context.author.name} requested to roll {roll.roll_description}.'
                         f' Result = {roll.value}')
         reply += f'\nRolls: {", ".join(_render_dice_rolls(roll))}'
