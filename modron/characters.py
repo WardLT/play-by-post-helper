@@ -5,6 +5,7 @@ from enum import Enum
 from typing import Dict, List, Optional, Tuple
 
 import yaml
+from discord import Guild
 from pydantic import BaseModel, Field, validator
 
 from modron.config import get_config
@@ -85,7 +86,7 @@ class Character(BaseModel):
 
     # Basic information about the character
     name: str = Field(..., description='Name of the character')
-    player: str = Field(None, description='Slack user ID of the player')
+    player: int = Field(None, description='Discord user ID of the player')
     classes: Dict[str, int] = Field(..., description='Levels in different classes')
     background: str = Field(None, description='Character background')
     race: str = Field(None, description='Race of the character')
@@ -399,18 +400,18 @@ class Character(BaseModel):
         return output
 
 
-def list_available_characters(team_id: str, user_id: str) -> List[str]:
+def list_available_characters(guild: Guild, user_id: str) -> List[str]:
     """List the names of character sheets that are available to a user
 
     Args:
-        team_id (str): ID of the Slack workspace
+        guild: Associated guild
         user_id (str): ID of the user in question
     Returns:
         ([str]): List of characters available to this player
     """
 
     # Get all characters for this team
-    sheets = _config.list_character_sheets(team_id)
+    sheets = _config.list_character_sheets(guild.id)
 
     # Return only the sheets
     return [
@@ -420,11 +421,11 @@ def list_available_characters(team_id: str, user_id: str) -> List[str]:
     ]
 
 
-def load_character(team_id: str, name: str) -> Tuple[Character, str]:
+def load_character(guild: Guild, name: str) -> Tuple[Character, str]:
     """Load a character sheet
 
     Arg:
-        team_id (str): ID of the Slack workspace
+        guild: Associated guild
         name (str): Name of the character
     Returns:
         - (Character) Desired character sheet
@@ -432,5 +433,5 @@ def load_character(team_id: str, name: str) -> Tuple[Character, str]:
     """
 
     config = get_config()
-    sheet_path = config.get_character_sheet_path(team_id, name)
+    sheet_path = config.get_character_sheet_path(guild.id, name)
     return Character.from_yaml(sheet_path), os.path.abspath(sheet_path)

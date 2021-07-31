@@ -7,7 +7,7 @@ from argparse import ArgumentParser, Namespace
 from datetime import datetime
 from typing import List, NoReturn
 
-from discord import TextChannel
+from discord import TextChannel, Guild
 from discord.ext.commands import Context
 
 from modron.characters import list_available_characters, load_character
@@ -108,11 +108,17 @@ class DiceRollInteraction(InteractionModule):
             purpose (str): Purpose of the roll
         """
 
+        # Get the channels where tracking is allowed
+        guild: Guild = context.guild
+        allowed_channels = sum([
+            cat.channels for cat in guild.categories if cat.id in config.team_options[guild.id].dice_tracked_categories
+        ], [])
+
         # Determine if we should log or not
         if isinstance(context.channel, TextChannel):
             channel: TextChannel = context.channel
             channel_name = channel.name
-            skipped_channel = channel.name in config.team_options[channel.guild.id].dice_skip_channels
+            skipped_channel = channel.name not in allowed_channels
             private_channel = False
         else:
             skipped_channel = False

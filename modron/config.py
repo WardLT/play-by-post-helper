@@ -64,7 +64,7 @@ class TeamConfig(BaseModel):
 
     # Logging dice rolls
     dice_log: bool = Field(True, help='Whether to log dice rolls for this team')
-    dice_skip_channels: List[str] = Field(['bot_test', 'ooc_discussion'], help="List of channels to omit from logging")
+    dice_tracked_categories: List[int] = Field(default_factory=list, help="List of categories of channel to track")
 
     # Character sheets
     character_sheet_path: str = Field('characters', help='Path to a directory with the character sheet YAML files')
@@ -114,50 +114,50 @@ class ModronConfig(BaseModel):
                                 ' with the largest minimum roll that is less than or equal to the dice roll.'
     )
 
-    def get_backup_dir(self, team_id: str) -> str:
-        """Get the path to the directory that holds backup files for a certain team
+    def get_backup_dir(self, guild_id: int) -> str:
+        """Get the path to the directory that holds backup files for a certain guild
 
         Args:
-            team_id: Name of the team
+            guild_id: ID of the guild
         Returns:
             Path to the backup directory
         """
-        return os.path.join(self.backup_dir, self.team_options[team_id].name)
+        return os.path.join(self.backup_dir, self.team_options[guild_id].name)
 
-    def get_dice_log_path(self, team_id: str) -> str:
-        """Get the path to the dice log for a certain team
+    def get_dice_log_path(self, guild_id: int) -> str:
+        """Get the path to the dice log for a certain guild
 
         Args:
-            team_id: Name of the team
+            guild_id
         Returns:
             Path to the log
         """
-        return os.path.join(self.dice_log_dir, f'{self.team_options[team_id].name}.csv')
+        return os.path.join(self.dice_log_dir, f'{self.team_options[guild_id].name}.csv')
 
-    def list_character_sheets(self, team_id: str) -> List[str]:
+    def list_character_sheets(self, guild_id: int) -> List[str]:
         """List all of paths to the character sheets for a certain workspace
 
         Args:
-            team_id (str): Name of the team
+            guild_id
         Returns:
             ([str]): List paths to all of the character sheets
         """
 
-        team_name = self.team_options[team_id].name
+        team_name = self.team_options[guild_id].name
         paths = glob(os.path.join(self.character_dir, team_name, '*.yml'))
         return paths
 
-    def get_character_sheet_path(self, team_id: str, name: str) -> str:
+    def get_character_sheet_path(self, guild_id: int, name: str) -> str:
         """Get the path to a certain character sheet
 
         Args:
-            team_id (str): ID of the Slack team
+            guild_id
             name (str): Name of the character
 
         Returns:
             (str): Path to the character sheet
         """
-        team_name = self.team_options[team_id].name
+        team_name = self.team_options[guild_id].name
         return os.path.join(self.character_dir, team_name, f'{name}.yml')
 
     def get_gdrive_credentials_path(self) -> str:
