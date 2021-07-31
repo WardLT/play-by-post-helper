@@ -31,7 +31,7 @@ class ReminderService(BaseService):
         """
         short_name = config.team_options[guild.id].name
         super().__init__(guild, max_sleep_time, name=f'reminder_{short_name}')
-        self.reminder_channel = reminder_channel
+        self.reminder_channel: TextChannel = utils.get(self._guild.channels, name=reminder_channel)
         self.watch_channel_id = watch_channel_id
         self.allowed_stall_time = config.team_options[guild.id].allowed_stall_time
 
@@ -76,12 +76,6 @@ class ReminderService(BaseService):
         This operation runs on an infinite loop and might
         be best run from a separate thread.
         """
-        # Get the channel ID for the reminder channel
-        reminder_channel_id = utils.get(self._guild.channels, name=self.reminder_channel)
-        if reminder_channel_id is None:
-            raise ValueError(f'No such channel: {self.reminder_channel}')
-
-        # Main loop: Wait for messages
         while True:
             wake_time = await self.perform_reminder_check()
             await self._sleep_until(wake_time)
@@ -126,9 +120,8 @@ class ReminderService(BaseService):
                 logger.info('Last poster was me, doing nothing')
             else:
                 logger.info('Last poster was not me. Sending an @channel reminder')
-                reminder_channel: TextChannel = utils.get(self._guild.channels, name=self.reminder_channel)
                 # TODO (wardlt): Stopped here!
-                await reminder_channel.send(
+                await self.reminder_channel.send(
                     content=f'@channel Last message was {humanize.naturaltime(stall_time)}.'
                             f' Who\'s up? Let\'s play some D&D!',
                     allowed_mentions=AllowedMentions.all()
