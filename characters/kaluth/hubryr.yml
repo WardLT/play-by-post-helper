@@ -1,29 +1,34 @@
-name: Hubryr Goldstone
-player: UP6ERQ4BZ
 alignment: good
-background: Guild Artisan
-race: Half-elf
-classes:
-  artificer: 9
-strength: 8
-dexterity: 16
-constitution: 10
-intelligence: 20
-wisdom: 14
-charisma: 10
-hit_points: 51
-current_hit_points: 51
 armor_class: 16
-speed: 30
-saving_throws:
-  - intelligence
-  - constitution
+background: Guild Artisan
+charisma: 10
+classes:
+  artificer: 10
+constitution: 10
+current_hit_points: 56
+custom_skills:
+  tinkering: intelligence
+dexterity: 16
+expertise:
+- tinkering
+hit_points: 56
+hit_points_adjustment: 0
+intelligence: 20
+name: Hubryr Goldstone
+player: 2 # Until he gets an ID
 proficiencies:
-  - insight
-  - perception
-  - arcana
-  - investigation
-  - perception
-  - stealth
-  - persuasion
-
+- insight
+- perception
+- arcana
+- investigation
+- perception
+- stealth
+- persuasion
+race: Half-elf
+saving_throws:
+- intelligence
+- constitution
+speed: 30
+strength: 8
+temporary_hit_points: 10
+wisdom: 14
