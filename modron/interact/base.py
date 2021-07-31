@@ -28,7 +28,6 @@ class InteractionModule:
     def __init__(self, name: str, help_string: str, description: str):
         """
         Args:
-             clients: Map of team ID to appropriately-authenticated client
              name (str): Name of the interaction module, defines the subcommand name
              help_string (str): Short-form name description of the module. Used in the root parser description
              description (str): Long-form description of the module. Used in its detailed home command

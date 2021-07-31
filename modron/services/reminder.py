@@ -5,7 +5,7 @@ from math import inf
 import logging
 
 import humanize
-from discord import Guild, TextChannel, AllowedMentions
+from discord import Guild, TextChannel, AllowedMentions, CategoryChannel
 from discord import utils
 
 from modron.config import get_config
@@ -21,18 +21,18 @@ config = get_config()
 class ReminderService(BaseService):
     """Thread that issues a reminder to players if play stalls"""
 
-    def __init__(self, guild: Guild, reminder_channel: str, watch_channel_regex: str, max_sleep_time: float = inf):
+    def __init__(self, guild: Guild, reminder_channel: str, watch_channel_id: int, max_sleep_time: float = inf):
         """
         Args:
             guild: Authenticated BotClient
-            reminder_channel: Channel on which to post reminders
-            watch_channel_regex: Pattern to match channels to watch for activity
+            reminder_channel: Name of channel on which to post reminders
+            watch_channel_id: ID of the channel or category channel to watch
             max_sleep_time: Longest time the thread is allowed to sleep for
         """
         short_name = config.team_options[guild.id].name
         super().__init__(guild, max_sleep_time, name=f'reminder_{short_name}')
         self.reminder_channel = reminder_channel
-        self.watch_channel_regex = watch_channel_regex
+        self.watch_channel_id = watch_channel_id
         self.allowed_stall_time = config.team_options[guild.id].allowed_stall_time
 
         # Status attributes
@@ -155,7 +155,13 @@ class ReminderService(BaseService):
         """
 
         # Get the channels to watch
-        self.watch_channels = match_channels_to_regex(self._guild, self.watch_channel_regex)
+        watch_channel = self._guild.get_channel(self.watch_channel_id)
+        if isinstance(watch_channel, TextChannel):
+            self.watch_channels = [watch_channel]
+        elif isinstance(watch_channel, CategoryChannel):
+            self.watch_channels = watch_channel.text_channels
+        else:
+            raise ValueError(f'Unrecognized type of channel: {type(watch_channel)}')
         logger.info(f'Watching {len(self.watch_channels)} channels for activity')
 
         # Warn user if the bot does not write a channel watched for stalling

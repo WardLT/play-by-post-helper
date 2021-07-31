@@ -55,7 +55,7 @@ class TeamConfig(BaseModel):
     # Reminders
     reminders: bool = Field(True, help='Whether to post inactivity reminders')
     reminder_channel: str = Field('ic_all', help='Channel on which to post reminders')
-    watch_channels: str = Field(r'^ic_.*', help='Regex define which channels to watch for activity')
+    ic_category: int = Field(None, help='Channel ID for category channel for all IC messages')
     allowed_stall_time: timedelta = Field(timedelta(days=1),
                                           description='How long to wait for activity before issuing reminders')
 
