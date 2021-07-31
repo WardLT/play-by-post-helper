@@ -1,12 +1,17 @@
 """Definition of the bot"""
 
 from datetime import timedelta
+import logging
 
 from discord.ext.commands import Bot
 
-from modron.discord import logger, config
+from modron.config import get_config
 from modron.services.backup import BackupService
 from modron.services.reminder import ReminderService
+
+
+logger = logging.getLogger(__name__)
+config = get_config()
 
 
 class ModronClient(Bot):
