@@ -3,10 +3,10 @@ from abc import ABCMeta, abstractmethod
 from datetime import datetime
 from math import inf
 from threading import Thread
-from time import sleep
-import logging
+from asyncio import sleep
 from typing import Optional
 from discord import Guild
+import logging
 
 import humanize
 
@@ -41,7 +41,7 @@ class BaseService(Thread, metaclass=ABCMeta):
         self.stop = False
         self._max_sleep_time = max_sleep_time
 
-    def _sleep_until(self, wake_time: datetime):
+    async def _sleep_until(self, wake_time: datetime):
         """Sleep until a certain time has been reached
 
         Args:
@@ -52,16 +52,16 @@ class BaseService(Thread, metaclass=ABCMeta):
             # Compute the amount of remaining time
             remaining_time = (wake_time - datetime.now()).total_seconds()
             if remaining_time <= 0:
-                logger.warn(f'Requested a wake time that is {-remaining_time:.2f}s in the past.')
+                logger.warning(f'Requested a wake time that is {-remaining_time:.2f}s in the past.')
                 return
 
             # Sleep for the maximum allowable time smaller
             #  than the amount of remaining time
             sleep_time = min(remaining_time, self._max_sleep_time)
-            sleep(sleep_time)
+            await sleep(sleep_time)
 
         raise ValueError('User has requested this thread to halt')
 
     @abstractmethod
-    def run(self):
+    async def run(self):
         raise NotImplementedError()

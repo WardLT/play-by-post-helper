@@ -1,5 +1,4 @@
 """Utility operations for discord"""
-import asyncio
 from typing import List, Optional, Tuple
 from datetime import datetime
 import logging
@@ -36,7 +35,7 @@ def match_channels_to_regex(guild: Guild, pattern: str) -> List[TextChannel]:
     return [c for c in guild.channels if reg.match(c.name) and isinstance(c, TextChannel)]
 
 
-async def get_last_activity(channel: TextChannel) -> Optional[Tuple[datetime, Member]]:
+async def get_last_activity(channel: TextChannel) -> Optional[Tuple[datetime, Optional[Member]]]:
     """Get the last activity on a certain text channel
 
     Args:
@@ -49,3 +48,7 @@ async def get_last_activity(channel: TextChannel) -> Optional[Tuple[datetime, Me
     message: Message = await channel.history(limit=1, oldest_first=False).get()
     if message is not None:
         return message.created_at, message.author
+
+    # Return a datetime of now for channels that have yet to be written in
+    #  TODO (wardlt): Change this to a timestamp of zero once we start using Discord
+    return datetime.now(), None
