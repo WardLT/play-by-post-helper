@@ -1,5 +1,9 @@
+from datetime import datetime, timedelta
+
+from dateutil.tz import tzlocal
 
 # Colors based on the Material design scheme
+
 colors = {
     'red': '#B71C1C',
     'green': '#2E7D32',
@@ -24,3 +28,9 @@ def escape_slack_characters(raw: str) -> str:
 
     # Escape < and >
     return out.replace("<", "&lt;").replace(">", "&gt;")
+
+
+def get_local_tz_offset() -> timedelta:
+    """Get the local offset to the current time"""
+
+    return tzlocal().utcoffset(datetime.now())

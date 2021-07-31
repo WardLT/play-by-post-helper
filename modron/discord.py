@@ -6,6 +6,8 @@ import re
 
 from discord import Guild, TextChannel, Message, Member, Forbidden
 
+from modron.utils import get_local_tz_offset
+
 logger = logging.getLogger(__name__)
 
 
@@ -35,11 +37,9 @@ async def get_last_activity(channel: TextChannel) -> Optional[Tuple[datetime, Op
         message: Message = await channel.history(limit=1, oldest_first=False).get()
     except Forbidden:
         logger.warning(f'Bot lacks access to channel: {channel.name}')
-        # TODO (wardlt): Change to a timestamp of zero once we start using Discord
-        return datetime.now(), None
+        return datetime.fromtimestamp(0), None
     if message is not None:
-        return message.created_at, message.author
+        return message.created_at + get_local_tz_offset(), message.author
 
     # Return a datetime of now for channels that have yet to be written in
-    #  TODO (wardlt): Change this to a timestamp of zero once we start using Discord
-    return datetime.now(), None
+    return datetime.fromtimestamp(0), None
