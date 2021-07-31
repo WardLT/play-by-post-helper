@@ -80,16 +80,16 @@ class ReminderModule(InteractionModule):
         subparser = subparsers.add_parser('break', help='Delay the reminder thread for a certain time')
         subparser.add_argument('time', help='How long to delay the reminder for. ISO 8601 format (ex: P3d)', type=str)
 
-    def interact(self, args: Namespace, payload: SlashCommandPayload):
+    def interact(self, args: Namespace, context: SlashCommandPayload):
         if args.reminder_command is None or args.reminder_command == 'status':
-            reply = self._generate_status(payload)
+            reply = self._generate_status(context)
         elif args.reminder_command == 'break':
-            reply = _add_delay(payload.team_id, args.time)
+            reply = _add_delay(context.team_id, args.time)
         else:
             reply = f'*ERROR*: Support for {args.reminder_command} has not been implemented (blame Logan)'
 
         # Send reply back to user
-        requests.post(payload.response_url, json={
+        requests.post(context.response_url, json={
             'text': reply, 'mkdwn': True
         })
 

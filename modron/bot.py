@@ -1,0 +1,45 @@
+"""Definition of the bot"""
+
+from datetime import timedelta
+
+from discord.ext.commands import Bot
+
+from modron.discord import logger, config
+from modron.services.backup import BackupService
+from modron.services.reminder import ReminderService
+
+
+class ModronClient(Bot):
+    """Client used to connect to Discord"""
+
+    async def on_ready(self):
+        """Start the services when the bot is ready"""
+        logger.info(f'Logged on as {self.user}')
+
+        # Launch the services for each time
+        for team_id, team_config in config.team_options.items():
+            guild = self.get_guild(team_id)
+
+            # Start the reminder thread
+            if team_config.reminders:
+                reminder = ReminderService(guild, team_config.reminder_channel,
+                                           team_config.watch_channels)
+                self.loop.create_task(reminder.run())
+                logger.info(f'Launched reminder service for {team_config.name}')
+            else:
+                logger.info(f'No reminders for {team_config.name}')
+
+            # Start the backup thread
+            if team_config.backup_channels is not None:
+                backup = BackupService(guild, backup_dir=config.backup_dir,
+                                       frequency=timedelta(days=1), channel_regex=team_config.backup_channels)
+                self.loop.create_task(backup.run())
+                logger.info(f'Launched backup service for {team_config.name}')
+            else:
+                logger.info(f'No backup for {team_config.name}')
+
+    async def on_disconnect(self):
+        logger.warning('Disconnected from Discord service')
+
+    async def on_connect(self):
+        logger.info('Connected to Discord service')

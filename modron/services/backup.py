@@ -1,4 +1,5 @@
 """Services related to backing up channels"""
+import asyncio
 from glob import glob
 import pickle as pkl
 import json
@@ -12,11 +13,13 @@ from time import sleep
 from typing import List, Dict, Optional, Tuple
 
 import humanize
+from discord import Guild, TextChannel, Message, User
+from googleapiclient.channel import Channel
 from googleapiclient.discovery import build, Resource
 from googleapiclient.http import MediaFileUpload
 
+from modron.discord import get_last_activity, match_channels_to_regex
 from modron.services import BaseService
-from modron.slack import BotClient
 from modron.config import get_config
 
 config = get_config()
@@ -51,23 +54,21 @@ class BackupService(BaseService):
     being backed up as separate json-ld files.
     """
 
-    def __init__(self, client: BotClient, backup_dir: Optional[str] = None, frequency: timedelta = timedelta(days=1),
+    def __init__(self, guild: Guild, backup_dir: Optional[str] = None, frequency: timedelta = timedelta(days=1),
                  channel_regex: str = "*", max_sleep_time: float = inf):
         """
 
         Args:
-            client: Authenticated client
+            guild: Connection to the guild
             backup_dir: Directory to store the
             channel_regex: Regex which matches the channels to be backed up
             max_sleep_time: Longest time to sleep before
         """
-        short_name = config.team_options[client.team_id].name
-        super().__init__(client, max_sleep_time, name=f'backup_{short_name}')
+        short_name = config.team_options[guild.id].name
+        super().__init__(guild, max_sleep_time, name=f'backup_{short_name}')
         self.frequency = frequency
-        if backup_dir is None:
-            backup_dir = config.get_backup_dir(client.team_id)
         self.backup_dir = backup_dir
-        self.backup_channels = client.match_channels(channel_regex)
+        self.channel_regex = channel_regex
 
         # Create a Google-drive page, if credentials are available
         cred_path = config.get_gdrive_credentials_path()
@@ -94,7 +95,7 @@ class BackupService(BaseService):
         return datetime.now() - self.last_backup_date
 
     @property
-    def backup_url(self) -> str:
+    def backup_url(self) -> Optional[str]:
         """URL for the backup folder"""
         if self.gdrive_backup_folder is None:
             return None
@@ -109,18 +110,18 @@ class BackupService(BaseService):
         """Build the GDrive client with stored credentials"""
         return build('drive', 'v3', credentials=self._creds)
 
-    def backup_messages(self, channel: str) -> int:
+    async def backup_messages(self, channel: TextChannel) -> int:
         """Backup all messages from a certain channel
 
         Args:
-            channel: Name of channel to backup
+            channel: Link to the channel to back up
         Returns:
             (int) Number of messages written
         """
         logger.info(f'Starting to backup {channel}')
 
         # Get the time of the last message
-        output_path = os.path.join(self.backup_dir, f'{channel}.jsonld')
+        output_path = os.path.join(self.backup_dir, f'{channel}.json')
         logger.info(f'Backup path: {output_path}')
         if not os.path.isfile(output_path):
             start_time = 0
@@ -131,41 +132,50 @@ class BackupService(BaseService):
             with open(output_path) as fp:
                 for line in fp:
                     msg = json.loads(line)
-                    start_time = max(start_time, float(msg["ts"]))
+                    start_time = max(start_time, float(msg["timestamp"]))
         logger.info(f'Starting timestamp {start_time}, which is {datetime.fromtimestamp(start_time)}')
 
         # Pulling the most recent message
-        last_time, _ = self._client.get_last_activity(channel)
+        last_time, _ = await get_last_activity(channel)
         if isclose((last_time - datetime.fromtimestamp(start_time)).total_seconds(), 0.0):
             logger.info(f'No new messages in {channel}')
             return 0
 
-        # Get the ID of the channel to be backed up
-        channel_id = self._client.get_channel_id(channel)
-
         # Make one query to the system
         n_msg = 0
-        response = self._client.conversations_history(channel=channel_id, inclusive='false', oldest=start_time)
-        _write_messages(response['messages'], output_path)
-        n_msg += len(response['messages'])
+        with open(output_path, 'a') as fp:
+            after = datetime.fromtimestamp(start_time) if start_time > 0 else None
+            async for message in channel.history(after=after, limit=None, oldest_first=True):
+                message: Message = message
+                n_msg += 1
+                author: User = message.author
 
-        # Loop until we have all of the messages
-        while response['has_more']:
-            response = self._client.conversations_history(channel=channel_id, inclusive='false', oldest=start_time,
-                                                          cursor=response['response_metadata']['next_cursor'])
-            _write_messages(response['messages'], output_path)
-            n_msg += len(response['messages'])
-            sleep(60 / 50)  # Make sure we don't saturate the limits
-        logger.info(f'Backed up {n_msg} messages from {channel}')
+                print(json.dumps({
+                    'id': message.id,
+                    'user_id': author.id,
+                    'user_name': author.name,
+                    'message': message.content,
+                    'timestamp': message.created_at.timestamp()
+                }), file=fp)
+        logger.info(f'Backed up {n_msg} messages from {channel.name}')
         return n_msg
 
-    def backup_all_channels(self) -> Dict[str, int]:
+    async def backup_all_channels(self) -> Dict[str, int]:
         """Download messages for all channels
 
         Returns:
             (dict) Number of messages downloaded per channel
         """
-        return dict((c, self.backup_messages(c)) for c in self.backup_channels)
+        # Match the backup channels
+        channels = match_channels_to_regex(self._guild, self.channel_regex)
+
+        # Submit all backups as asynchronous tasks
+        tasks = dict((c.name, asyncio.create_task(self.backup_messages(c))) for c in channels)
+
+        # Wait until they all finish
+        return dict([
+            (c, await t) for c, t in tasks.items()
+        ])
 
     def upload_to_gdrive(self) -> Tuple[int, int]:
         """Upload the log files to the Google Drive
@@ -185,7 +195,7 @@ class BackupService(BaseService):
         logger.info(f'Ready to upload to \"{output["name"]}\" ({config.gdrive_backup_folder})')
 
         # List out all of the files to be backed-up
-        files = glob(os.path.join(self.backup_dir, '**', '*.jsonld'), recursive=True)
+        files = glob(os.path.join(self.backup_dir, '**', '*.json'), recursive=True)
         folders = set(Path(p).parent.name for p in files)
         logger.info(f'Found {len(files)} files to upload in {len(folders)} folders')
 
@@ -301,16 +311,12 @@ class BackupService(BaseService):
             logger.info(f'Created new folder {output} for {name}')
         return output
 
-    def run(self):
-        # Make sure I am a member of all the channels I am backing up
-        for channel in self.backup_channels:
-            self._client.add_self_to_channel(channel)
-
+    async def run(self):
         # Run the main loop
         logger.info('Starting backup thread')
         while True:
             # Run the backup
-            result = self.backup_all_channels()
+            result = await self.backup_all_channels()
             logger.info(f'Backed up {sum(result.values())} messages in total. From: {", ".join(result.keys())}')
             self.last_backup_successful = False
 
@@ -325,4 +331,4 @@ class BackupService(BaseService):
                     logger.info(f'Error during GDrive upload: {e}')
 
             self.next_run_time = datetime.now() + self.frequency
-            self._sleep_until(self.next_run_time)
+            await self._sleep_until(self.next_run_time)

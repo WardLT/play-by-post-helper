@@ -1,57 +1,65 @@
 import os
-from datetime import timedelta
+from datetime import timedelta, datetime
 
-from pytest import fixture, mark, raises
+from discord import Guild, utils, TextChannel
+from pytest import mark, raises
 
 from modron.config import get_config
 from modron.services.backup import BackupService
 from modron.services.reminder import ReminderService
-from modron.slack import BotClient
 
 config = get_config()
 
 
-@fixture()
-def client() -> BotClient:
-    token = os.environ.get('OAUTH_ACCESS_TOKENS', None)
-    if token is None:
-        raise ValueError('Cannot find Auth token')
-    return BotClient(token=token)
+@mark.timeout(60)
+@mark.asyncio
+async def test_reminder(guild: Guild):
+    service = ReminderService(guild, "bot_testing", "bot_testing", max_sleep_time=5)
+
+    # Send a message to the bot-test channel
+    test_channel: TextChannel = utils.get(guild.channels, name='bot_testing')
+    message = await test_channel.send('Test message')
+
+    # Make sure the message is captured
+    last_time, was_me = await service.assess_last_activity()
+    assert (message.created_at - last_time).total_seconds() < 5, 'Did not pick up the latest message'
+    assert was_me, 'I was not the last messenger'
+    assert service.watch_channels[0].name == 'bot_testing'
+
+    # Delete the message
+    await message.delete()
+
+    # Run a step of the loop
+    wait_time = await service.perform_reminder_check()
+    assert wait_time > datetime.now()
 
 
 @mark.timeout(60)
-def test_reminder(client):
-    thread = ReminderService(client, "bot_test", "bot_test", max_sleep_time=5)
-    thread.stop = True
-
-    with raises(ValueError):
-        thread.run()
-
-
-@mark.timeout(60)
-def test_backup(client, tmpdir):
+@mark.asyncio
+async def test_backup(guild: Guild, tmpdir):
     # Make a temporary directory
-    log_dir = os.path.join(tmpdir, 'test_slack')
+    log_dir = os.path.join(tmpdir, 'test')
     os.makedirs(log_dir, exist_ok=True)
-    thread = BackupService(client, log_dir, timedelta(days=1), channel_regex='^bot_test$',
-                           max_sleep_time=5)
+    service = BackupService(guild, log_dir, timedelta(days=1), channel_regex='^bot_testing$',
+                            max_sleep_time=5)
 
     # Run the code
-    count = thread.backup_messages('bot_test')
+    backup_channel: TextChannel = utils.get(guild.channels, name='bot_testing')
+    count = await service.backup_messages(backup_channel)
     assert count > 0
 
     # Run it again immediately
-    count = thread.backup_messages('bot_test')
+    count = await service.backup_messages(backup_channel)
     assert count == 0
 
     # Run the loop
-    counts = thread.backup_all_channels()
-    assert counts == {'bot_test': 0}
+    counts = await service.backup_all_channels()
+    assert counts == {'bot_testing': 0}
 
     # Delete the previously-uploaded folder
-    gd_client = thread.get_gdrive_client()
+    gd_client = service.get_gdrive_client()
     result = gd_client.files().list(
-        q=f"name = 'test_slack' and '{config.gdrive_backup_folder}' in parents and trashed = false",
+        q=f"name = 'test' and '{config.gdrive_backup_folder}' in parents and trashed = false",
         pageSize=1
     ).execute()
     hits = result.get('files', [])
@@ -59,27 +67,24 @@ def test_backup(client, tmpdir):
         gd_client.files().delete(fileId=hits[0]['id']).execute()
 
     # Upload once, which should get the files
-    n_uploaded, file_sizes = thread.upload_to_gdrive()
+    n_uploaded, file_sizes = service.upload_to_gdrive()
     assert n_uploaded == 1
     assert file_sizes > 0
 
     # Attempt upload again, which should skip the process
-    n_uploaded, file_sizes = thread.upload_to_gdrive()
+    n_uploaded, file_sizes = service.upload_to_gdrive()
     assert n_uploaded == 0
     assert file_sizes == 0
 
     # Send a message and then make sure it uploads an updated file
-    channel_id = client.get_channel_id("bot_test")
-    client.chat_postMessage(channel=channel_id, text="Test message")
+    message = await backup_channel.send(content="Testing backup message")
 
-    count = thread.backup_messages('bot_test')
-    assert count > 1
+    count = await service.backup_messages(backup_channel)
+    assert count > 0
 
-    n_uploaded, file_sizes = thread.upload_to_gdrive()
+    n_uploaded, file_sizes = service.upload_to_gdrive()
     assert n_uploaded == 1
     assert file_sizes > 0
 
-    # Make sure the infinite loop works
-    thread.stop = True
-    with raises(ValueError):
-        thread.run()
+    # Delete the test message
+    await message.delete()

@@ -68,13 +68,13 @@ class CharacterSheet(InteractionModule):
         max_parser = hp_subparsers.add_parser('max', help='Adjust hit point maximum')
         max_parser.add_argument('amount', help='Amount of change, or "reset" to change the temporary back to zero')
 
-    def interact(self, args: Namespace, payload: SlashCommandPayload):
+    def interact(self, args: Namespace, context: SlashCommandPayload):
         # Get the characters available for this player
-        available_chars = list_available_characters(payload.team_id, payload.user_id)
+        available_chars = list_available_characters(context.team_id, context.user_id)
         if len(available_chars) == 0:
             logger.info('No character found for this player')
             requests.post(
-                payload.response_url,
+                context.response_url,
                 json={
                     'text': 'You have not defined a character yet. Talk to Logan.'
                 }
@@ -84,26 +84,26 @@ class CharacterSheet(InteractionModule):
         # Determine which character is being played
         assert len(available_chars) == 1, "Modron does not yet support >1 character per user"
         character = available_chars[0]
-        sheet, sheet_path = load_character(payload.team_id, character)
-        logger.info(f'User {payload.user_id} mapped to character {sheet.name}. Loaded their sheet')
+        sheet, sheet_path = load_character(context.team_id, character)
+        logger.info(f'User {context.user_id} mapped to character {sheet.name}. Loaded their sheet')
 
         # Switch on the chosen subcommand
         if args.char_subcommand is None:
             # Return the character sheet
             logger.info('Reminding the user which character they are currently playing')
-            payload.send_reply(f'You are playing {sheet.name} (lvl {sheet.level})', ephemeral=True)
+            context.send_reply(f'You are playing {sheet.name} (lvl {sheet.level})', ephemeral=True)
         elif args.char_subcommand == "ability":
             ability_name = ' '.join(args.name)
             try:
                 modifier = sheet.lookup_modifier(ability_name)
             except ValueError:
                 logger.info(f'Modifier lookup failed for "{ability_name}"')
-                payload.send_reply(f'Could not find a modifier for "{ability_name}"')
+                context.send_reply(f'Could not find a modifier for "{ability_name}"')
                 return
             logger.info(f'Retrieved modifier for {ability_name} rolls: {modifier:+d}')
-            payload.send_reply(f'{sheet.name}\'s modifier for {ability_name} is {modifier:+d}', ephemeral=True)
+            context.send_reply(f'{sheet.name}\'s modifier for {ability_name} is {modifier:+d}', ephemeral=True)
         elif args.char_subcommand == "hp":
-            return self._run_hp_subcommand(args, payload, sheet, sheet_path)
+            return self._run_hp_subcommand(args, context, sheet, sheet_path)
         else:
             raise ValueError(f'Subcommand {args.char_subcommand} not yet implemented')
 

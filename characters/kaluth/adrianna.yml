@@ -13,6 +13,7 @@ intelligence: 11
 wisdom: 12
 charisma: 10
 current_hit_points: 93
+hit_points_adjustment: 5
 hit_points: 93
 armor_class: 16
 speed: 40

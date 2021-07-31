@@ -6,10 +6,9 @@ from threading import Thread
 from time import sleep
 import logging
 from typing import Optional
+from discord import Guild
 
 import humanize
-
-from modron.slack import BotClient
 
 
 logger = logging.getLogger(__name__)
@@ -31,14 +30,14 @@ class BaseService(Thread, metaclass=ABCMeta):
     cause the thread
 
     """
-    def __init__(self, client: BotClient, max_sleep_time: float = inf, name: Optional[str] = None):
+    def __init__(self, guild: Guild, max_sleep_time: float = inf, name: Optional[str] = None):
         """
         Args:
-            client: Authenticated BotClient
+            guild: Connection to a certain guild
             max_sleep_time: Longest allowed sleep call in seconds
         """
         super().__init__(daemon=True, name=name)
-        self._client = client
+        self._guild = guild
         self.stop = False
         self._max_sleep_time = max_sleep_time
 

@@ -40,9 +40,9 @@ class StatisticModule(InteractionModule):
         parser.add_argument("--no-modifiers", action='store_true',
                             help="Only get dice performed without any modification")
 
-    def interact(self, args: Namespace, payload: SlashCommandPayload):
+    def interact(self, args: Namespace, context: SlashCommandPayload):
         # Load in the dice rolls from the appropriate team
-        dice_path = config.get_dice_log_path(payload.team_id)
+        dice_path = config.get_dice_log_path(context.team_id)
         dice_log = pd.read_csv(dice_path)
         logger.info(f'Loaded {len(dice_log)} records from {dice_path}')
 
@@ -58,7 +58,7 @@ class StatisticModule(InteractionModule):
 
         # Screen down to the desired dice rolls
         if args.character is None:
-            user_name = self.clients[payload.team_id].get_user_name(payload.user_id)
+            user_name = self.clients[context.team_id].get_user_name(context.user_id)
         else:
             user_name = args.character
 
@@ -88,7 +88,7 @@ class StatisticModule(InteractionModule):
 
         # If necessary, match dice rolls
         if len(dice_log) == 0:
-            payload.send_reply('No matching dice rolls.', ephemeral=True)
+            context.send_reply('No matching dice rolls.', ephemeral=True)
             return
 
         # Extract the values of interest
@@ -112,7 +112,7 @@ class StatisticModule(InteractionModule):
 
         #   Special case: Only the output
         if len(rolls) == 0:
-            payload.send_reply(header, ephemeral=True)
+            context.send_reply(header, ephemeral=True)
             return
 
         output = [header, f'*Last {min(5, len(rolls))} rolls*: {", ".join(map(str, rolls[-5:]))}']
@@ -123,4 +123,4 @@ class StatisticModule(InteractionModule):
         output.append(f'*Die description*: {summary.models[0].description}')
 
         # Send outputs to user
-        payload.send_reply("\n".join(output), ephemeral=True)
+        context.send_reply("\n".join(output), ephemeral=True)

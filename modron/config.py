@@ -84,11 +84,11 @@ class ModronConfig(BaseModel):
     credentials_dir: str = Field('creds', help='Path to the credentials for third-party (i.e., non-Slack) apps')
 
     # Miscellaneous options
-    gdrive_backup_folder: str = Field('1Ea1rjA0bonW1Y9_ACbcd1WqigMeru5lb',
+    gdrive_backup_folder: str = Field('1OmFkSgRvBr3JeWCnOWOaHBiEX5T-AR_V',
                                       help='Where to upload folders on Google drive. Expects a Google Drive folder ID')
 
     # Team-specific options
-    team_options: Dict[str, TeamConfig] = Field({}, help='Settings for the different Slack teams configured to '
+    team_options: Dict[int, TeamConfig] = Field({}, help='Settings for the different Slack teams configured to '
                                                          'work with Modron. Key is the Slack team ID')
 
     # NPC generator

@@ -24,7 +24,7 @@ class ModronState(BaseModel):
     """Holder for elements of Modron's configuration that can change during runtime
     or need to be persistent across restarts"""
 
-    reminder_time: Dict[str, datetime] = Field(None, description='Next time to check if a reminder is needed')
+    reminder_time: Dict[int, datetime] = Field(None, description='Next time to check if a reminder is needed')
 
     @classmethod
     def load(cls, path: str = config.state_path) -> 'ModronState':

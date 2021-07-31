@@ -86,20 +86,20 @@ class NPCGenerator(InteractionModule):
         parser.add_argument('--location', '-l', help='Which demographic template to use',
                             default='default', choices=config.npc_race_dist.keys(), type=str)
 
-    def interact(self, args: Namespace, payload: SlashCommandPayload):
+    def interact(self, args: Namespace, context: SlashCommandPayload):
         # Log the interaction
-        logger.info(f'{payload.user_id} requested to make {args.n} NPCs from {args.location}')
+        logger.info(f'{context.user_id} requested to make {args.n} NPCs from {args.location}')
 
         # Make the HTML table
         npc_table = generate_and_render_npcs(args.location, args.n)
 
         # Check if the command was invoked in a channel. If not, we must send file as a DM
-        if not self.clients[payload.team_id].conversation_is_channel(payload.channel_id):
+        if not self.clients[context.team_id].conversation_is_channel(context.channel_id):
             logger.info('Command came from a private channel, will send it to them directly')
-            result = self.clients[payload.team_id].conversations_open(users=payload.user_id)
+            result = self.clients[context.team_id].conversations_open(users=context.user_id)
             channel_id = result['channel']['id']
         else:
-            channel_id = payload.channel_id
+            channel_id = context.channel_id
 
         with TemporaryDirectory() as td:
             # Convert the table to PDF
@@ -110,6 +110,6 @@ class NPCGenerator(InteractionModule):
             })
 
             # Upload it as a file
-            self.clients[payload.team_id].files_upload(
+            self.clients[context.team_id].files_upload(
                 channels=channel_id, title=f'{args.n} NPCs from {args.location}',
                 file=pdf_path, initial_comment=f'The {args.n} NPCs you requested')

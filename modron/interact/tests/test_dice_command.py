@@ -5,7 +5,7 @@ from csv import DictReader
 
 from pytest import raises
 
-from modron.interact import handle_slash_command
+from modron.interact import handle_generic_slash_command
 from modron.interact._argparse import NoExitParserError
 from modron.config import get_config
 
@@ -95,7 +95,7 @@ def test_shortcut(parser, payload, caplog):
     payload.command = '/mroll'
     payload.text = '1d20 test'
     with caplog.at_level(logging.INFO):
-        assert handle_slash_command(payload, parser) == {"response_type": "in_channel"}
+        assert handle_generic_slash_command(payload, parser) == {"response_type": "in_channel"}
         sleep(5)  # Waits for the delayed thread to run
     assert '1d20' in caplog.messages[-2]
 
@@ -103,6 +103,6 @@ def test_shortcut(parser, payload, caplog):
     payload.command = '/roll'
     payload.text = '1d20 test'
     with caplog.at_level(logging.INFO):
-        assert handle_slash_command(payload, parser) == {"response_type": "in_channel"}
+        assert handle_generic_slash_command(payload, parser) == {"response_type": "in_channel"}
         sleep(5)  # Waits for the delayed thread to run
     assert '1d20' in caplog.messages[-2]
