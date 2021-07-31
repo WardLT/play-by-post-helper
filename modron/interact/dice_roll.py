@@ -118,7 +118,7 @@ class DiceRollInteraction(InteractionModule):
         if isinstance(context.channel, TextChannel):
             channel: TextChannel = context.channel
             channel_name = channel.name
-            skipped_channel = channel.name not in allowed_channels
+            skipped_channel = channel not in allowed_channels
             private_channel = False
         else:
             skipped_channel = False
