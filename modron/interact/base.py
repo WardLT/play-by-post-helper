@@ -59,7 +59,8 @@ class InteractionModule:
             args = self.parser.parse_args(args)
         except NoExitParserError as exc:
             logger.info(f'Parser raised an exception. Message: {exc.error_message}')
-            await context.send(exc.make_message())
+            await context.send(exc.make_message(), delete_after=60)
+            return
         await self.interact(args, context)
 
     async def interact(self, args: Namespace, context: Context):
