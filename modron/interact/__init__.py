@@ -2,7 +2,7 @@
 
 Holds logic of how Modron should respond a certain direct message"""
 import logging
-from typing import Union, Sequence, Callable, NoReturn
+from typing import Sequence, NoReturn
 
 from discord.ext.commands import Context, Command
 

@@ -119,16 +119,13 @@ class DiceRollInteraction(InteractionModule):
             channel: TextChannel = context.channel
             channel_name = channel.name
             skipped_channel = channel not in allowed_channels
-            private_channel = False
         else:
             skipped_channel = False
-            private_channel = True
             channel_name = None
         no_log = not config.team_options[context.guild.id].dice_log
 
-        if no_log or skipped_channel or private_channel:
-            logger.info(f'Refusing to log dice roll. Reasons: No log - {no_log}, skipped channel - {skipped_channel},'
-                        f' private channel - {private_channel}')
+        if no_log or skipped_channel:
+            logger.info(f'Refusing to log dice roll. Reasons: No log - {no_log}, skipped channel - {skipped_channel}')
             return
 
         # Get the information about this dice roll

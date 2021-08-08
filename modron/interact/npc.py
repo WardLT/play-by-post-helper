@@ -8,7 +8,7 @@ import os
 from tabulate import tabulate
 import pdfkit
 
-from modron.interact import InteractionModule, SlashCommandPayload
+from modron.interact import InteractionModule
 from modron.npc import generate_npc
 from modron.config import get_config
 

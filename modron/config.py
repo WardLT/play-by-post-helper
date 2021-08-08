@@ -81,7 +81,7 @@ class ModronConfig(BaseModel):
     backup_dir: str = Field('backup', help='Path to where to store the backup. Each team will get its own '
                                            'subdirectory')
     character_dir: str = Field('characters', help='Path to the character sheets. Each team has its own subdirectory')
-    credentials_dir: str = Field('creds', help='Path to the credentials for third-party (i.e., non-Slack) apps')
+    credentials_dir: str = Field('creds', help='Path to the credentials for third-party (i.e., non-Discord) apps')
 
     # Miscellaneous options
     gdrive_backup_folder: str = Field('1OmFkSgRvBr3JeWCnOWOaHBiEX5T-AR_V',

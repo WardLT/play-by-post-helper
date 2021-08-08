@@ -16,9 +16,9 @@ def state_path(tmpdir):
 def test_save_and_load(state_path):
     # Modify the file
     state = ModronState.load(state_path)
-    state.reminder_time = {'TID': datetime.now()}
+    state.reminder_time = {1234: datetime.now()}
     state.save(state_path)
 
     # Get the changes back
     state = ModronState.load(state_path)
-    assert 'TID' in state.reminder_time
+    assert 1234 in state.reminder_time

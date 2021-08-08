@@ -1,7 +1,8 @@
 """Tests related to the Slack API"""
 from discord import Guild
 
-from modron.discord import match_channels_to_regex, ModronClient
+from modron.discord import match_channels_to_regex
+from modron.bot import ModronClient
 
 
 def test_channel_match(client: ModronClient, guild: Guild):

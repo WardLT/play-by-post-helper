@@ -8,7 +8,7 @@ from modron.bot import ModronClient
 
 
 @fixture()
-async def client() -> ModronClient:
+async def bot() -> ModronClient:
     token = os.environ.get('BOT_TOKEN', None)
     if token is None:
         raise ValueError('Cannot find Auth token')
@@ -27,5 +27,5 @@ async def client() -> ModronClient:
 
 
 @fixture()
-async def guild(client: ModronClient) -> Guild:
-    return client.get_guild(853806073906593832)
+async def guild(bot: ModronClient) -> Guild:
+    return bot.get_guild(853806073906593832)

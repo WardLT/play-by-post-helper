@@ -8,7 +8,7 @@ def test_npc_generator(parser, payload, caplog):
     try:
         args = parser.parse_args(['npcgen', '3'])
         with caplog.at_level(logging.INFO):
-            args.interact(args, payload)
+            args.roller(args, payload)
     except OSError as exc:
         assert 'wkhtmltopdf' in str(exc), "Failure for a reason other than wkhtml not being installed"
     assert '3 NPCs from default' in caplog.messages[-1]
@@ -23,7 +23,7 @@ def test_npc_generator(parser, payload, caplog):
     try:
         args = parser.parse_args(['npcgen', '3'])
         with caplog.at_level(logging.INFO):
-            args.interact(args, payload)
+            args.roller(args, payload)
     except OSError as exc:
         assert 'wkhtmltopdf' in str(exc), "Failure for a reason other than wkhtml not being installed"
     assert '3 NPCs from default' in caplog.messages[-2]

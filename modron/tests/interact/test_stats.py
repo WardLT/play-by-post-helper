@@ -17,25 +17,25 @@ def test_stats(parser, payload):
 
     # Run for all dice rolls
     args = parser.parse_args(['stats'])
-    args.interact(args, payload)
+    args.roller(args, payload)
 
     # Run for only perception checks
     args = parser.parse_args(['stats', '--reason', 'perception'])
-    args.interact(args, payload)
+    args.roller(args, payload)
 
     # Run for only unmodified rolls
     args = parser.parse_args(['stats', '--reason', 'perception', '--no-modifiers'])
-    args.interact(args, payload)
+    args.roller(args, payload)
 
     # Test where there should not be any rolls
     args = parser.parse_args(['stats', '--reason', 'no way', '--no-modifiers'])
-    args.interact(args, payload)
+    args.roller(args, payload)
 
     # Screen by channel
     args = parser.parse_args(['stats', '--channel', 'ic_all'])
-    args.interact(args, payload)
+    args.roller(args, payload)
 
     # Screen by player
     args = parser.parse_args(['stats', '--character', 'Hubryr'])
-    args.interact(args, payload)
+    args.roller(args, payload)
 

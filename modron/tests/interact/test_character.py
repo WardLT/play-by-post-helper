@@ -29,20 +29,20 @@ def test_character(parser, payload, caplog):
     # Test with the bot user, who has no characters
     args = parser.parse_args(['character'])
     with caplog.at_level(logging.INFO):
-        args.interact(args, payload)
+        args.roller(args, payload)
     assert "No character" in caplog.messages[-1]
 
     # Test with a real player
     payload.user_id = 'UP4K437HT'
     with caplog.at_level(logging.INFO):
-        args.interact(args, payload)
+        args.roller(args, payload)
     assert "Adrianna" in caplog.messages[-2]
     assert "Reminding" in caplog.messages[-1]
 
     # Test looking up an ability
     with caplog.at_level(logging.INFO):
         args = parser.parse_args(['character', 'ability', 'str'])
-        args.interact(args, payload)
+        args.roller(args, payload)
     assert '+3' in caplog.messages[-1]
 
 
@@ -58,7 +58,7 @@ def test_lookup_hp(parser, payload, caplog):
     payload.user_id = 'UP4K437HT'
     args = parser.parse_args(['character', 'hp'])
     with caplog.at_level(logging.INFO):
-        args.interact(args, payload)
+        args.roller(args, payload)
     assert caplog.messages[-1].startswith('No changes.')
 
 
@@ -68,25 +68,25 @@ def test_harm_and_heal(parser, payload, caplog, test_sheet_path):
     # Fully heal the character
     args = parser.parse_args(['character', 'hp', 'heal', 'full'])
     with caplog.at_level(logging.INFO):
-        args.interact(args, payload)
+        args.roller(args, payload)
     assert caplog.messages[-1].startswith('Saved')
     assert 'Fully healed' in caplog.messages[-2]
 
     # Reset the temporary hit points and HP maximum
     args = parser.parse_args(['character', 'hp', 'max', 'reset'])
     with caplog.at_level(logging.INFO):
-        args.interact(args, payload)
+        args.roller(args, payload)
     assert 'Reset hit point' in caplog.messages[-2]
 
     args = parser.parse_args(['character', 'hp', 'temp', 'reset'])
     with caplog.at_level(logging.INFO):
-        args.interact(args, payload)
+        args.roller(args, payload)
     assert 'Removed all temporary hit' in caplog.messages[-2]
 
     # Test applying damage
     args = parser.parse_args(['character', 'hp', 'harm', '10'])
     with caplog.at_level(logging.INFO):
-        args.interact(args, payload)
+        args.roller(args, payload)
     assert '10 hit points' in caplog.messages[-2]
 
     sheet = Character.from_yaml(test_sheet_path)
@@ -95,7 +95,7 @@ def test_harm_and_heal(parser, payload, caplog, test_sheet_path):
     # Test healing
     args = parser.parse_args(['character', 'hp', 'heal', '5'])
     with caplog.at_level(logging.INFO):
-        args.interact(args, payload)
+        args.roller(args, payload)
     assert '5 hit points' in caplog.messages[-2]
 
     sheet = Character.from_yaml(test_sheet_path)
@@ -104,7 +104,7 @@ def test_harm_and_heal(parser, payload, caplog, test_sheet_path):
     # Test adding temporary hit points
     args = parser.parse_args(['character', 'hp', 'temp', '2'])
     with caplog.at_level(logging.INFO):
-        args.interact(args, payload)
+        args.roller(args, payload)
     assert '2 temporary hit points' in caplog.messages[-2]
 
     sheet = Character.from_yaml(test_sheet_path)
@@ -114,7 +114,7 @@ def test_harm_and_heal(parser, payload, caplog, test_sheet_path):
     # Test lowering hit point max
     args = parser.parse_args(['character', 'hp', 'max', '-22'])
     with caplog.at_level(logging.INFO):
-        args.interact(args, payload)
+        args.roller(args, payload)
     assert 'by -22 hit points' in caplog.messages[-2]
 
     sheet = Character.from_yaml(test_sheet_path)
@@ -126,7 +126,7 @@ def test_harm_and_heal(parser, payload, caplog, test_sheet_path):
     for sub in ['heal', 'temp', 'max']:
         args = parser.parse_args(['character', 'hp', sub, 'asdf'])
         with caplog.at_level(logging.INFO):
-            args.interact(args, payload)
+            args.roller(args, payload)
         assert 'Parse error' in caplog.messages[-1]
 
 
