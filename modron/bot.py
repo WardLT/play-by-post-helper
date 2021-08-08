@@ -35,9 +35,10 @@ class ModronClient(Bot):
                 logger.info(f'No reminders for {team_config.name}')
 
             # Start the backup thread
-            if team_config.backup_channels is not None:
+            if len(team_config.backup_channels) > 0:
                 backup = BackupService(guild, backup_dir=config.backup_dir,
-                                       frequency=timedelta(days=1), channel_regex=team_config.backup_channels)
+                                       frequency=timedelta(days=1),
+                                       channels=team_config.backup_channels)
                 self.loop.create_task(backup.run())
                 logger.info(f'Launched backup service for {team_config.name}')
             else:

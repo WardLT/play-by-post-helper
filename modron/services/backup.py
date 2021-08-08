@@ -13,7 +13,7 @@ from time import sleep
 from typing import List, Dict, Optional, Tuple
 
 import humanize
-from discord import Guild, TextChannel, Message, User
+from discord import Guild, TextChannel, Message, User, CategoryChannel
 from googleapiclient.channel import Channel
 from googleapiclient.discovery import build, Resource
 from googleapiclient.http import MediaFileUpload
@@ -55,20 +55,20 @@ class BackupService(BaseService):
     """
 
     def __init__(self, guild: Guild, backup_dir: Optional[str] = None, frequency: timedelta = timedelta(days=1),
-                 channel_regex: str = "*", max_sleep_time: float = inf):
+                 channels: List[int] = (), max_sleep_time: float = inf):
         """
 
         Args:
             guild: Connection to the guild
             backup_dir: Directory to store the
-            channel_regex: Regex which matches the channels to be backed up
+            channels: List of channels or categories to back up
             max_sleep_time: Longest time to sleep before
         """
         short_name = config.team_options[guild.id].name
         super().__init__(guild, max_sleep_time, name=f'backup_{short_name}')
         self.frequency = frequency
         self.backup_dir = backup_dir
-        self.channel_regex = channel_regex
+        self.channels = channels
 
         # Create a Google-drive page, if credentials are available
         cred_path = config.get_gdrive_credentials_path()
@@ -166,11 +166,17 @@ class BackupService(BaseService):
         Returns:
             (dict) Number of messages downloaded per channel
         """
-        # Match the backup channels
-        channels = match_channels_to_regex(self._guild, self.channel_regex)
+        # Get the channels to back up
+        to_backup = []
+        for channel_id in self.channels:
+            channel = self._guild.get_channel(channel_id)
+            if isinstance(channel, CategoryChannel):
+                to_backup.extend(channel.channels)
+            else:
+                to_backup.append(channel)
 
         # Submit all backups as asynchronous tasks
-        tasks = dict((c.name, asyncio.create_task(self.backup_messages(c))) for c in channels)
+        tasks = dict((c.name, asyncio.create_task(self.backup_messages(c))) for c in to_backup)
 
         # Wait until they all finish
         return dict([

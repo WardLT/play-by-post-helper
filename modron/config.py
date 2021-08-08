@@ -60,7 +60,8 @@ class TeamConfig(BaseModel):
                                           description='How long to wait for activity before issuing reminders')
 
     # Backing up messages
-    backup_channels: Optional[str] = Field(r'^ic_.*', help='Regex defining which channels to backup')
+    backup_channels: List[int] = Field(default_factory=list, help='List of channels (including category channels) '
+                                                                  'to back up.')
 
     # Logging dice rolls
     dice_log: bool = Field(True, help='Whether to log dice rolls for this team')

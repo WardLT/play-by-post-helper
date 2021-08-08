@@ -42,7 +42,7 @@ async def test_backup(guild: Guild, tmpdir):
     # Make a temporary directory
     log_dir = os.path.join(tmpdir, 'test')
     os.makedirs(log_dir, exist_ok=True)
-    service = BackupService(guild, log_dir, timedelta(days=1), channel_regex='^bot_testing$',
+    service = BackupService(guild, log_dir, timedelta(days=1), channels=[863442378592878602],
                             max_sleep_time=5)
 
     # Run the code
