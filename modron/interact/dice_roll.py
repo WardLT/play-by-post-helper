@@ -156,7 +156,10 @@ class DiceRollInteraction(InteractionModule):
 
     async def interact(self, args: Namespace, context: Context):
         # Check if the user is requesting a roll by name
-        if dice_regex.match(args.dice) is None:
+        if args.dice.lower() == 'luck':
+            args.dice = '1d20'
+            args.purpose = ['luck']
+        elif dice_regex.match(args.dice) is None:
             logger.info('Dice did not match regex, attempting to match to character ability')
             available_chars = list_available_characters(context.guild, context.author.id)
             if len(available_chars) == 0:

@@ -9,16 +9,14 @@ from pathlib import Path
 from datetime import datetime, timedelta
 from math import inf, isclose
 import logging
-from time import sleep
 from typing import List, Dict, Optional, Tuple
 
 import humanize
 from discord import Guild, TextChannel, Message, User, CategoryChannel
-from googleapiclient.channel import Channel
 from googleapiclient.discovery import build, Resource
 from googleapiclient.http import MediaFileUpload
 
-from modron.discord import get_last_activity, match_channels_to_regex
+from modron.discord import get_last_activity
 from modron.services import BaseService
 from modron.config import get_config
 

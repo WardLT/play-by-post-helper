@@ -57,6 +57,11 @@ async def test_rolling(parser, roller: DiceRollInteraction, payload: MockContext
     await roller.interact(args, payload)
     assert '1d6+1 at advantage' in payload.last_message
 
+    # Test a luck roll (always a d20)
+    args = parser.parse_args(['luck'])
+    await roller.interact(args, payload)
+    assert 'for luck' in payload.last_message
+
     # Make sure the log file does not yet exist
     print(f'Checking if the log was created or modified at {log_path}')
     assert not os.path.isfile(log_path) or os.path.getmtime(log_path) == original_time
