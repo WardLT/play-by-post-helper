@@ -1,17 +1,19 @@
 from time import sleep
 import logging
 
-from pytest import raises, fixture
+from discord import Guild
+from pytest import raises, fixture, mark
 
 from modron.characters import Character
 from modron.config import get_config
 from modron.interact import NoExitParserError, handle_generic_slash_command
+from modron.interact.character import CharacterSheet, HPTracker
 
 
 @fixture()
-def test_sheet_path():
+def test_sheet_path(guild: Guild):
     config = get_config()
-    return config.get_character_sheet_path('TP3LCSL2Z', 'adrianna')
+    return config.get_character_sheet_path(guild.id, 'modron')
 
 
 @fixture(autouse=True)
@@ -25,117 +27,85 @@ def backup_sheet(test_sheet_path):
         fp.write(_original_sheet)
 
 
-def test_character(parser, payload, caplog):
-    # Test with the bot user, who has no characters
-    args = parser.parse_args(['character'])
-    with caplog.at_level(logging.INFO):
-        args.roller(args, payload)
-    assert "No character" in caplog.messages[-1]
+@mark.asyncio
+async def test_character(payload):
+    character = CharacterSheet()
+    parser = character.parser
 
     # Test with a real player
-    payload.user_id = 'UP4K437HT'
-    with caplog.at_level(logging.INFO):
-        args.roller(args, payload)
-    assert "Adrianna" in caplog.messages[-2]
-    assert "Reminding" in caplog.messages[-1]
+    args = parser.parse_args([])
+    await character.interact(args, payload)
+    assert "Modron" in payload.last_message
 
     # Test looking up an ability
-    with caplog.at_level(logging.INFO):
-        args = parser.parse_args(['character', 'ability', 'str'])
-        args.roller(args, payload)
-    assert '+3' in caplog.messages[-1]
+    args = parser.parse_args(['ability', 'str'])
+    await character.interact(args, payload)
+    assert '+0' in payload.last_message
 
 
-def test_help(parser, payload, caplog):
-    """Make sure the help printing works"""
-    with raises(NoExitParserError) as exc:
-        parser.parse_args(['character', 'ability', '--help'])
-    print(exc.value.text_output)
-    assert exc.value.text_output.startswith('*usage*: /modron character')
+@mark.asyncio
+async def test_lookup_hp(payload):
+    hp = HPTracker()
+    args = hp.parser.parse_args([])
+    await hp.interact(args, payload)
+    assert 'Modron has ' in payload.last_message
 
 
-def test_lookup_hp(parser, payload, caplog):
-    payload.user_id = 'UP4K437HT'
-    args = parser.parse_args(['character', 'hp'])
-    with caplog.at_level(logging.INFO):
-        args.roller(args, payload)
-    assert caplog.messages[-1].startswith('No changes.')
-
-
-def test_harm_and_heal(parser, payload, caplog, test_sheet_path):
-    payload.user_id = 'UP4K437HT'
+@mark.asyncio
+async def test_harm_and_heal(payload, test_sheet_path):
+    hp = HPTracker()
 
     # Fully heal the character
-    args = parser.parse_args(['character', 'hp', 'heal', 'full'])
-    with caplog.at_level(logging.INFO):
-        args.roller(args, payload)
-    assert caplog.messages[-1].startswith('Saved')
-    assert 'Fully healed' in caplog.messages[-2]
+    args = hp.parser.parse_args(['heal', 'full'])
+    await hp.interact(args, payload)
+    assert 'hit point maximum' in payload.last_message
 
     # Reset the temporary hit points and HP maximum
-    args = parser.parse_args(['character', 'hp', 'max', 'reset'])
-    with caplog.at_level(logging.INFO):
-        args.roller(args, payload)
-    assert 'Reset hit point' in caplog.messages[-2]
+    args = hp.parser.parse_args(['max', 'reset'])
+    await hp.interact(args, payload)
+    assert 'Reset hit point' in payload.last_message
 
-    args = parser.parse_args(['character', 'hp', 'temp', 'reset'])
-    with caplog.at_level(logging.INFO):
-        args.roller(args, payload)
-    assert 'Removed all temporary hit' in caplog.messages[-2]
+    args = hp.parser.parse_args(['temp', 'reset'])
+    await hp.interact(args, payload)
+    assert 'Removed all temporary hit' in payload.last_message
 
     # Test applying damage
-    args = parser.parse_args(['character', 'hp', 'harm', '10'])
-    with caplog.at_level(logging.INFO):
-        args.roller(args, payload)
-    assert '10 hit points' in caplog.messages[-2]
+    args = hp.parser.parse_args(['harm', '2'])
+    await hp.interact(args, payload)
+    assert '2 hit points' in payload.last_message
 
     sheet = Character.from_yaml(test_sheet_path)
-    assert sheet.total_hit_points == sheet.hit_points - 10
+    assert sheet.total_hit_points == sheet.hit_points - 2
 
     # Test healing
-    args = parser.parse_args(['character', 'hp', 'heal', '5'])
-    with caplog.at_level(logging.INFO):
-        args.roller(args, payload)
-    assert '5 hit points' in caplog.messages[-2]
+    args = hp.parser.parse_args(['heal', '1'])
+    await hp.interact(args, payload)
+    assert '1 hit points' in payload.last_message
 
     sheet = Character.from_yaml(test_sheet_path)
-    assert sheet.total_hit_points == sheet.hit_points - 5
+    assert sheet.total_hit_points == sheet.hit_points - 1
 
     # Test adding temporary hit points
-    args = parser.parse_args(['character', 'hp', 'temp', '2'])
-    with caplog.at_level(logging.INFO):
-        args.roller(args, payload)
-    assert '2 temporary hit points' in caplog.messages[-2]
+    args = hp.parser.parse_args(['temp', '2'])
+    await hp.interact(args, payload)
+    assert '2 temporary hit points' in payload.last_message
 
     sheet = Character.from_yaml(test_sheet_path)
-    assert sheet.total_hit_points == sheet.hit_points - 3
+    assert sheet.total_hit_points == sheet.hit_points + 1
     assert sheet.temporary_hit_points == 2
 
     # Test lowering hit point max
-    args = parser.parse_args(['character', 'hp', 'max', '-22'])
-    with caplog.at_level(logging.INFO):
-        args.roller(args, payload)
-    assert 'by -22 hit points' in caplog.messages[-2]
+    args = hp.parser.parse_args(['max', '-2'])
+    await hp.interact(args, payload)
+    assert 'by -2 hit points' in payload.last_message
 
     sheet = Character.from_yaml(test_sheet_path)
-    assert sheet.total_hit_points == sheet.hit_points - 20
+    assert sheet.total_hit_points == sheet.hit_points
     assert sheet.temporary_hit_points == 2
 
     # Make sure the parse error works for all subcommands that
     #  accept a non-text input as well (e.g., 'reset')
     for sub in ['heal', 'temp', 'max']:
-        args = parser.parse_args(['character', 'hp', sub, 'asdf'])
-        with caplog.at_level(logging.INFO):
-            args.roller(args, payload)
-        assert 'Parse error' in caplog.messages[-1]
-
-
-def test_hp_shortcut(payload, parser, caplog):
-    # Special shortcut for /roll
-    payload.command = '/hp'
-    payload.text = ''
-    payload.user_id = 'UP4K437HT'
-    with caplog.at_level(logging.INFO):
-        assert handle_generic_slash_command(payload, parser) == {"response_type": "in_channel"}
-        sleep(5)  # Waits for the delayed thread to run
-    assert caplog.messages[-1].startswith('No changes.')
+        args = hp.parser.parse_args([sub, 'asdf'])
+        with raises(ValueError):
+            await hp.interact(args, payload)

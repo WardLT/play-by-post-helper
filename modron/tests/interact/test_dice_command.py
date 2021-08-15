@@ -1,11 +1,9 @@
 from argparse import ArgumentParser
-import logging
 import os
 from csv import DictReader
 
 from discord import Guild, utils
 from pytest import raises, fixture, mark
-from pytest_mock import MockerFixture
 
 from modron.interact._argparse import NoExitParserError
 from modron.config import get_config

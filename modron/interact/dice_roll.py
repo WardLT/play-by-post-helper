@@ -46,7 +46,7 @@ def _render_dice_rolls(roll: DiceRoll) -> List[str]:
 
         # Render the value of all dice
         output.append(
-            ' '.join([value_str if u else f'~{v}~' for v, u in zip(rolls, was_used)])
+            ' '.join([value_str if u else f'~~{v}~~' for v, u in zip(rolls, was_used)])
         )
     return output
 

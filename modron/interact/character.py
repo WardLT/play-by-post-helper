@@ -1,23 +1,18 @@
 """Get information about a specific character"""
 from argparse import Namespace, ArgumentParser
-from typing import Dict
 import logging
+from typing import Tuple
 
-import requests
+from discord.ext.commands import Context
 
-from modron.interact import SlashCommandPayload
 from modron.interact.base import InteractionModule
 from modron.characters import list_available_characters, load_character, Character
-from modron.slack import BotClient
 
 logger = logging.getLogger(__name__)
 
-_description = '''Handles operations related to character sheets
+_description = '''Handles operations related to character sheets 
 
-Allows users to read from or edit character sheets. Common uses will
-be to set HP and look up statistics.
-
-You may also use this command to change which character you are playing,
+TBD: You may also use this command to change which character you are playing,
 which will dictate the character sheet it reads.
 '''
 
@@ -34,12 +29,33 @@ This command can be used to get current HP, apply damage or healing, or
 make temporary changes to the HP'''
 
 
+def load_sheet(context: Context) -> Tuple[Character, str]:
+    """Load the requested character sheet
+
+    Args:
+        context: Context from the command
+    Returns:
+        Character sheet for player's character
+    """
+    # Get the characters available for this player
+    available_chars = list_available_characters(context.guild, context.author.id)
+    if len(available_chars) == 0:
+        logger.warning('No character found for this player')
+        raise ValueError('You have not defined a character yet. Talk to Logan.')
+
+    # Determine which character is being played
+    assert len(available_chars) == 1, "Modron does not yet support >1 character per user"
+    character = available_chars[0]
+    sheet, sheet_path = load_character(context.guild, character)
+    logger.info(f'User {context.author} mapped to character {sheet.name}. Loaded their sheet')
+    return sheet, sheet_path
+
+
 class CharacterSheet(InteractionModule):
     """Handles interactions related to a character sheet"""
 
-    def __init__(self, clients: Dict[str, BotClient]):
-        super().__init__(clients, name='character', help_string='Work with character sheets',
-                         description=_description)
+    def __init__(self):
+        super().__init__(name='character', help_string='Work with character sheets', description=_description)
 
     def register_argparse(self, parser: ArgumentParser):
         # Add a subparser group
@@ -51,10 +67,38 @@ class CharacterSheet(InteractionModule):
                                                description=_ability_description)
         ability_parser.add_argument('name', help='Which ability to look up', nargs='+')
 
+    async def interact(self, args: Namespace, context: Context):
+        # Get the character sheet
+        sheet, _ = load_sheet(context)
+
+        # Switch on the chosen subcommand
+        if args.char_subcommand is None:
+            # Return the character sheet
+            logger.info('Reminding the user which character they are currently playing')
+            await context.reply(f'You are playing {sheet.name} (lvl {sheet.level})')
+        elif args.char_subcommand == "ability":
+            ability_name = ' '.join(args.name)
+            try:
+                modifier = sheet.lookup_modifier(ability_name)
+            except ValueError:
+                logger.info(f'Modifier lookup failed for "{ability_name}"')
+                await context.reply(f'Could not find a modifier for "{ability_name}"')
+                return
+            logger.info(f'Retrieved modifier for {ability_name} rolls: {modifier:+d}')
+            await context.reply(f'{sheet.name}\'s modifier for {ability_name} is {modifier:+d}')
+        else:
+            raise ValueError(f'Subcommand {args.char_subcommand} not yet implemented')
+
+
+class HPTracker(InteractionModule):
+    """Interaction for tracking character health"""
+
+    def __init__(self):
+        super(HPTracker, self).__init__(name='hp', description=_hp_description, help_string='Track character HP')
+
+    def register_argparse(self, parser: ArgumentParser):
         # Add the "hp" command
-        hp_parser = subparsers.add_parser('hp', help='Display and keep track of character HP',
-                                          description=_hp_description)
-        hp_subparsers = hp_parser.add_subparsers(description='Available options for tracking HP', dest='hp_subcommand')
+        hp_subparsers = parser.add_subparsers(description='Available options for tracking HP', dest='hp_subcommand')
 
         heal_parser = hp_subparsers.add_parser('heal', help='Apply healing to a character')
         heal_parser.add_argument('amount', help='Amount of healing. Can be an integer or "full".')
@@ -68,54 +112,9 @@ class CharacterSheet(InteractionModule):
         max_parser = hp_subparsers.add_parser('max', help='Adjust hit point maximum')
         max_parser.add_argument('amount', help='Amount of change, or "reset" to change the temporary back to zero')
 
-    def interact(self, args: Namespace, context: SlashCommandPayload):
-        # Get the characters available for this player
-        available_chars = list_available_characters(context.team_id, context.user_id)
-        if len(available_chars) == 0:
-            logger.info('No character found for this player')
-            requests.post(
-                context.response_url,
-                json={
-                    'text': 'You have not defined a character yet. Talk to Logan.'
-                }
-            )
-            return
-
-        # Determine which character is being played
-        assert len(available_chars) == 1, "Modron does not yet support >1 character per user"
-        character = available_chars[0]
-        sheet, sheet_path = load_character(context.team_id, character)
-        logger.info(f'User {context.user_id} mapped to character {sheet.name}. Loaded their sheet')
-
-        # Switch on the chosen subcommand
-        if args.char_subcommand is None:
-            # Return the character sheet
-            logger.info('Reminding the user which character they are currently playing')
-            context.send_reply(f'You are playing {sheet.name} (lvl {sheet.level})', ephemeral=True)
-        elif args.char_subcommand == "ability":
-            ability_name = ' '.join(args.name)
-            try:
-                modifier = sheet.lookup_modifier(ability_name)
-            except ValueError:
-                logger.info(f'Modifier lookup failed for "{ability_name}"')
-                context.send_reply(f'Could not find a modifier for "{ability_name}"')
-                return
-            logger.info(f'Retrieved modifier for {ability_name} rolls: {modifier:+d}')
-            context.send_reply(f'{sheet.name}\'s modifier for {ability_name} is {modifier:+d}', ephemeral=True)
-        elif args.char_subcommand == "hp":
-            return self._run_hp_subcommand(args, context, sheet, sheet_path)
-        else:
-            raise ValueError(f'Subcommand {args.char_subcommand} not yet implemented')
-
-    def _run_hp_subcommand(self, args: Namespace, payload: SlashCommandPayload, sheet: Character, sheet_path: str):
-        """Process an HP subcommand
-
-        Args:
-            args: Parsed slash command
-            payload: Slash command payload
-            sheet: Character sheet
-            sheet_path: Path to the character sheet
-        """
+    async def interact(self, args: Namespace, context: Context):
+        # Get the character sheet
+        sheet, sheet_path = load_sheet(context)
 
         # Make any changes
         change_msg = ''
@@ -131,8 +130,7 @@ class CharacterSheet(InteractionModule):
                     amount = int(args.amount)
                 except ValueError:
                     logger.info(f'Parse error for heal amount. Input: "{args.amount}"')
-                    payload.send_reply(f'Could not parse amount: "{args.amount}"')
-                    return
+                    raise ValueError(f'Could not parse amount: "{args.amount}"')
 
                 change_msg = f"Healed {amount} hit points."
                 sheet.heal(amount)
@@ -141,9 +139,8 @@ class CharacterSheet(InteractionModule):
             try:
                 amount = int(args.amount)
             except ValueError:
-                payload.send_reply(f'Could not parse amount: "{args.amount}"')
                 logger.info(f'Parse error for harm amount. Input: "{args.amount}"')
-                return
+                raise ValueError(f'Could not parse amount: "{args.amount}"')
 
             sheet.harm(amount)
             change_msg = f"Took {amount} hit points of damage."
@@ -159,9 +156,8 @@ class CharacterSheet(InteractionModule):
                 try:
                     amount = int(args.amount)
                 except ValueError:
-                    payload.send_reply(f'Could not parse amount: "{args.amount}"')
                     logger.info(f'Parse error for amount. Input: "{args.amount}"')
-                    return
+                    raise ValueError(f'Could not parse amount: "{args.amount}"')
 
                 sheet.grant_temporary_hit_points(amount)
                 change_msg = f"Granted {amount} temporary hit points."
@@ -175,9 +171,8 @@ class CharacterSheet(InteractionModule):
                 try:
                     amount = int(args.amount)
                 except ValueError:
-                    payload.send_reply(f'Could not parse amount: "{args.amount}"')
                     logger.info(f'Parse error for amount. Input: "{args.amount}"')
-                    return
+                    raise ValueError(f'Could not parse amount: "{args.amount}"')
 
                 sheet.adjust_hit_point_maximum(amount)
                 change_msg = f"Adjusted hit point maximum by {amount} hit points."
@@ -198,4 +193,5 @@ class CharacterSheet(InteractionModule):
         if sheet.hit_points_adjustment != 0:
             msg += f" including a {sheet.hit_points_adjustment} change to HP maximum"
 
-        payload.send_reply(msg, ephemeral=True)
+        await context.send(f'||{msg}||')
+

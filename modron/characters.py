@@ -400,12 +400,12 @@ class Character(BaseModel):
         return output
 
 
-def list_available_characters(guild: Guild, user_id: str) -> List[str]:
+def list_available_characters(guild: Guild, user_id: int) -> List[str]:
     """List the names of character sheets that are available to a user
 
     Args:
         guild: Associated guild
-        user_id (str): ID of the user in question
+        user_id: ID of the user in question
     Returns:
         ([str]): List of characters available to this player
     """

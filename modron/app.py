@@ -5,6 +5,7 @@ from logging.handlers import RotatingFileHandler
 
 from modron.bot import ModronClient
 from modron.interact import attach_commands
+from modron.interact.character import HPTracker, CharacterSheet
 from modron.interact.dice_roll import DiceRollInteraction
 
 
@@ -26,7 +27,9 @@ def main():
 
     # Generate the slash command responder
     modules = [
-         DiceRollInteraction(),
+        DiceRollInteraction(),
+        HPTracker(),
+        CharacterSheet(),
     ]
     attach_commands(bot, modules)
 
