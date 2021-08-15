@@ -164,12 +164,10 @@ class DiceRollInteraction(InteractionModule):
             available_chars = list_available_characters(context.guild, context.author.id)
             if len(available_chars) == 0:
                 logging.info(f'Seems like user {context.author.id} needs to register a character')
-                await context.send(
+                raise ValueError(
                     f'Did you mean to request a character roll? {args.dice} does not seem like a dice roll, '
-                    f'but you have not registered a character yet. Talk to Logan about registering your sheet.',
-                    delete_after=15
+                    'but you have not registered a character yet. Talk to Logan about registering your sheet.',
                 )
-                return
             elif len(available_chars) == 1:
                 # Reformat command to use a specific character roll
                 sheet, _ = load_character(context.guild, available_chars[0])

@@ -55,13 +55,21 @@ class InteractionModule:
             context: Context of the command invocation
             args: List of arguments
         """
+        # Parse the instructions
         try:
             args = self.parser.parse_args(args)
         except NoExitParserError as exc:
             logger.info(f'Parser raised an exception. Message: {exc.error_message}')
             await context.send(exc.make_message(), delete_after=60)
             return
-        await self.interact(args, context)
+
+        # Perform the interaction
+        try:
+            await self.interact(args, context)
+        except ValueError as e:
+            logger.info(f'Interaction raised an exception. Message: {e}')
+            await context.send(f'Command failure! Message: {str(e)}', delete_after=120)
+            raise e
 
     async def interact(self, args: Namespace, context: Context):
         """Perform an interaction given the details of a message

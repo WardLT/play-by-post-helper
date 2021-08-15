@@ -1,0 +1,20 @@
+name: Modron
+player: 862094786956886035
+alignment: lawful
+background: Monodrone
+race: Modron
+classes:
+  construct: 1
+strength: 10
+dexterity: 13
+constitution: 12
+intelligence: 4
+wisdom: 10
+charisma: 5
+hit_points: 5
+current_hit_points: 5
+armor_class: 13
+speed: 30
+saving_throws: []
+proficiencies:
+  - history

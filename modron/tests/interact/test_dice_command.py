@@ -80,22 +80,14 @@ async def test_rolling(parser, roller: DiceRollInteraction, payload: MockContext
 
 
 @mark.asyncio
-@mark.skip('Cannot figure out how to mock user')
-async def test_ability_roll(parser, roller, payload, mocker: MockerFixture):
-    # Test a roll w/o a registered character
-    args = parser.parse_args(['ability', 'check'])
-    await roller.interact(args, payload)
-    assert "you have not registered a character" in payload.last_message
-
+async def test_ability_roll(parser, roller, payload):
     # Test an unknown ability
-    mocker.patch.object(payload.author.id, 'id', new=854826609101111317)
     args = parser.parse_args(['ability', 'check'])
     with raises(BaseException) as exc:
         await roller.interact(args, payload)
     assert str(exc.value).startswith('Unrecognized')
 
     # Test a real ability
-    args = parser.parse_args(['roll', '-a', 'str', 'save'])
-    with caplog.at_level(logging.INFO):
-        args.roller(args, payload)
-    assert '1d20+7 at advantage for str save.' in caplog.messages[-2]
+    args = parser.parse_args(['-a', 'str', 'save'])
+    await roller.interact(args, payload)
+    assert 'at advantage' in payload.last_message
