@@ -1,13 +1,19 @@
-import logging
+from pytest import mark
+
+from modron.interact.reminder import ReminderModule
+
+rem = ReminderModule()
 
 
-def test_delay_status(parser, payload):
-    args = parser.parse_args(['reminder', 'status'])
-    args.roller(args, payload)
+@mark.asyncio
+async def test_delay_status(payload):
+    args = rem.parser.parse_args(['status'])
+    await rem.interact(args, payload)
+    assert payload.last_message.startswith('Next check')
 
 
-def test_delay_pause(parser, payload, caplog):
-    args = parser.parse_args(['reminder', 'break', 'PT1S'])
-    with caplog.at_level(logging.INFO):
-        args.roller(args, payload)
-    assert 'failed' not in caplog.messages[-1]
+@mark.asyncio
+async def test_delay_pause(payload):
+    args = rem.parser.parse_args(['break', 'PT1S'])
+    await rem.interact(args, payload)
+    assert 'paused' in payload.last_message.lower()
