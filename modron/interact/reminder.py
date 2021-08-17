@@ -79,7 +79,7 @@ class ReminderModule(InteractionModule):
             # Get the reminder time as a time
             state = ModronState.load()
             reminder_time = state.reminder_time[context.guild.id]
-            reply = f'Next check for reminder: <t:{reminder_time.timestamp()}>'  # Format as a
+            reply = f'Next check for reminder: <t:{int(reminder_time.timestamp())}>'  # Format as a
         elif args.reminder_command == 'break':
             reply = _add_delay(context.guild.id, args.time)
         else:
