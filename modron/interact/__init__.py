@@ -68,7 +68,7 @@ async def handle_generic_slash_command(context: Context, parser: NoExitParser) -
         args = parser.parse_args(context.args)
     except NoExitParserError as exc:
         logger.info(f'Parser raised an exception. Message: {exc.error_message}')
-        await context.send(exc.make_message())
+        await context.reply(exc.make_message(), delete_after=60)
         return
 
     # If there is not an interact command, return help message

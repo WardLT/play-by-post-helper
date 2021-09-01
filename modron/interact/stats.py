@@ -4,8 +4,9 @@ import logging
 from argparse import ArgumentParser, Namespace
 
 import pandas as pd
+from discord.ext.commands import Context
 
-from modron import SlashCommandPayload, get_config
+from modron.config import get_config
 from modron.dice import DiceRoll
 from modron.dice.stats import DiceRollStatistics
 from modron.interact.base import InteractionModule
@@ -22,11 +23,10 @@ config = get_config()
 class StatisticModule(InteractionModule):
     """Module for returning statistics about play"""
 
-    def __init__(self, clients):
+    def __init__(self):
         super().__init__(
-            clients=clients,
             name='stats',
-            help_string='Get statistics about play',
+            help_string='Get statistics about dice rolls',
             description=_description
         )
 
@@ -40,9 +40,9 @@ class StatisticModule(InteractionModule):
         parser.add_argument("--no-modifiers", action='store_true',
                             help="Only get dice performed without any modification")
 
-    def interact(self, args: Namespace, context: SlashCommandPayload):
+    async def interact(self, args: Namespace, context: Context):
         # Load in the dice rolls from the appropriate team
-        dice_path = config.get_dice_log_path(context.team_id)
+        dice_path = config.get_dice_log_path(context.guild.id)
         dice_log = pd.read_csv(dice_path)
         logger.info(f'Loaded {len(dice_log)} records from {dice_path}')
 
@@ -58,13 +58,13 @@ class StatisticModule(InteractionModule):
 
         # Screen down to the desired dice rolls
         if args.character is None:
-            user_name = self.clients[context.team_id].get_user_name(context.user_id)
+            character = context.author.nick
         else:
-            user_name = args.character
+            character = args.character
 
         if not args.all_players and len(dice_log) > 0:
-            dice_log.query(f'user=="{user_name}"', inplace=True)
-            logger.info(f'Reduced to {len(dice_log)} records from {user_name}')
+            dice_log.query(f'character=="{character}"', inplace=True)
+            logger.info(f'Reduced to {len(dice_log)} records from {character}')
 
         if len(dice_log) > 0:
             dice_log['dice_faces'] = dice_log['dice'].apply(lambda x: DiceRoll.make_roll(x).dice)
@@ -88,7 +88,7 @@ class StatisticModule(InteractionModule):
 
         # If necessary, match dice rolls
         if len(dice_log) == 0:
-            context.send_reply('No matching dice rolls.', ephemeral=True)
+            await context.reply('No matching dice rolls.', delete_after=60)
             return
 
         # Extract the values of interest
@@ -106,13 +106,13 @@ class StatisticModule(InteractionModule):
         header = f'Pulled {len(rolls)} d{die_choice} rolls'
         if args.reason is not None:
             header += f' for {args.reason}'
-        header += ' from all players' if args.all_players else f' from {user_name}'
+        header += ' from all players' if args.all_players else f' from {character}'
         if match_channels is not None:
             header += f' in channels: {", ".join(match_channels)}'
 
         #   Special case: Only the output
         if len(rolls) == 0:
-            context.send_reply(header, ephemeral=True)
+            await context.reply(header, delete_after=60)
             return
 
         output = [header, f'*Last {min(5, len(rolls))} rolls*: {", ".join(map(str, rolls[-5:]))}']
@@ -123,4 +123,4 @@ class StatisticModule(InteractionModule):
         output.append(f'*Die description*: {summary.models[0].description}')
 
         # Send outputs to user
-        context.send_reply("\n".join(output), ephemeral=True)
+        await context.reply("\n".join(output), delete_after=500)

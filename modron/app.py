@@ -8,6 +8,7 @@ from modron.interact import attach_commands
 from modron.interact.character import HPTracker, CharacterSheet
 from modron.interact.dice_roll import DiceRollInteraction
 from modron.interact.reminder import ReminderModule
+from modron.interact.stats import StatisticModule
 
 
 def main():
@@ -31,7 +32,8 @@ def main():
         DiceRollInteraction(),
         HPTracker(),
         CharacterSheet(),
-        ReminderModule()
+        ReminderModule(),
+        StatisticModule()
     ]
     attach_commands(bot, modules)
 
