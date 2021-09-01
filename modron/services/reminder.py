@@ -122,7 +122,7 @@ class ReminderService(BaseService):
                 logger.info('Last poster was not me. Sending an @channel reminder')
                 # TODO (wardlt): Stopped here!
                 await self.reminder_channel.send(
-                    content=f'@channel Last message was {humanize.naturaltime(stall_time)}.'
+                    content=f'@everyone Last message was {humanize.naturaltime(stall_time)}.'
                             f' Who\'s up? Let\'s play some D&D!',
                     allowed_mentions=AllowedMentions.all()
                 )
