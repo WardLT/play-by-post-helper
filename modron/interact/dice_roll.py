@@ -132,6 +132,7 @@ class DiceRollInteraction(InteractionModule):
         dice_info = {
             'time': datetime.now().isoformat(),
             'user': context.author.name,
+            'user_id': context.author.id,
             'character': context.author.nick,
             'channel': channel_name,
             'reason': purpose,
