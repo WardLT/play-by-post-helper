@@ -120,7 +120,7 @@ class ReminderService(BaseService):
             active_poster_was_me = last_message is not None and \
                                    last_message.author == self._guild.me and \
                                    'Let\'s play some D&D!' in last_message.content and \
-                                   (last_message.created_at + get_local_tz_offset() - last_time).total_seconds() < 1
+                                   abs(last_message.created_at + get_local_tz_offset() - last_time).total_seconds() < 1
 
             # If not, send a reminder
             if active_poster_was_me:
