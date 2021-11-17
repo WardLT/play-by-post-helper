@@ -12,6 +12,7 @@ from modron.config import get_config
 from modron.db import ModronState
 from modron.discord import match_channels_to_regex, get_last_activity
 from modron.services import BaseService
+from modron.utils import get_local_tz_offset
 
 logger = logging.getLogger(__name__)
 
@@ -117,8 +118,9 @@ class ReminderService(BaseService):
             # Check if the last message was me giving a reminder message
             last_message: Message = await self.reminder_channel.history(limit=1, oldest_first=False).get()
             active_poster_was_me = last_message is not None and \
-                last_message.author == self._guild.me and \
-                'Let\'s play some D&D!' in last_message.content
+                                   last_message.author == self._guild.me and \
+                                   'Let\'s play some D&D!' in last_message.content and \
+                                   (last_message.created_at + get_local_tz_offset() - last_time).total_seconds() < 1
 
             # If not, send a reminder
             if active_poster_was_me:
