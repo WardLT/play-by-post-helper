@@ -5,7 +5,7 @@ from math import inf
 import logging
 
 import humanize
-from discord import Guild, TextChannel, AllowedMentions, CategoryChannel
+from discord import Guild, TextChannel, AllowedMentions, CategoryChannel, Message
 from discord import utils
 
 from modron.config import get_config
@@ -90,7 +90,7 @@ class ReminderService(BaseService):
             (datetime) Time to check for the next reminder
         """
         # Determine the last activity
-        last_time, active_poster_was_me = await self.assess_last_activity()
+        last_time = await self.assess_last_activity()
         stall_time = datetime.now() - last_time
         logger.info(f'Most recent post was {stall_time} ago in {self.active_channel}')
         self.last_channel_poll = datetime.now()
@@ -114,13 +114,17 @@ class ReminderService(BaseService):
         if datetime.now() > reminder_time:
             logger.info(f'Channel has been stalled for {stall_time - self.allowed_stall_time} too long')
 
-            # Check if the bot was the last one to send a message
-            #  If not, then send a reminder to the channel
+            # Check if the last message was me giving a reminder message
+            last_message: Message = await self.reminder_channel.history(limit=1, oldest_first=False).get()
+            active_poster_was_me = last_message is not None and \
+                last_message.author == self._guild.me and \
+                'Let\'s play some D&D!' in last_message.content
+
+            # If not, send a reminder
             if active_poster_was_me:
                 logger.info('Last poster was me, doing nothing')
             else:
                 logger.info('Last poster was not me. Sending an @channel reminder')
-                # TODO (wardlt): Stopped here!
                 await self.reminder_channel.send(
                     content=f'@everyone Last message was {humanize.naturaltime(stall_time)}.'
                             f' Who\'s up? Let\'s play some D&D!',
@@ -134,7 +138,7 @@ class ReminderService(BaseService):
             wake_time = reminder_time
         return wake_time
 
-    async def assess_last_activity(self) -> Tuple[datetime, bool]:
+    async def assess_last_activity(self) -> datetime:
         """Get the last activity on the watched channels
 
         Updates the results in:
@@ -143,8 +147,7 @@ class ReminderService(BaseService):
             ``self.watch_channels`` - The list of channels beign watched
 
         Returns:
-            - (datetime) Time of the latest activity
-            - (bool) Whether the last sender was the bot
+            Time of the latest activity
         """
 
         # Get the channels to watch
@@ -172,5 +175,4 @@ class ReminderService(BaseService):
         self.time_last_activity = last_time
         active_channel_ind = last_times.index(last_time)
         self.active_channel = self.watch_channels[active_channel_ind]
-        active_poster_was_me = last_author[active_channel_ind] == self._guild.me
-        return last_time, active_poster_was_me
+        return last_time

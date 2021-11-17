@@ -22,10 +22,9 @@ async def test_reminder(guild: Guild):
     message = await test_channel.send('Test message')
 
     # Make sure the message is captured
-    last_time, was_me = await service.assess_last_activity()
+    last_time = await service.assess_last_activity()
     assert ((message.created_at + get_local_tz_offset()) - last_time).total_seconds() < 5, \
         'Did not pick up the latest message'
-    assert was_me, 'I was not the last messenger'
     assert service.watch_channels[0].name == 'bot_testing'
 
     # Delete the message
