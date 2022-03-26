@@ -3,4 +3,5 @@ pytest>=5.3
 pytest-flask
 pytest-timeout
 pytest-cov
+pytest-asyncio
 flake8
