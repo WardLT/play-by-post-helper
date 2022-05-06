@@ -23,7 +23,7 @@ async def test_reminder(guild: Guild):
 
     # Make sure the message is captured
     last_time = await service.assess_last_activity()
-    assert ((message.created_at + get_local_tz_offset()) - last_time).total_seconds() < 5, \
+    assert ((message.created_at.replace(tzinfo=None) + get_local_tz_offset()) - last_time).total_seconds() < 5, \
         'Did not pick up the latest message'
     assert service.watch_channels[0].name == 'bot_testing'
 

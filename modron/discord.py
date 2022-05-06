@@ -34,12 +34,14 @@ async def get_last_activity(channel: TextChannel) -> Optional[Tuple[datetime, Op
     """
 
     try:
-        message: Message = await channel.history(limit=1, oldest_first=False).get()
+        message: Optional[Message] = None
+        async for message in channel.history(limit=1, oldest_first=False):
+            break
     except Forbidden:
         logger.warning(f'Bot lacks access to channel: {channel.name}')
         return datetime.fromtimestamp(0), None
     if message is not None:
-        return message.created_at + get_local_tz_offset(), message.author
+        return message.created_at.replace(tzinfo=None) + get_local_tz_offset(), message.author
 
     # Return a datetime of now for channels that have yet to be written in
     return datetime.fromtimestamp(0), None

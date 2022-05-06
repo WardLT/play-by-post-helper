@@ -1,12 +1,8 @@
-from time import sleep
-import logging
-
 from discord import Guild
 from pytest import raises, fixture, mark
 
 from modron.characters import Character
 from modron.config import get_config
-from modron.interact import NoExitParserError, handle_generic_slash_command
 from modron.interact.character import CharacterSheet, HPTracker
 
 
