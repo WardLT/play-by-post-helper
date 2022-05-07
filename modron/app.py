@@ -29,7 +29,7 @@ def main():
     BOT_TOKEN = os.environ.get('BOT_TOKEN')
     if BOT_TOKEN is None:
         raise ValueError('Bot token not found. Set the BOT_TOKEN environmental variable')
-    bot = ModronClient(command_prefix="/", intents=Intents.default())
+    bot = ModronClient(command_prefix="$", intents=Intents.default())
 
     # Generate the slash command responder
     modules = [

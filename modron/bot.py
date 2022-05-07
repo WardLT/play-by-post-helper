@@ -25,10 +25,6 @@ class ModronClient(Bot):
         for team_id, team_config in config.team_options.items():
             guild = self.get_guild(team_id)
 
-            # Register the commands
-            await self.tree.sync(guild=guild)
-            logger.info(f'Synced commands')
-
             # Start the reminder thread
             if team_config.reminders:
                 reminder = ReminderService(guild, team_config.reminder_channel,
