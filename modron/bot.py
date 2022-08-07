@@ -4,6 +4,7 @@ from datetime import timedelta
 import logging
 
 from discord.ext.commands import Bot
+from discord import utils
 
 from modron.config import get_config
 from modron.services.backup import BackupService
@@ -43,6 +44,11 @@ class ModronClient(Bot):
                 logger.info(f'Launched backup service for {team_config.name}')
             else:
                 logger.info(f'No backup for {team_config.name}')
+
+            # Make a hello message
+            ooc_channel = utils.get(guild.channels, name='ooc_discussion')  # TODO: Make channel name configurable
+            await ooc_channel.send('I have been summoned. Your incense was appreciated. 🤖')
+            logger.info('Successfully started Modron.')
 
     async def on_disconnect(self):
         logger.warning('Disconnected from Discord service')
