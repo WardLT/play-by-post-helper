@@ -104,7 +104,7 @@ class NPCGenerator(InteractionModule):
             })
 
             # Upload it as a file
-            file = File(filename, filename=filename)
+            file = File(pdf_path, filename=filename)
             await context.reply(
                 f'The {args.n} NPCs from {args.location} you requested',
                 file=file
