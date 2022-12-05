@@ -3,7 +3,8 @@ import os
 import logging
 from glob import glob
 from datetime import timedelta
-from typing import List, Dict, Tuple, Optional
+from pathlib import Path
+from typing import List, Dict, Tuple, Optional, Union
 
 import yaml
 from pydantic import BaseModel, Field
@@ -167,13 +168,21 @@ class ModronConfig(BaseModel):
 
         return os.path.join(self.credentials_dir, 'gdrive', 'token.pickle')
 
+    @classmethod
+    def parse_yaml(cls, path: Union[str, Path]):
+        """Load the configuration form a YAML file"""
+        with open(path) as fp:
+            return cls.parse_obj(yaml.load(fp, yaml.SafeLoader))
 
-def get_config() -> ModronConfig:
-    cfg_path = os.environ.get('MODRON_CONFIG', os.path.join(os.path.dirname(__file__), '..', 'modron_config.yml'))
-    if os.path.isfile(cfg_path):
-        logger.info(f'Loading Modron config from {cfg_path}')
-        with open(cfg_path) as fp:
-            return ModronConfig.parse_obj(yaml.load(fp, yaml.SafeLoader))
+
+def _get_config() -> ModronConfig:
+    cfg_path = Path() / 'modron_config.yml'
+    if cfg_path.is_file():
+        logger.info(f'Loading Modron config from {cfg_path.absolute()}')
+        return ModronConfig.parse_yaml(cfg_path)
     else:
         logger.info('Creating default configuration')
         return ModronConfig()
+
+
+config = _get_config()

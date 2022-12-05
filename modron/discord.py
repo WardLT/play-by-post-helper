@@ -1,10 +1,9 @@
 """Utility operations for discord"""
-from typing import List, Optional, Tuple
+from typing import Optional, Tuple
 from datetime import datetime
 import logging
-import re
 
-from discord import Guild, TextChannel, Message, Member, Forbidden
+from discord import TextChannel, Message, Member, Forbidden
 
 from modron.utils import get_local_tz_offset
 

@@ -11,7 +11,7 @@ from discord import utils
 
 from modron.config import get_config
 from modron.db import ModronState
-from modron.discord import match_channels_to_regex, get_last_activity
+from modron.discord import get_last_activity
 from modron.services import BaseService
 from modron.utils import get_local_tz_offset
 

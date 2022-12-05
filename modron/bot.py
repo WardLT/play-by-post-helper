@@ -18,6 +18,8 @@ config = get_config()
 class ModronClient(Bot):
     """Client used to connect to Discord"""
 
+    testing: bool = False
+
     async def on_ready(self):
         """Start the services when the bot is ready"""
         logger.info(f'Logged on as {self.user}')
@@ -45,9 +47,10 @@ class ModronClient(Bot):
             else:
                 logger.info(f'No backup for {team_config.name}')
 
-            # Make a hello message
-            ooc_channel = utils.get(guild.channels, name='ooc_discussion')  # TODO: Make channel name configurable
-            await ooc_channel.send('I have been summoned. Your incense was appreciated. 🤖')
+            # Make a hello message, if we're not in testing mode
+            if not self.testing:
+                ooc_channel = utils.get(guild.channels, name='ooc_discussion')  # TODO: Make channel name configurable
+                await ooc_channel.send('I have been summoned. Your incense was appreciated. 🤖')
             logger.info('Successfully started Modron.')
 
     async def on_disconnect(self):

@@ -1,16 +1,8 @@
-from typing import Dict
-
 from discord import TextChannel, Guild, Message, Member
 from discord import utils
-from pytest import fixture
+from pytest_asyncio import fixture as async_fixture
 
-# from modron.interact.npc import NPCGenerator
-# from modron.interact.reminder import ReminderModule
-from modron.bot import ModronClient
 from modron.interact.dice_roll import DiceRollInteraction
-# from modron.interact.character import CharacterSheet
-# from modron.interact.stats import StatisticModule
-from modron.interact import attach_commands, NoExitParser
 
 _test_modules = [DiceRollInteraction]
 
@@ -38,7 +30,7 @@ class MockMessage(Message):
     pass
 
 
-@fixture
+@async_fixture
 async def payload(guild: Guild) -> MockContext:
     """Build a fake context"""
     author = guild.members[0]
