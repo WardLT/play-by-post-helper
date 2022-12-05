@@ -19,7 +19,7 @@ def _pretty_multiplier(x: float) -> str:
         return f'{x:.0f}x'
     elif x > 2:
         return f'{x:.1f}x'
-    return f'{x*100:.1f}%'
+    return f'{(x-1)*100:.1f}%'
 
 
 # Dice models
