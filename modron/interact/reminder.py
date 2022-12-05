@@ -7,10 +7,12 @@ from typing import Optional, Dict
 import humanize
 import isodate
 import requests
+from discord import Guild
+from discord.ext.commands import Context
 from isodate import ISO8601Error
 
 from modron.db import ModronState
-from modron.interact import InteractionModule, SlashCommandPayload
+from modron.interact import InteractionModule
 from modron.services.reminder import ReminderService
 
 _description = '''Interact with the reminder timer'''
@@ -18,11 +20,11 @@ _description = '''Interact with the reminder timer'''
 logger = logging.getLogger(__name__)
 
 
-def _add_delay(team_id: str, time: str) -> str:
+def _add_delay(team_id: int, time: str) -> str:
     """Update Modron reminder state
 
     Args:
-        team_id (str): Name of the team to adjust
+        team_id (int): Name of the team to adjust
         time (str): How long to snooze for
     Returns:
         (str) A reply to give to the user about the status
@@ -56,16 +58,8 @@ def _add_delay(team_id: str, time: str) -> str:
 class ReminderModule(InteractionModule):
     """Interact with the reminder timer"""
 
-    def __init__(self, clients, reminder_thread: Optional[Dict[str, ReminderService]] = None):
-        """
-        Args:
-            clients: Authenticated BotClients
-            reminder_thread: Pointer to the reminder service
-        """
-        super().__init__(clients, 'reminder', 'View or snooze the reminder timer', _description)
-        if reminder_thread is None:
-            reminder_thread = dict()
-        self.reminder_threads = reminder_thread
+    def __init__(self):
+        super().__init__('reminder', 'View or snooze the reminder timer', _description)
 
     def register_argparse(self, parser: ArgumentParser):
         # Prepare to add subparsers
@@ -80,42 +74,16 @@ class ReminderModule(InteractionModule):
         subparser = subparsers.add_parser('break', help='Delay the reminder thread for a certain time')
         subparser.add_argument('time', help='How long to delay the reminder for. ISO 8601 format (ex: P3d)', type=str)
 
-    def interact(self, args: Namespace, payload: SlashCommandPayload):
+    async def interact(self, args: Namespace, context: Context):
         if args.reminder_command is None or args.reminder_command == 'status':
-            reply = self._generate_status(payload)
+            # Get the reminder time as a time
+            state = ModronState.load()
+            reminder_time = state.reminder_time[context.guild.id]
+            reply = f'Next check for reminder: <t:{int(reminder_time.timestamp())}>'  # Format as a
         elif args.reminder_command == 'break':
-            reply = _add_delay(payload.team_id, args.time)
+            reply = _add_delay(context.guild.id, args.time)
         else:
-            reply = f'*ERROR*: Support for {args.reminder_command} has not been implemented (blame Logan)'
+            raise ValueError('Support for {args.reminder_command} has not been implemented (blame Logan)')
 
         # Send reply back to user
-        requests.post(payload.response_url, json={
-            'text': reply, 'mkdwn': True
-        })
-
-    def _generate_status(self, payload: SlashCommandPayload) -> str:
-        """Generate a status message for the reminder threads
-
-        Args:
-            payload (SlashCommandPayload): Command payload
-        Returns:
-            (str) Status message
-        """
-
-        # Get the user's time zone
-        user_info = self.clients[payload.team_id].users_info(user=payload.user_id)
-        user_tz = timezone(timedelta(seconds=user_info['user']['tz_offset']),
-                           name=user_info['user']['tz_label'])
-
-        # Get the reminder time
-        state = ModronState.load()
-        reminder_time = state.reminder_time[payload.team_id].astimezone(user_tz)
-        reply = f'Next check for reminder: {reminder_time.strftime("%a %b %d, %I:%M %p")}\n'
-
-        # Append thread status
-        thread = self.reminder_threads.get(payload.team_id, None)
-        if thread is None:
-            reply += 'No reminder thread detected'
-        else:
-            reply += f'Thread status: {"Alive" if thread.is_alive() else "*Dead*"}'
-        return reply
+        await context.reply(reply)

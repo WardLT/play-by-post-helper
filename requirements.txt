@@ -3,8 +3,7 @@ pandas==1.1.*
 scipy==1.5.*
 humanize
 isodate
-slackclient
-slackeventsapi
+discord.py
 tabulate
 pdfkit
 pydantic
@@ -12,3 +11,4 @@ pyyaml
 google-api-python-client
 google-auth-httplib2
 google-auth-oauthlib
+python-dateutil

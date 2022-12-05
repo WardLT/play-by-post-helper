@@ -1,27 +1,31 @@
-name: Adrianna Bloodmoon
-player: UP4K437HT
 alignment: chaotic good
+armor_class: 16
 background: Outlander
-race: Half-Orc
+charisma: 10
 classes:
   barbarian: 8
-  fighter: 1
-strength: 16
-dexterity: 14
+  fighter: 2
 constitution: 16
+current_hit_points: 40
+custom_skills: {}
+dexterity: 14
+expertise: []
+hit_points: 102
+hit_points_adjustment: 0
 intelligence: 11
-wisdom: 12
-charisma: 10
-current_hit_points: 93
-hit_points: 93
-armor_class: 16
-speed: 40
-saving_throws:
-  - strength
-  - constitution
+name: Adrianna Bloodmoon
+player: 854826609101111317
 proficiencies:
-  - animal handling
-  - athletics
-  - intimidation
-  - perception
-  - survival
+- animal handling
+- athletics
+- intimidation
+- perception
+- survival
+race: Half-Orc
+saving_throws:
+- strength
+- constitution
+speed: 40
+strength: 16
+temporary_hit_points: 0
+wisdom: 12

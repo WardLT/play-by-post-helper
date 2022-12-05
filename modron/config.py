@@ -3,7 +3,8 @@ import os
 import logging
 from glob import glob
 from datetime import timedelta
-from typing import List, Dict, Tuple, Optional
+from pathlib import Path
+from typing import List, Dict, Tuple, Optional, Union
 
 import yaml
 from pydantic import BaseModel, Field
@@ -55,16 +56,17 @@ class TeamConfig(BaseModel):
     # Reminders
     reminders: bool = Field(True, help='Whether to post inactivity reminders')
     reminder_channel: str = Field('ic_all', help='Channel on which to post reminders')
-    watch_channels: str = Field(r'^ic_.*', help='Regex define which channels to watch for activity')
+    ic_category: int = Field(None, help='Channel ID for category channel for all IC messages')
     allowed_stall_time: timedelta = Field(timedelta(days=1),
                                           description='How long to wait for activity before issuing reminders')
 
     # Backing up messages
-    backup_channels: Optional[str] = Field(r'^ic_.*', help='Regex defining which channels to backup')
+    backup_channels: List[int] = Field(default_factory=list, help='List of channels (including category channels) '
+                                                                  'to back up.')
 
     # Logging dice rolls
     dice_log: bool = Field(True, help='Whether to log dice rolls for this team')
-    dice_skip_channels: List[str] = Field(['bot_test', 'ooc_discussion'], help="List of channels to omit from logging")
+    dice_tracked_categories: List[int] = Field(default_factory=list, help="List of categories of channel to track")
 
     # Character sheets
     character_sheet_path: str = Field('characters', help='Path to a directory with the character sheet YAML files')
@@ -81,14 +83,14 @@ class ModronConfig(BaseModel):
     backup_dir: str = Field('backup', help='Path to where to store the backup. Each team will get its own '
                                            'subdirectory')
     character_dir: str = Field('characters', help='Path to the character sheets. Each team has its own subdirectory')
-    credentials_dir: str = Field('creds', help='Path to the credentials for third-party (i.e., non-Slack) apps')
+    credentials_dir: str = Field('creds', help='Path to the credentials for third-party (i.e., non-Discord) apps')
 
     # Miscellaneous options
-    gdrive_backup_folder: str = Field('1Ea1rjA0bonW1Y9_ACbcd1WqigMeru5lb',
+    gdrive_backup_folder: str = Field('1OmFkSgRvBr3JeWCnOWOaHBiEX5T-AR_V',
                                       help='Where to upload folders on Google drive. Expects a Google Drive folder ID')
 
     # Team-specific options
-    team_options: Dict[str, TeamConfig] = Field({}, help='Settings for the different Slack teams configured to '
+    team_options: Dict[int, TeamConfig] = Field({}, help='Settings for the different Slack teams configured to '
                                                          'work with Modron. Key is the Slack team ID')
 
     # NPC generator
@@ -114,50 +116,50 @@ class ModronConfig(BaseModel):
                                 ' with the largest minimum roll that is less than or equal to the dice roll.'
     )
 
-    def get_backup_dir(self, team_id: str) -> str:
-        """Get the path to the directory that holds backup files for a certain team
+    def get_backup_dir(self, guild_id: int) -> str:
+        """Get the path to the directory that holds backup files for a certain guild
 
         Args:
-            team_id: Name of the team
+            guild_id: ID of the guild
         Returns:
             Path to the backup directory
         """
-        return os.path.join(self.backup_dir, self.team_options[team_id].name)
+        return os.path.join(self.backup_dir, self.team_options[guild_id].name)
 
-    def get_dice_log_path(self, team_id: str) -> str:
-        """Get the path to the dice log for a certain team
+    def get_dice_log_path(self, guild_id: int) -> str:
+        """Get the path to the dice log for a certain guild
 
         Args:
-            team_id: Name of the team
+            guild_id
         Returns:
             Path to the log
         """
-        return os.path.join(self.dice_log_dir, f'{self.team_options[team_id].name}.csv')
+        return os.path.join(self.dice_log_dir, f'{self.team_options[guild_id].name}.csv')
 
-    def list_character_sheets(self, team_id: str) -> List[str]:
+    def list_character_sheets(self, guild_id: int) -> List[str]:
         """List all of paths to the character sheets for a certain workspace
 
         Args:
-            team_id (str): Name of the team
+            guild_id
         Returns:
             ([str]): List paths to all of the character sheets
         """
 
-        team_name = self.team_options[team_id].name
+        team_name = self.team_options[guild_id].name
         paths = glob(os.path.join(self.character_dir, team_name, '*.yml'))
         return paths
 
-    def get_character_sheet_path(self, team_id: str, name: str) -> str:
+    def get_character_sheet_path(self, guild_id: int, name: str) -> str:
         """Get the path to a certain character sheet
 
         Args:
-            team_id (str): ID of the Slack team
+            guild_id
             name (str): Name of the character
 
         Returns:
             (str): Path to the character sheet
         """
-        team_name = self.team_options[team_id].name
+        team_name = self.team_options[guild_id].name
         return os.path.join(self.character_dir, team_name, f'{name}.yml')
 
     def get_gdrive_credentials_path(self) -> str:
@@ -166,13 +168,21 @@ class ModronConfig(BaseModel):
 
         return os.path.join(self.credentials_dir, 'gdrive', 'token.pickle')
 
+    @classmethod
+    def parse_yaml(cls, path: Union[str, Path]):
+        """Load the configuration form a YAML file"""
+        with open(path) as fp:
+            return cls.parse_obj(yaml.load(fp, yaml.SafeLoader))
 
-def get_config() -> ModronConfig:
-    cfg_path = os.environ.get('MODRON_CONFIG', os.path.join(os.path.dirname(__file__), '..', 'modron_config.yml'))
-    if os.path.isfile(cfg_path):
-        logger.info(f'Loading Modron config from {cfg_path}')
-        with open(cfg_path) as fp:
-            return ModronConfig.parse_obj(yaml.load(fp, yaml.SafeLoader))
+
+def _get_config() -> ModronConfig:
+    cfg_path = Path() / 'modron_config.yml'
+    if cfg_path.is_file():
+        logger.info(f'Loading Modron config from {cfg_path.absolute()}')
+        return ModronConfig.parse_yaml(cfg_path)
     else:
         logger.info('Creating default configuration')
         return ModronConfig()
+
+
+config = _get_config()

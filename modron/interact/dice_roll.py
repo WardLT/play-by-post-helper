@@ -7,12 +7,12 @@ from argparse import ArgumentParser, Namespace
 from datetime import datetime
 from typing import List, NoReturn
 
-import requests
+from discord import TextChannel, Guild
+from discord.ext.commands import Context
 
 from modron.characters import list_available_characters, load_character
 from modron.config import get_config
 from modron.dice import DiceRoll, dice_regex
-from modron.interact import SlashCommandPayload
 from modron.interact.base import InteractionModule
 
 logger = logging.getLogger(__name__)
@@ -46,7 +46,7 @@ def _render_dice_rolls(roll: DiceRoll) -> List[str]:
 
         # Render the value of all dice
         output.append(
-            ' '.join([value_str if u else f'~{v}~' for v, u in zip(rolls, was_used)])
+            ' '.join([value_str if u else f'~~{v}~~' for v, u in zip(rolls, was_used)])
         )
     return output
 
@@ -73,8 +73,8 @@ Call `/modron roll --help` for full details
 class DiceRollInteraction(InteractionModule):
     """Servicing requests to roll dice"""
 
-    def __init__(self, clients):
-        super().__init__(clients, "roll", "Roll a set of dice. Ex: `/modron roll 1d20+4 --advantage`", _description)
+    def __init__(self):
+        super().__init__("roll", "Roll a set of dice. Ex: `/modron roll 1d20+4 --advantage`", _description)
 
     def register_argparse(self, parser: ArgumentParser):
         # Add the roll definition
@@ -96,38 +96,44 @@ class DiceRollInteraction(InteractionModule):
         parser.add_argument("--reroll_ones", '-1', help="Re-roll any dice that roll a 1 the first time",
                             action='store_true')
 
-    def log_dice_roll(self, payload: SlashCommandPayload, roll: DiceRoll, purpose: str) -> NoReturn:
+    def log_dice_roll(self, context: Context, roll: DiceRoll, purpose: str) -> NoReturn:
         """Log a dice roll to disk
 
         Only logs dice rolls if ``config.DICE_LOG`` is not ``None``
         and the requests comes from a channel that is not on the skip list.
 
         Args:
-            payload (SlashCommandPayload): Command send to Modron
+            context (SlashCommandPayload): Command send to Modron
             roll (DiceRoll): Value of the dice roll
             purpose (str): Purpose of the roll
         """
 
+        # Get the channels where tracking is allowed
+        guild: Guild = context.guild
+        allowed_channels = sum([
+            cat.channels for cat in guild.categories if cat.id in config.team_options[guild.id].dice_tracked_categories
+        ], [])
+
         # Determine if we should log or not
-        if payload.channel_id.startswith('C'):
-            channel_name = self.clients[payload.team_id].get_channel_name(payload.channel_id)
-            skipped_channel = channel_name in config.team_options[payload.team_id].dice_skip_channels
-            private_channel = False
+        if isinstance(context.channel, TextChannel):
+            channel: TextChannel = context.channel
+            channel_name = channel.name
+            skipped_channel = channel not in allowed_channels
         else:
             skipped_channel = False
-            private_channel = True
             channel_name = None
-        no_log = not config.team_options[payload.team_id].dice_log
+        no_log = not config.team_options[context.guild.id].dice_log
 
-        if no_log or skipped_channel or private_channel:
-            logger.info(f'Refusing to log dice roll. Reasons: No log - {no_log}, skipped channel - {skipped_channel},'
-                        f' private channel - {private_channel}')
+        if no_log or skipped_channel:
+            logger.info(f'Refusing to log dice roll. Reasons: No log - {no_log}, skipped channel - {skipped_channel}')
             return
 
         # Get the information about this dice roll
         dice_info = {
             'time': datetime.now().isoformat(),
-            'user': self.clients[payload.team_id].get_user_name(payload.user_id),
+            'user': context.author.name,
+            'user_id': context.author.id,
+            'character': context.author.nick,
             'channel': channel_name,
             'reason': purpose,
             'dice': roll.dice_description,
@@ -135,35 +141,37 @@ class DiceRollInteraction(InteractionModule):
             'disadvantage': roll.disadvantage,
             'reroll_ones': roll.reroll_ones,
             'total_value': roll.value,
-            'dice_values': json.dumps(roll.dice_values)
+            'dice_values': json.dumps(roll.dice_values),
+            'raw_rolls': json.dumps(roll.raw_rolls)
         }
 
         # If desired, save the dice roll
-        dice_path = config.get_dice_log_path(payload.team_id)
+        dice_path = config.get_dice_log_path(context.guild.id)
         new_file = not os.path.isfile(dice_path)
         os.makedirs(os.path.dirname(dice_path), exist_ok=True)
-        with open(config.get_dice_log_path(payload.team_id), 'a') as fp:
-            writer = csv.DictWriter(fp, fieldnames=dice_info.keys())
+        with open(config.get_dice_log_path(context.guild.id), 'a') as fp:
+            writer = csv.DictWriter(fp, fieldnames=list(dice_info.keys()))
             if new_file:
                 writer.writeheader()
             writer.writerow(dice_info)
 
-    def interact(self, args: Namespace, payload: SlashCommandPayload):
+    async def interact(self, args: Namespace, context: Context):
         # Check if the user is requesting a roll by name
-        if dice_regex.match(args.dice) is None:
+        if args.dice.lower() == 'luck':
+            args.dice = '1d20'
+            args.purpose = ['luck']
+        elif dice_regex.match(args.dice) is None:
             logger.info('Dice did not match regex, attempting to match to character ability')
-            available_chars = list_available_characters(payload.team_id, payload.user_id)
+            available_chars = list_available_characters(context.guild, context.author.id)
             if len(available_chars) == 0:
-                logging.info(f'Seems like user {payload.user_id} needs to register a character')
-                payload.send_reply(
+                logging.info(f'Seems like user {context.author.id} needs to register a character')
+                raise ValueError(
                     f'Did you mean to request a character roll? {args.dice} does not seem like a dice roll, '
-                    f'but you have not registered a character yet. Talk to Logan about registering your sheet.',
-                    ephemeral=True
+                    'but you have not registered a character yet. Talk to Logan about registering your sheet.',
                 )
-                return
             elif len(available_chars) == 1:
                 # Reformat command to use a specific character roll
-                sheet, _ = load_character(payload.team_id, available_chars[0])
+                sheet, _ = load_character(context.guild, available_chars[0])
                 ability_name = ' '.join([args.dice] + args.purpose)
 
                 # Lookup the ability
@@ -181,21 +189,18 @@ class DiceRollInteraction(InteractionModule):
         # Make the reply
         purpose = ' '.join(args.purpose)
         if len(purpose) > 0:
-            reply = f'<@{payload.user_id}> rolled for {purpose}\n' \
+            reply = f'<@!{context.author.id}> rolled for {purpose}\n' \
                     f'{roll.roll_description} = *{roll.value}*'
-            logger.info(f'{payload.user_id} requested to roll {roll.roll_description} for {purpose}.'
+            logger.info(f'{context.author.name} requested to roll {roll.roll_description} for {purpose}.'
                         f' Result = {roll.value}')
         else:
-            reply = f'<@{payload.user_id}> rolled {roll.roll_description} = *{roll.value}*'
-            logger.info(f'{payload.user_id} requested to roll {roll.roll_description}.'
+            reply = f'<@!{context.author.id}> rolled {roll.roll_description} = *{roll.value}*'
+            logger.info(f'{context.author.name} requested to roll {roll.roll_description}.'
                         f' Result = {roll.value}')
         reply += f'\nRolls: {", ".join(_render_dice_rolls(roll))}'
 
-        # POST the result back to the reply url
-        requests.post(payload.response_url, json={
-            'text': reply, 'mkdwn': True,
-            'response_type': 'in_channel',
-        })
+        # Send the message
+        await context.send(reply)
 
         # Log the dice roll
-        self.log_dice_roll(payload, roll, purpose)
+        self.log_dice_roll(context, roll, purpose)

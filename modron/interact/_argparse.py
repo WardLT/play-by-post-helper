@@ -22,6 +22,20 @@ class NoExitParserError(Exception):
         self.error_message = error_message
         self.text_output = text_output
 
+    def make_message(self) -> str:
+        """Create a nicely-formatted error message
+
+        Returns:
+            Message that combines both the error message and
+            any text output by the failed parsing command
+        """
+        # Make the reply message
+        msg = ''
+        if self.error_message is not None:
+            msg = f'*{self.error_message}*\n'
+        msg += self.text_output
+        return msg
+
 
 class MarkdownFormatter(RawTextHelpFormatter):
     """Argparse HelpFormatter that renders the help in markdown format"""

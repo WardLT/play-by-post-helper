@@ -5,10 +5,12 @@ from argparse import ArgumentParser, Namespace
 from string import Template
 import os
 
+from discord import File
+from discord.ext.commands import Context
 from tabulate import tabulate
 import pdfkit
 
-from modron.interact import InteractionModule, SlashCommandPayload
+from modron.interact import InteractionModule
 from modron.npc import generate_npc
 from modron.config import get_config
 
@@ -73,9 +75,8 @@ def generate_and_render_npcs(location: str, n: int) -> str:
 class NPCGenerator(InteractionModule):
     """Module for generating randomized NPCs"""
 
-    def __init__(self, clients):
+    def __init__(self):
         super().__init__(
-            clients=clients,
             name='npcgen',
             help_string='Generate a new NPC',
             description=_description
@@ -86,30 +87,25 @@ class NPCGenerator(InteractionModule):
         parser.add_argument('--location', '-l', help='Which demographic template to use',
                             default='default', choices=config.npc_race_dist.keys(), type=str)
 
-    def interact(self, args: Namespace, payload: SlashCommandPayload):
+    async def interact(self, args: Namespace, context: Context):
         # Log the interaction
-        logger.info(f'{payload.user_id} requested to make {args.n} NPCs from {args.location}')
+        logger.info(f'{context.author} requested to make {args.n} NPCs from {args.location}')
 
         # Make the HTML table
         npc_table = generate_and_render_npcs(args.location, args.n)
 
-        # Check if the command was invoked in a channel. If not, we must send file as a DM
-        if not self.clients[payload.team_id].conversation_is_channel(payload.channel_id):
-            logger.info('Command came from a private channel, will send it to them directly')
-            result = self.clients[payload.team_id].conversations_open(users=payload.user_id)
-            channel_id = result['channel']['id']
-        else:
-            channel_id = payload.channel_id
-
         with TemporaryDirectory() as td:
             # Convert the table to PDF
-            pdf_path = os.path.join(td, f'npcs_{args.n}_{args.location}.pdf')
+            filename = f'npcs_{args.n}_{args.location}.pdf'
+            pdf_path = os.path.join(td, filename)
             pdfkit.from_string(npc_table, pdf_path, options={
                 'orientation': 'landscape',
                 'page-size': 'Letter'
             })
 
             # Upload it as a file
-            self.clients[payload.team_id].files_upload(
-                channels=channel_id, title=f'{args.n} NPCs from {args.location}',
-                file=pdf_path, initial_comment=f'The {args.n} NPCs you requested')
+            file = File(pdf_path, filename=filename)
+            await context.reply(
+                f'The {args.n} NPCs from {args.location} you requested',
+                file=file
+            )

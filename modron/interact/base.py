@@ -1,46 +1,12 @@
 """Base class for interaction modules"""
-
 from argparse import ArgumentParser, Namespace
-from typing import Dict
+import logging
 
-import requests
-from pydantic import BaseModel, Field, AnyHttpUrl
+from discord.ext.commands import Context
 
-from modron.slack import BotClient
-from modron.utils import escape_slack_characters
+from modron.interact import NoExitParser, NoExitParserError
 
-
-class SlashCommandPayload(BaseModel):
-    """Definition for the payload from a slash command"""
-
-    command: str = Field(..., description='Command that was typed in to trigger this request')
-    text: str = Field(..., description='Part of the Slash Command after the command itself')
-    response_url: AnyHttpUrl = Field(..., description='A temporary webhook URL that you can use to'
-                                                      ' generate messages responses')
-    trigger_id: str = Field(..., description='A temporary ID that will let your app open a modal')
-    user_id: str = Field(..., description='The ID of the user who triggered the command')
-    channel_id: str = Field(..., description='Name of the channel from which this command was triggered')
-    team_id: str = Field(..., description='Name fo the team from which this command originated')
-
-    def send_reply(self, text: str, mrkdwn: bool = True, ephemeral: bool = False):
-        """Reply to an event.
-
-        Sends a POST request to the URL specified in the payload
-
-        Args:
-            text (str): Text of the reply
-            mrkdwn (bool): Whether to format the reply using Slack's markdown variant
-            ephemeral (bool): Whether the message should be only viewable temporarily
-        """
-
-        requests.post(
-            self.response_url,
-            json={
-                'text': escape_slack_characters(text),
-                'mrkdwn': mrkdwn,
-                'response_type': 'ephemeral' if ephemeral else 'in_channel'
-            }
-        )
+logger = logging.getLogger(__name__)
 
 
 class InteractionModule:
@@ -59,18 +25,20 @@ class InteractionModule:
     back to Slack.
     """
 
-    def __init__(self, clients: Dict[str, BotClient], name: str, help_string: str, description: str):
+    def __init__(self, name: str, help_string: str, description: str):
         """
         Args:
-             clients: Map of team ID to appropriately-authenticated client
              name (str): Name of the interaction module, defines the subcommand name
              help_string (str): Short-form name description of the module. Used in the root parser description
              description (str): Long-form description of the module. Used in its detailed home command
         """
-        self.clients = clients
         self.name = name
         self.help_string = help_string
         self.description = description
+
+        # Build the parser for this class
+        self.parser = NoExitParser(description=self.description, prog=f'/{name}')
+        self.register_argparse(self.parser)
 
     def register_argparse(self, parser: ArgumentParser):
         """Define a subparser for this class
@@ -80,11 +48,34 @@ class InteractionModule:
         """
         raise NotImplementedError()
 
-    def interact(self, args: Namespace, payload: SlashCommandPayload):
+    async def command(self, context: Context, *args):
+        """Command interface to Discord bot interface
+
+        Args:
+            context: Context of the command invocation
+            args: List of arguments
+        """
+        # Parse the instructions
+        try:
+            args = self.parser.parse_args(args)
+        except NoExitParserError as exc:
+            logger.info(f'Parser raised an exception. Message: {exc.error_message}')
+            await context.send(exc.make_message(), delete_after=60)
+            return
+
+        # Perform the interaction
+        try:
+            await self.interact(args, context)
+        except ValueError as e:
+            logger.info(f'Interaction raised an exception. Message: {e}')
+            await context.send(f'Command failure! Message: {str(e)}', delete_after=120)
+            raise e
+
+    async def interact(self, args: Namespace, context: Context):
         """Perform an interaction given the details of a message
 
         Args:
             args (Namespace): Parsed arguments for the command
-            payload (SlashCommandPayload): Full description of the slash command
+            context (SlashCommandPayload): Full description of the slash command
         """
         raise NotImplementedError()

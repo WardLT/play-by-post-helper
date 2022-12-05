@@ -102,6 +102,10 @@ class DiceRoll:
         Dice are listed in descending order by number of faces."""
         return list(self._dice.elements())
 
+    @property
+    def raw_rolls(self) -> List[Sequence[int]]:
+        return [x[1] for x in self.results]
+
     @classmethod
     def make_roll(cls, roll: str, reroll_ones: bool = False,
                   advantage: bool = False, disadvantage: bool = False) -> 'DiceRoll':
