@@ -6,11 +6,9 @@ from discord import Guild, utils
 from pytest import raises, fixture, mark
 
 from modron.interact._argparse import NoExitParserError
-from modron.config import get_config
+from modron.config import config
 from modron.interact.dice_roll import DiceRollInteraction
 from modron.tests.interact.conftest import MockContext
-
-config = get_config()
 
 
 @fixture()
@@ -71,7 +69,8 @@ async def test_rolling(parser, roller: DiceRollInteraction, payload: MockContext
     assert '1d6+2' in payload.last_message
     with open(log_path) as fp:
         reader = DictReader(fp)
-        roll = next(reader)
+        for roll in reader:
+            continue  # Loop until the last one
         assert roll['reason'] == 'test'
         assert roll['advantage']
         assert roll['channel'] == 'ic_all'

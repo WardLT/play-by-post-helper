@@ -14,10 +14,7 @@ from typing import Dict
 import yaml
 from pydantic import BaseModel, Field
 
-from modron.config import get_config
-
-
-config = get_config()
+from modron.config import config
 
 
 class ModronState(BaseModel):

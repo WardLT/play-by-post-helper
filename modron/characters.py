@@ -8,9 +8,7 @@ import yaml
 from discord import Guild
 from pydantic import BaseModel, Field, validator
 
-from modron.config import get_config
-
-_config = get_config()
+from modron.config import config
 
 
 def _compute_mod(score: int) -> int:
@@ -411,7 +409,7 @@ def list_available_characters(guild: Guild, user_id: int) -> List[str]:
     """
 
     # Get all characters for this team
-    sheets = _config.list_character_sheets(guild.id)
+    sheets = config.list_character_sheets(guild.id)
 
     # Return only the sheets
     return [
@@ -431,7 +429,5 @@ def load_character(guild: Guild, name: str) -> Tuple[Character, str]:
         - (Character) Desired character sheet
         - (str): Absolute path to the character sheet, in case you must save it later
     """
-
-    config = get_config()
     sheet_path = config.get_character_sheet_path(guild.id, name)
     return Character.from_yaml(sheet_path), os.path.abspath(sheet_path)

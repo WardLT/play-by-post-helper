@@ -10,13 +10,12 @@ from typing import List, NoReturn
 from discord import TextChannel, Guild
 from discord.ext.commands import Context
 
-from modron.characters import list_available_characters, load_character
-from modron.config import get_config
+from modron.config import config
 from modron.dice import DiceRoll, dice_regex
 from modron.interact.base import InteractionModule
+from modron.characters import list_available_characters, load_character
 
 logger = logging.getLogger(__name__)
-config = get_config()
 
 
 def _render_dice_rolls(roll: DiceRoll) -> List[str]:

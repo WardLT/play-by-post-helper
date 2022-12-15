@@ -5,10 +5,6 @@ from time import sleep
 from pytest import raises
 
 from modron.interact import NoExitParserError, handle_generic_slash_command
-from modron.config import get_config
-
-
-config = get_config()
 
 
 def test_help(parser):

@@ -4,12 +4,14 @@ import logging
 from glob import glob
 from datetime import timedelta
 from pathlib import Path
-from typing import List, Dict, Tuple, Union
+from typing import List, Dict, Tuple, Union, Optional
 
 import yaml
 from pydantic import BaseModel, Field
 
 logger = logging.getLogger(__name__)
+
+my_path = Path(__file__).parent
 
 # Defaults for MAB's NPC generator
 _RACE_TIER_WEIGHTS = [50, 10, 3, 2]
@@ -61,8 +63,8 @@ class TeamConfig(BaseModel):
                                           description='How long to wait for activity before issuing reminders')
 
     # Backing up messages
-    backup_channels: List[int] = Field(default_factory=list, help='List of channels (including category channels) '
-                                                                  'to back up.')
+    backup_channels: Optional[List[int]] = Field(default_factory=list,
+                                                 help='List of channels (including category channels) to back up.')
 
     # Logging dice rolls
     dice_log: bool = Field(True, help='Whether to log dice rolls for this team')
@@ -76,7 +78,7 @@ class ModronConfig(BaseModel):
     """Configuration items that customize Modron's behavior"""
 
     # Paths to key files and directories
-    state_path: str = Field(os.path.join(os.path.dirname(__file__), '..', 'modron_state.yml'),
+    state_path: str = Field(str((my_path / '..' / 'modron_state.yml').absolute()),
                             help='Path to the Modron state YAML file')
     dice_log_dir: str = Field('dice-logs', help='Path to where the dice logs are stored. One per channel, '
                                                 'labelled with name of team defined in this config file.')
@@ -137,12 +139,12 @@ class ModronConfig(BaseModel):
         return os.path.join(self.dice_log_dir, f'{self.team_options[guild_id].name}.csv')
 
     def list_character_sheets(self, guild_id: int) -> List[str]:
-        """List all of paths to the character sheets for a certain workspace
+        """List all paths to the character sheets for a certain workspace
 
         Args:
-            guild_id
+            guild_id: ID number of the guild
         Returns:
-            ([str]): List paths to all of the character sheets
+            ([str]): List paths to all character sheets
         """
 
         team_name = self.team_options[guild_id].name
@@ -176,7 +178,7 @@ class ModronConfig(BaseModel):
 
 
 def _get_config() -> ModronConfig:
-    cfg_path = Path() / 'modron_config.yml'
+    cfg_path = my_path / '..' / 'modron_config.yml'
     if cfg_path.is_file():
         logger.info(f'Loading Modron config from {cfg_path.absolute()}')
         return ModronConfig.parse_yaml(cfg_path)

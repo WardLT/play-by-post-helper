@@ -6,13 +6,12 @@ import logging
 from discord.ext.commands import Bot
 from discord import utils
 
-from modron.config import get_config
+from modron.config import config
 from modron.services.backup import BackupService
 from modron.services.reminder import ReminderService
 
 
 logger = logging.getLogger(__name__)
-config = get_config()
 
 
 class ModronClient(Bot):
