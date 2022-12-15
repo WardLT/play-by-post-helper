@@ -10,7 +10,7 @@ from modron.characters import list_available_characters, load_character, Charact
 
 logger = logging.getLogger(__name__)
 
-_description = '''Handles operations related to character sheets 
+_description = '''Handles operations related to character sheets
 
 TBD: You may also use this command to change which character you are playing,
 which will dictate the character sheet it reads.
@@ -194,4 +194,3 @@ class HPTracker(InteractionModule):
             msg += f" including a {sheet.hit_points_adjustment} change to HP maximum"
 
         await context.send(f'||{msg}||')
-

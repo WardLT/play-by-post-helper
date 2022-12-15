@@ -4,7 +4,7 @@ import logging
 from glob import glob
 from datetime import timedelta
 from pathlib import Path
-from typing import List, Dict, Tuple, Optional, Union
+from typing import List, Dict, Tuple, Union
 
 import yaml
 from pydantic import BaseModel, Field

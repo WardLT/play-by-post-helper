@@ -24,7 +24,7 @@ async def test_stats(payload):
     # Make the parser
     module = StatisticModule()
     parser = module.parser
-    
+
     # Run for all dice rolls
     args = parser.parse_args([])
     await module.interact(args, payload)
@@ -50,4 +50,3 @@ async def test_stats(payload):
     # Screen by channel
     args = parser.parse_args(['--channel', 'ic_all'])
     await module.interact(args, payload)
-

@@ -1,19 +1,15 @@
 """Interact with the channel sleep timer"""
 from argparse import ArgumentParser, Namespace
-from datetime import datetime, timezone, timedelta
+from datetime import datetime
 import logging
-from typing import Optional, Dict
 
 import humanize
 import isodate
-import requests
-from discord import Guild
 from discord.ext.commands import Context
 from isodate import ISO8601Error
 
 from modron.db import ModronState
 from modron.interact import InteractionModule
-from modron.services.reminder import ReminderService
 
 _description = '''Interact with the reminder timer'''
 

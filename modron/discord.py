@@ -10,18 +10,6 @@ from modron.utils import get_local_tz_offset
 logger = logging.getLogger(__name__)
 
 
-def match_channels_to_regex(guild: Guild, pattern: str) -> List[TextChannel]:
-    """Find all channels that match a certain pattern
-
-    Args:
-        guild: Guild to evaluate
-        pattern: Regular expression used to match channels
-    """
-
-    reg = re.compile(pattern)
-    return [c for c in guild.channels if reg.match(c.name) and isinstance(c, TextChannel)]
-
-
 async def get_last_activity(channel: TextChannel) -> Optional[Tuple[datetime, Optional[Member]]]:
     """Get the last activity on a certain text channel
 
