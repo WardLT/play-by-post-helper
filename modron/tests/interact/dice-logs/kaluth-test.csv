@@ -1,0 +1,5 @@
+time,user,character,channel,reason,dice,advantage,disadvantage,reroll_ones,total_value,dice_values,raw_rolls
+2021-08-23T17:14:48.791899,Kati,,ic_all,dex save,1d20+3,False,False,False,18,[15],[[15]]
+2021-08-25T16:20:49.977710,Kati,,ic_all,dave percept,1d20+1,False,False,False,13,[12],[[12]]
+2021-08-27T07:50:50.494988,WardLT,Adrianna,ic_all,insight,1d20+1,False,False,False,5,[4],[[4]]
+2021-08-28T19:11:38.972061,Hiota,Austin / Hubryr,ic_all,perception,1d20+6,False,False,False,23,[17],[[17]]
