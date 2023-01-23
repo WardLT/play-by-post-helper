@@ -94,6 +94,8 @@ class DiceRollInteraction(InteractionModule):
         adv_group.add_argument("--disadvantage", "-d", help="Perform the roll at disadvantage", action='store_true')
         parser.add_argument("--reroll_ones", '-1', help="Re-roll any dice that roll a 1 the first time",
                             action='store_true')
+        parser.add_argument("--reroll_twos", '-2', help="Re-roll any dice that roll a 1 or 2 the first time",
+                            action='store_true')
 
     def log_dice_roll(self, context: Context, roll: DiceRoll, purpose: str) -> NoReturn:
         """Log a dice roll to disk
@@ -139,6 +141,7 @@ class DiceRollInteraction(InteractionModule):
             'advantage': roll.advantage,
             'disadvantage': roll.disadvantage,
             'reroll_ones': roll.reroll_ones,
+            'reroll_twos': roll.reroll_twos,
             'total_value': roll.value,
             'dice_values': json.dumps(roll.dice_values),
             'raw_rolls': json.dumps(roll.raw_rolls)
@@ -183,7 +186,7 @@ class DiceRollInteraction(InteractionModule):
 
         # Make the dice roll
         roll = DiceRoll.make_roll(args.dice, advantage=args.advantage, disadvantage=args.disadvantage,
-                                  reroll_ones=args.reroll_ones)
+                                  reroll_ones=args.reroll_ones, reroll_twos=args.reroll_twos)
 
         # Make the reply
         purpose = ' '.join(args.purpose)

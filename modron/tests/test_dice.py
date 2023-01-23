@@ -38,6 +38,10 @@ def test_reroll_one():
     assert isclose(_measure_probability(6, 1, reroll_one=True), 1 / 36, abs_tol=1e-3)
 
 
+def test_reroll_two():
+    assert isclose(_measure_probability(6, 2, reroll_two=True), 2 / 36, abs_tol=1e-3)
+
+
 def test_advantage():
     assert isclose(_measure_probability(2, 2, advantage=True), 0.75, abs_tol=1e-3)
 
@@ -76,6 +80,11 @@ def test_parser():
     assert not roll.disadvantage
     assert roll.reroll_ones
     assert roll.value == sum([x[0] for x in roll.results]) + 2
+
+    roll = DiceRoll.make_roll('d3+4d14+2', reroll_ones=True, reroll_twos=True)
+    assert roll.reroll_ones
+    assert roll.reroll_twos
+    assert str(roll).startswith('4d14+1d3+2 re-rolling twos =')
 
     # Test advantage and disadvantage
     roll = DiceRoll.make_roll('d20+2', advantage=True)
