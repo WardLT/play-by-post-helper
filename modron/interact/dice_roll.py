@@ -9,6 +9,7 @@ from typing import List, NoReturn
 
 from discord import TextChannel, Guild
 from discord.ext.commands import Context
+from discord import utils
 
 from modron.config import config
 from modron.dice import DiceRoll, dice_regex
@@ -92,10 +93,14 @@ class DiceRollInteraction(InteractionModule):
         adv_group = parser.add_mutually_exclusive_group(required=False)
         adv_group.add_argument("--advantage", "-a", help="Perform the roll at advantage", action='store_true')
         adv_group.add_argument("--disadvantage", "-d", help="Perform the roll at disadvantage", action='store_true')
-        parser.add_argument("--reroll_ones", '-1', help="Re-roll any dice that roll a 1 the first time",
-                            action='store_true')
-        parser.add_argument("--reroll_twos", '-2', help="Re-roll any dice that roll a 1 or 2 the first time",
-                            action='store_true')
+        reroll_group = parser.add_mutually_exclusive_group(required=False)
+        reroll_group.add_argument("--reroll_ones", '-1', help="Re-roll any dice that roll a 1 the first time",
+                                  action='store_true')
+        reroll_group.add_argument("--reroll_twos", '-2', help="Re-roll any dice that roll a 1 or 2 the first time",
+                                  action='store_true')
+
+        # Mark how it is logged
+        parser.add_argument('--blind', '-b', help='Whether to only report the roll to the GM', action='store_true')
 
     def log_dice_roll(self, context: Context, roll: DiceRoll, purpose: str) -> NoReturn:
         """Log a dice roll to disk
@@ -202,7 +207,12 @@ class DiceRollInteraction(InteractionModule):
         reply += f'\nRolls: {", ".join(_render_dice_rolls(roll))}'
 
         # Send the message
-        await context.send(reply)
+        if args.blind:
+            channel_name = config.team_options[context.guild.id].blind_channel
+            channel: TextChannel = utils.get(context.guild.channels, name=channel_name)
+            await channel.send(reply)
+        else:
+            await context.send(reply)
 
         # Log the dice roll
         self.log_dice_roll(context, roll, purpose)

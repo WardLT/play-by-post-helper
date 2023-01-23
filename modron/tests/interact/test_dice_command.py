@@ -12,7 +12,8 @@ from modron.tests.interact.conftest import MockContext
 
 
 @fixture()
-def roller() -> DiceRollInteraction:
+def roller(guild) -> DiceRollInteraction:
+    config.team_options[guild.id].blind_channel = 'bot_testing'
     return DiceRollInteraction()
 
 
@@ -55,6 +56,11 @@ async def test_rolling(parser, roller: DiceRollInteraction, payload: MockContext
 
     # Test a luck roll (always a d20)
     args = parser.parse_args(['luck'])
+    await roller.interact(args, payload)
+    assert 'for luck' in payload.last_message
+
+    # Test a blind roll
+    args = parser.parse_args(['luck', '--blind'])
     await roller.interact(args, payload)
     assert 'for luck' in payload.last_message
 
