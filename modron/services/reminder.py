@@ -1,7 +1,6 @@
 """Services related to reminding players when it is their turn"""
 from typing import List
 from datetime import datetime, timedelta
-from dateutil import tz
 from math import inf
 import logging
 
@@ -9,15 +8,13 @@ import humanize
 from discord import Guild, TextChannel, AllowedMentions, CategoryChannel, Message
 from discord import utils
 
-from modron.config import get_config
+from modron.config import config
 from modron.db import ModronState
 from modron.discord import get_last_activity
 from modron.services import BaseService
 from modron.utils import get_local_tz_offset
 
 logger = logging.getLogger(__name__)
-
-config = get_config()
 
 
 class ReminderService(BaseService):
@@ -118,10 +115,10 @@ class ReminderService(BaseService):
 
             # Check if the last message was me giving a reminder message
             last_message: Message = await self.reminder_channel.history(limit=1, oldest_first=False).get()
-            active_poster_was_me = last_message is not None and \
-                                   last_message.author == self._guild.me and \
-                                   'Let\'s play some D&D!' in last_message.content and \
-                                   abs(last_message.created_at + get_local_tz_offset() - last_time).total_seconds() < 1
+            active_poster_was_me = (last_message is not None and
+                                    last_message.author == self._guild.me and
+                                    'Let\'s play some D&D!' in last_message.content and
+                                    abs(last_message.created_at + get_local_tz_offset() - last_time).total_seconds())
 
             # If not, send a reminder
             if active_poster_was_me:

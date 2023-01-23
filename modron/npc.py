@@ -3,7 +3,7 @@ import logging
 from random import randint, choice
 from typing import Tuple
 
-from modron.config import get_config
+from modron.config import config
 
 logger = logging.getLogger(__name__)
 
@@ -12,9 +12,6 @@ _hair_color = {1: 'blonde', 2: 'blonde', 3: 'brown', 4: 'brown', 5: 'black', 6: 
 _tiefling_eye_colors = ['red', 'orange', 'yellow', 'green', 'blue', 'purple', 'black']
 _tiefling_horns = ['eyebrow', 'short stubs', 'gazelle', 'rams horns',
                    'malformed/mismatched', 'hooks', 'antlers', 'smooth arc']
-
-
-config = get_config()
 
 
 def generate_npc(location='default') -> dict:

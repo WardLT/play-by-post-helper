@@ -2,5 +2,7 @@ team_options:
   853806073906593832:
     name: kaluth
     ic_category: 853806638346534962
+    dice_tracked_categories: [853806638346534962]
     reminders: True
-    backup_channels: null
+    backup_channels:
+      - 853806638346534962

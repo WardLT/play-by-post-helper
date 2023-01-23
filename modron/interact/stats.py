@@ -6,7 +6,7 @@ from argparse import ArgumentParser, Namespace
 import pandas as pd
 from discord.ext.commands import Context
 
-from modron.config import get_config
+from modron.config import config
 from modron.dice import DiceRoll
 from modron.dice.stats import DiceRollStatistics
 from modron.interact.base import InteractionModule
@@ -17,7 +17,6 @@ A present, provides commands to returns how "fair" dice have been.
 """
 
 logger = logging.getLogger(__name__)
-config = get_config()
 
 
 class StatisticModule(InteractionModule):

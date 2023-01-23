@@ -4,12 +4,10 @@ from datetime import timedelta, datetime
 from discord import Guild, utils, TextChannel
 from pytest import mark
 
-from modron.config import get_config
+from modron.config import config
 from modron.utils import get_local_tz_offset
 from modron.services.backup import BackupService
 from modron.services.reminder import ReminderService
-
-config = get_config()
 
 
 @mark.timeout(60)

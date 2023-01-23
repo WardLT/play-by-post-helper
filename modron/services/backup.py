@@ -18,9 +18,8 @@ from googleapiclient.http import MediaFileUpload
 
 from modron.discord import get_last_activity
 from modron.services import BaseService
-from modron.config import get_config
+from modron.config import config
 
-config = get_config()
 logger = logging.getLogger(__name__)
 
 
@@ -70,6 +69,7 @@ class BackupService(BaseService):
 
         # Create a Google-drive page, if credentials are available
         cred_path = config.get_gdrive_credentials_path()
+        self._creds = None
         if os.path.isfile(cred_path):
             with open(cred_path, 'rb') as fp:
                 self._creds = pkl.load(fp)

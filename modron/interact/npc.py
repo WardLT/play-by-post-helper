@@ -12,16 +12,13 @@ import pdfkit
 
 from modron.interact import InteractionModule
 from modron.npc import generate_npc
-from modron.config import get_config
-
-config = get_config()
+from modron.config import config
 
 _description = '''Generate a randomized NPC
 
 Follows the method used by MAB to create NPCs for Kaluth'''
 
 logger = logging.getLogger(__name__)
-
 
 _table_template = '''<!doctype html>
 <html>
