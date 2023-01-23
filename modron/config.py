@@ -69,6 +69,7 @@ class TeamConfig(BaseModel):
     # Logging dice rolls
     dice_log: bool = Field(True, help='Whether to log dice rolls for this team')
     dice_tracked_categories: List[int] = Field(default_factory=list, help="List of categories of channel to track")
+    blind_channel: str = Field("blind_rolls", help='Name of the channel on which to post blind rolls')
 
     # Character sheets
     character_sheet_path: str = Field('characters', help='Path to a directory with the character sheet YAML files')

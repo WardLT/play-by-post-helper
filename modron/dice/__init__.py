@@ -4,13 +4,16 @@ from typing import List, Tuple, Sequence
 from random import randint
 from collections import Counter
 
-
 dice_regex = re.compile(r"(?P<sign>[-+]?)(?P<number>\d*)d(?P<sides>\d+)")
 _modifer_regex = re.compile(r"(?P<sign>[-+])(?P<value>\d+)([^d]|$)")
 
 
-def roll_die(sides: int, advantage: bool = False, disadvantage: bool = False,
-             reroll_one: bool = False) -> Tuple[int, Sequence[int]]:
+def roll_die(sides: int,
+             advantage: bool = False,
+             disadvantage: bool = False,
+             reroll_one: bool = False,
+             reroll_two: bool = False) \
+        -> Tuple[int, Sequence[int]]:
     """Compute the result of rolling a single die
 
     Follows the D&D 5e rules. (See Chapter 7 of the PHB)
@@ -19,11 +22,14 @@ def roll_die(sides: int, advantage: bool = False, disadvantage: bool = False,
         sides (int): Number of sides on the die
         advantage (bool): Whether to perform the roll at advantage
         disadvantage (bool): Whether to perform the roll at disadvantage
-        reroll_one (bool): Whether to re-roll one of the dice if either is a 1.
+        reroll_one (bool): Whether to re-roll values of 1. Only re-rolls one of two dice if using
+            advantage or disadvantage.
             Example: If I roll two 1s at advantage, I only re-roll one of the two dice.
+        reroll_two (bool): Whether to re-roll values of 1 or 2. Takes precedent over ``reroll_ones``.
+            As with `reroll_one`, will apply at most once even if more than one die is rolled.
     Returns:
         - value: (int) Value of the roll
-        - all_rolls ([int]): Values of all of the dice used in this calculation
+        - all_rolls ([int]): Values of all dice rolls used in this calculation, in the order they were rolled
     """
     assert not (advantage and disadvantage), "You cannot roll both at advantage and disadvantage"
     assert sides > 0, "Dice must have a nonnegative number of faces. No non-Euclidean geometry"
@@ -33,8 +39,9 @@ def roll_die(sides: int, advantage: bool = False, disadvantage: bool = False,
         used = [True, True]  # Marking which die values are used
 
         # Re-roll only one of the dice if a one is rolled
-        if reroll_one and 1 in rolls:
-            used[rolls.index(1)] = False  # Mark a 1 as "unused"
+        min_value = min(rolls)
+        if (reroll_one and min_value == 1) or (reroll_two and min_value <= 2):
+            used[rolls.index(min(rolls))] = False  # Mark a 1 as "unused"
 
             # Add in a new roll to replace that die
             used.append(True)
@@ -47,26 +54,32 @@ def roll_die(sides: int, advantage: bool = False, disadvantage: bool = False,
     else:
         # Simple logic: Not at [dis]advantage
         value = randint(1, sides)
-        if reroll_one and value == 1:
-            value = randint(1, sides)
-            return value, [1, value]
+        if (reroll_one and value == 1) or (reroll_two and value <= 2):
+            new_value = randint(1, sides)
+            return new_value, [new_value, value]
         return value, [value]
 
 
 class DiceRoll:
     """Representation of a single dice roll.
 
-    Follows the D&D 5e rules for dice. Consult Chapter 7 of the D&D manual for the
+    Follows the D&D 5e rules for dice. Consult Chapter 7 of the D&D manual for details
     """
 
-    def __init__(self, dice: List[int], modifier: int = 0, reroll_ones: bool = False,
-                 advantage: bool = False, disadvantage: bool = False):
-        """Perform a dice roll
+    def __init__(self,
+                 dice: List[int],
+                 modifier: int = 0,
+                 reroll_ones: bool = False,
+                 reroll_twos: bool = True,
+                 advantage: bool = False,
+                 disadvantage: bool = False):
+        """Roll dice
 
         Args:
             dice ([int]): List of dice to roll
             modifier (int): Modifier to add to the roll
             reroll_ones (bool): Whether to re-roll dice which are 1 on the first roll
+            reroll_twos (bool): Whether to re-roll dice which are 1 or 2 on the first roll
             advantage (bool): Whether to roll each dice twice and take the high value
             disadvantage (bool): Whether to roll the dice twice and take the low value
         """
@@ -76,11 +89,13 @@ class DiceRoll:
         self._dice = Counter(dice)
         self.modifier = modifier
         self.reroll_ones = reroll_ones
+        self.reroll_twos = reroll_twos
         self.advantage = advantage
         self.disadvantage = disadvantage
 
         # Make the rolls. Store the results and all dice which were rolled
-        self.results = [roll_die(s, advantage=advantage, disadvantage=disadvantage, reroll_one=reroll_ones)
+        self.results = [roll_die(s, advantage=advantage, disadvantage=disadvantage,
+                                 reroll_one=reroll_ones, reroll_two=reroll_twos)
                         for s in self._dice.elements()]
 
         # Store the result, which is the result of the used dice
@@ -107,13 +122,14 @@ class DiceRoll:
         return [x[1] for x in self.results]
 
     @classmethod
-    def make_roll(cls, roll: str, reroll_ones: bool = False,
+    def make_roll(cls, roll: str, reroll_ones: bool = False, reroll_twos: bool = False,
                   advantage: bool = False, disadvantage: bool = False) -> 'DiceRoll':
         """Make a roll given a text string describing the dice
 
         Args:
             roll (str): String describing the roll, which must not contain spaces
             reroll_ones (bool): Whether to re-roll dice which are 1 on the first roll
+            reroll_twos (bool): Whether to re-roll dice which are 1 or 2 on the first roll
             advantage (bool): Whether to roll each dice twice and take the high value
             disadvantage (bool): Whether to roll the dice twice and take the low value
         Returns:
@@ -138,7 +154,7 @@ class DiceRoll:
         else:
             modifier = 0
 
-        return cls(dice, modifier, reroll_ones=reroll_ones,
+        return cls(dice, modifier, reroll_ones=reroll_ones, reroll_twos=reroll_twos,
                    advantage=advantage, disadvantage=disadvantage)
 
     @property
@@ -155,7 +171,11 @@ class DiceRoll:
             desc = " at advantage"
         elif self.disadvantage:
             desc = " at disadvantage"
-        if self.reroll_ones:
+
+        # Mark the re-rolling rules
+        if self.reroll_twos:
+            desc += " re-rolling twos"
+        elif self.reroll_ones:
             desc += " re-rolling ones"
         roll_desc = f'{dice_desc}{desc}'
         return roll_desc
