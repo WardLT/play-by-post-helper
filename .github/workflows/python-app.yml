@@ -27,5 +27,7 @@ jobs:
       run: |
         flake8 .
     - name: Test with pytest
+      env:
+        BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
       run: |
         pytest
