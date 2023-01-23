@@ -12,6 +12,11 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
+    - name: Store GDrive credentials
+      env:
+        GDRIVE_B64: ${{ secrets.GDRIVE_B64 }}
+      run: |
+        echo "$GDRIVE_B64" | base64 --decode > ./creds/gdrive/token.pickle
     - name: Set up Python 3.7
       uses: actions/setup-python@v3
       with:
