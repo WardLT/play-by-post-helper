@@ -1,21 +1,37 @@
 """Test replying with dice statistics"""
+from tempfile import TemporaryDirectory
 from pathlib import Path
 import shutil
 
 from pytest import mark, fixture
 
 from modron.interact.stats import StatisticModule
+from modron.config import config
+
+example_path = Path(__file__).parent / 'dice-logs' / 'kaluth-test.csv'
 
 
 @fixture(autouse=True)
 def spoof_dice_logs():
-    """Spoof the """
-    cur_path = Path(__file__).parent
-    cur_path.joinpath('dice-logs').mkdir(exist_ok=True)
-    shutil.copy(
-        cur_path.parent.parent.parent.joinpath('dice-logs/kaluth-test.csv'),
-        cur_path.joinpath('dice-logs/kaluth.csv')
-    )
+    """Spoof the dice logs so we don't overwrite existing ones"""
+    dice_path = Path(config.dice_log_dir)
+    with TemporaryDirectory() as td:
+        td = Path(td)
+        # Move the old dice somewhere
+        restore_copy = dice_path.is_dir()
+        if restore_copy:
+            shutil.copytree(dice_path, td / 'test-dir')
+
+        # Copy in some examples
+        shutil.copy(
+            example_path,
+            dice_path / 'kaluth.csv'
+        )
+        yield None
+
+        if restore_copy:
+            shutil.rmtree(dice_path)
+            shutil.copytree(td / 'test-dir', dice_path)
 
 
 @mark.asyncio
