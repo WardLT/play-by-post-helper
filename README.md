@@ -1,6 +1,6 @@
 # Play-by-Post Helper
 
-[![Build Status](https://travis-ci.org/WardLT/play-by-post-helper.svg?branch=master)](https://travis-ci.org/WardLT/play-by-post-helper)
+[![CI](https://github.com/WardLT/play-by-post-helper/actions/workflows/python-app.yml/badge.svg)](https://github.com/WardLT/play-by-post-helper/actions/workflows/python-app.yml)
 [![Coverage Status](https://coveralls.io/repos/github/WardLT/play-by-post-helper/badge.svg?branch=master)](https://coveralls.io/github/WardLT/play-by-post-helper?branch=master)
 
 The Play-by-Post Helper (Modron) is a Discord bot that assists playing Role Playing Games (RPGs) on Discord.
