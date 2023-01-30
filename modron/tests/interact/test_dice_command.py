@@ -62,7 +62,7 @@ async def test_rolling(parser, roller: DiceRollInteraction, payload: MockContext
     # Test a blind roll
     args = parser.parse_args(['luck', '--blind'])
     await roller.interact(args, payload)
-    assert 'for luck' in payload.last_message
+    assert 'rolled 1d20' in payload.last_message
 
     # Make sure the log file does not yet exist
     print(f'Checking if the log was created or modified at {log_path}')
