@@ -208,9 +208,14 @@ class DiceRollInteraction(InteractionModule):
 
         # Send the message
         if args.blind:
+            # Send the dice roll to the blind channel
             channel_name = config.team_options[context.guild.id].blind_channel
             channel: TextChannel = utils.get(context.guild.channels, name=channel_name)
             await channel.send(reply)
+
+            # Send a confirmation message as a reply
+            await context.send(f'@!{context.author.id}> rolled {roll.roll_description}, and '
+                               'only the GM will see the result')
         else:
             await context.send(reply)
 
