@@ -214,7 +214,7 @@ class DiceRollInteraction(InteractionModule):
             await channel.send(reply)
 
             # Send a confirmation message as a reply
-            await context.send(f'@!{context.author.id}> rolled {roll.roll_description}, and '
+            await context.send(f'<@!{context.author.id}> rolled {roll.roll_description}, and '
                                'only the GM will see the result')
         else:
             await context.send(reply)
