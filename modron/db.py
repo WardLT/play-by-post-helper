@@ -16,6 +16,7 @@ from discord import Message
 from pydantic import BaseModel, Field
 
 from modron.config import config
+from modron.discord import timestamp_to_local_tz
 
 
 class LastMessage(BaseModel):
@@ -35,7 +36,7 @@ class LastMessage(BaseModel):
             Message description
         """
         return cls(
-            last_time=message.created_at,
+            last_time=timestamp_to_local_tz(message.created_at),
             sender=message.author.name,
             channel=message.channel.name,
         )
