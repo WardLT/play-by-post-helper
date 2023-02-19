@@ -75,11 +75,16 @@ class ReminderModule(InteractionModule):
             # Get the reminder time as a time
             state = ModronState.load()
             reminder_time = state.reminder_time[context.guild.id]
-            reply = f'Next check for reminder: <t:{int(reminder_time.timestamp())}>'  # Format as a
+            reply = f'Next check for reminder: <t:{int(reminder_time.timestamp())}>'  # Format as a time
+
+            # Display the last message
+            if state.last_message is not None:
+                reply += f"\n\nLast message was from {state.last_message.sender} in #{state.last_message.channel}" \
+                         f" at <t:{int(state.last_message.last_time.timestamp())}"
         elif args.reminder_command == 'break':
             reply = _add_delay(context.guild.id, args.time)
         else:
             raise ValueError('Support for {args.reminder_command} has not been implemented (blame Logan)')
 
-        # Send reply back to user
+        # Reply to user
         await context.reply(reply)

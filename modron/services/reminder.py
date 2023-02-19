@@ -1,5 +1,5 @@
 """Services related to reminding players when it is their turn"""
-from typing import List
+from typing import List, Optional
 from datetime import datetime, timedelta
 from math import inf
 import logging
@@ -9,7 +9,7 @@ from discord import Guild, TextChannel, AllowedMentions, CategoryChannel, Messag
 from discord import utils
 
 from modron.config import config
-from modron.db import ModronState
+from modron.db import ModronState, LastMessage
 from modron.discord import get_last_activity
 from modron.services import BaseService
 from modron.utils import get_local_tz_offset
@@ -36,6 +36,7 @@ class ReminderService(BaseService):
 
         # Status attributes
         self.active_channel = None
+        self.last_message: Optional[Message] = None
         self.time_last_activity = datetime.now()
         self.last_channel_poll = datetime.now()
         self.watch_channels: List[TextChannel] = []
@@ -91,34 +92,38 @@ class ReminderService(BaseService):
         # Determine the last activity
         last_time = await self.assess_last_activity()
         stall_time = datetime.now() - last_time
-        logger.info(f'Most recent post was {stall_time} ago in {self.active_channel}')
+        logger.info(f'Most recent post was {stall_time} ago in {self.active_channel} '
+                    f'by {self.last_message.author.name}')
         self.last_channel_poll = datetime.now()
 
         # Determine when we would issue a reminder based on activity
         state = ModronState.load()
         reminder_time = last_time + self.allowed_stall_time
 
+        # Update the lass message in the state
+        state.last_message = LastMessage.from_discord(self.last_message)
+
         # If it is after any previous reminder time, replace that reminder time
         team_reminder_time = state.reminder_time.get(self._guild.id, None)
         if team_reminder_time is None or reminder_time > team_reminder_time:
             logger.info(f'Moving up the next reminder time to: {reminder_time}')
             state.reminder_time[self._guild.id] = reminder_time
-            state.save()
         else:
             logger.info(f'Activity-based reminder would be sooner '
                         f'than user-specified reminder: {team_reminder_time}. Not updating reminder time')
             reminder_time = state.reminder_time[self._guild.id]
+        state.save()
 
         # Check if we are past the stall time
         if datetime.now() > reminder_time:
             logger.info(f'Channel has been stalled for {stall_time - self.allowed_stall_time} too long')
 
             # Check if the last message was me giving a reminder message
-            last_message: Message = await self.reminder_channel.history(limit=1, oldest_first=False).get()
-            active_poster_was_me = (last_message is not None and
-                                    last_message.author == self._guild.me and
-                                    'Let\'s play some D&D!' in last_message.content and
-                                    abs(last_message.created_at + get_local_tz_offset() - last_time).total_seconds())
+            active_poster_was_me = (self.last_message is not None and
+                                    self.last_message.author == self._guild.me and
+                                    'Let\'s play some D&D!' in self.last_message.content and
+                                    abs(self.last_message.created_at + get_local_tz_offset()
+                                        - last_time).total_seconds())
 
             # If not, send a reminder
             if active_poster_was_me:
@@ -136,7 +141,7 @@ class ReminderService(BaseService):
         else:
             # If we are not past the stall time, wait for the remaining time
             wake_time = reminder_time
-        return wake_time
+        return wake_time + timedelta(seconds=1)
 
     async def assess_last_activity(self) -> datetime:
         """Get the last activity on the watched channels
@@ -144,7 +149,8 @@ class ReminderService(BaseService):
         Updates the results in:
             ``self.last_updated_time`` - Time of the last activity on watched channels
             ``self.active_channel`` - Last active channel
-            ``self.watch_channels`` - The list of channels beign watched
+            ``self.last_message`` - Last message sent on any watched channel
+            ``self.watch_channels`` - The list of channels being watched
 
         Returns:
             Time of the latest activity
@@ -168,11 +174,12 @@ class ReminderService(BaseService):
 
         # Check every channel
         tasks = [await get_last_activity(c) for c in self.watch_channels]
-        last_times, last_author = zip(*tasks)
+        last_times, last_messages = zip(*tasks)
 
         # Get the most recent activity and info on most recent channel
         last_time = max(last_times)
         self.time_last_activity = last_time
         active_channel_ind = last_times.index(last_time)
+        self.last_message = last_messages[active_channel_ind]
         self.active_channel = self.watch_channels[active_channel_ind]
         return last_time
