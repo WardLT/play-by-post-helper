@@ -3,7 +3,7 @@ from typing import Optional, Tuple
 from datetime import datetime
 import logging
 
-from discord import TextChannel, Message, Member, Forbidden
+from discord import TextChannel, Message, Forbidden
 
 from modron.utils import get_local_tz_offset
 

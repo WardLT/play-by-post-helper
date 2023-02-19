@@ -9,12 +9,36 @@ assess and alter the server state from the command line.
 """
 from datetime import datetime
 import json
-from typing import Dict
+from typing import Dict, Optional
 
 import yaml
+from discord import Message
 from pydantic import BaseModel, Field
 
 from modron.config import config
+
+
+class LastMessage(BaseModel):
+    """Information about the last message"""
+
+    last_time: datetime = Field(..., description='Time the last message was sent')
+    sender: str = Field(..., description='Username of person who sent the last message')
+    channel: str = Field(..., description='Name of the channel in which the message was sent')
+
+    @classmethod
+    def from_discord(cls, message: Message):
+        """Make description from a discord Message object
+
+        Args:
+            message: Message to use for configuration
+        Returns:
+            Message description
+        """
+        return cls(
+            last_time=message.created_at,
+            sender=message.author.name,
+            channel=message.channel.name,
+        )
 
 
 class ModronState(BaseModel):
@@ -22,6 +46,7 @@ class ModronState(BaseModel):
     or need to be persistent across restarts"""
 
     reminder_time: Dict[int, datetime] = Field(None, description='Next time to check if a reminder is needed')
+    last_message: Optional[LastMessage] = Field(None, description='Information about the last message')
 
     @classmethod
     def load(cls, path: str = config.state_path) -> 'ModronState':
