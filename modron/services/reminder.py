@@ -127,7 +127,12 @@ class ReminderService(BaseService):
 
             # If not, send a reminder
             if active_poster_was_me:
-                logger.info('Last poster was me, doing nothing')
+                logger.info('Last poster was me. Upping the ante')
+                await self.reminder_channel.send(
+                    content=f'@everyone, another reminder! It\'s been since {humanize.naturaltime(stall_time)}'
+                            f' that we played some D&D!',
+                    allowed_mentions=AllowedMentions.all()
+                )
             else:
                 logger.info('Last poster was not me. Sending an @channel reminder')
                 await self.reminder_channel.send(
