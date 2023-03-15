@@ -24,7 +24,8 @@ async def bot() -> ModronClient:
 
     # Give the client, but make sure to kill it later
     yield client
-    task.cancel()
+    await client.close()
+    task.result()
 
 
 @async_fixture()

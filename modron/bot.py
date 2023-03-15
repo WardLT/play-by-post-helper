@@ -23,6 +23,10 @@ class ModronClient(Bot):
         """Start the services when the bot is ready"""
         logger.info(f'Logged on as {self.user}')
 
+        # If testing, do nothing
+        if self.testing:
+            return
+
         # Launch the services for each time
         for team_id, team_config in config.team_options.items():
             guild = self.get_guild(team_id)
@@ -47,10 +51,10 @@ class ModronClient(Bot):
                 logger.info(f'No backup for {team_config.name}')
 
             # Make a hello message, if we're not in testing mode
-            if not self.testing:
-                ooc_channel = utils.get(guild.channels, name='ooc_discussion')  # TODO: Make channel name configurable
-                await ooc_channel.send('I have been summoned. Your incense was appreciated. 🤖')
-            logger.info('Successfully started Modron.')
+            ooc_channel = utils.get(guild.channels, name='ooc_discussion')  # TODO: Make channel name configurable
+            await ooc_channel.send('I have been summoned. Your incense was appreciated. 🤖')
+
+        logger.info('Successfully started Modron.')
 
     async def on_disconnect(self):
         logger.warning('Disconnected from Discord service')
