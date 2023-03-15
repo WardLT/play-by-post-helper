@@ -16,7 +16,7 @@ async def test_delay_status(payload, guild):
     args = rem.parser.parse_args(['status'])
     await rem.interact(args, payload)
     assert payload.last_message.startswith('Next check')
-    assert 'was from' in payload.last_message
+    assert 'was from' in payload.last_message, payload.last_message
 
 
 @mark.asyncio
