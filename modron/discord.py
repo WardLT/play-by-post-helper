@@ -28,7 +28,7 @@ async def get_last_activity(channel: TextChannel) -> Optional[Tuple[datetime, Op
         logger.warning(f'Bot lacks access to channel: {channel.name}')
         return datetime.fromtimestamp(0), None
     if message is not None:
-        return timestamp_to_local_tz(message.created_at) + get_local_tz_offset(), message
+        return timestamp_to_local_tz(message.created_at), message
 
     # Return a datetime of now for channels that have yet to be written in
     return datetime.fromtimestamp(0), None
