@@ -4,5 +4,7 @@ team_options:
     ic_category: 853806638346534962
     dice_tracked_categories: [853806638346534962]
     reminders: True
+    private_channels:
+      862094786956886035: bot_testing
     backup_channels:
       - 853806638346534962
