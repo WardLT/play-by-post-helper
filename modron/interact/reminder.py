@@ -11,7 +11,6 @@ from pytimeparse.timeparse import timeparse
 from discord import User, TextChannel, Guild, AllowedMentions
 from discord.ext.commands import Context
 from discord import utils
-from isodate import ISO8601Error
 
 from modron.config import config
 from modron.bot import ModronClient

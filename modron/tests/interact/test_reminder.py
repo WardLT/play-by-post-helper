@@ -2,12 +2,19 @@ import asyncio
 from asyncio import Task
 
 from discord import Message
-from pytest import mark, fixture
+from pytest import mark, fixture, raises
 
-from modron.interact.reminder import ReminderModule, FollowupModule
+from modron.interact.reminder import ReminderModule, FollowupModule, parse_delay
 from modron.services.reminder import ReminderService
 
 reminders = ReminderModule()
+
+
+def test_delay_parser():
+    assert parse_delay('1 second').total_seconds() == 1
+    with raises(ValueError) as error:
+        parse_delay('asdf')
+    assert 'asdf' in str(error.value)
 
 
 @mark.asyncio
