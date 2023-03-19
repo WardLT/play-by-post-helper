@@ -29,7 +29,7 @@ class InteractionModule:
         """
         Args:
              name (str): Name of the interaction module, defines the subcommand name
-             help_string (str): Short-form name description of the module. Used in the root parser description
+             help_string (str): Short-form name description of the module. Used in the root parser help text
              description (str): Long-form description of the module. Used in its detailed home command
         """
         self.name = name
