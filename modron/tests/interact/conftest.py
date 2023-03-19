@@ -33,7 +33,7 @@ class MockMessage(Message):
 @async_fixture
 async def payload(guild: Guild) -> MockContext:
     """Build a fake context"""
-    author = guild.members[0]
+    author = guild.get_member(862094786956886035)  # Modron
     channel = utils.get(guild.channels, name='bot_testing')
     return MockContext(
         author=author,
