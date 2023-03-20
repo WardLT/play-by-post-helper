@@ -7,7 +7,7 @@ from asyncio import Task
 from datetime import timedelta, datetime
 from typing import Optional
 
-from discord import TextChannel, Guild, utils, User, AllowedMentions
+from discord import TextChannel, utils, User, AllowedMentions
 from discord.ext.commands import Context
 
 from modron.config import config
