@@ -1,19 +1,12 @@
 """Interact with the channel sleep timer"""
 from argparse import ArgumentParser, Namespace
-from asyncio import Task
 from datetime import datetime, timedelta
-from typing import Dict, Optional
-import asyncio
 import logging
 
 import humanize
 from pytimeparse.timeparse import timeparse
-from discord import User, TextChannel, Guild, AllowedMentions
 from discord.ext.commands import Context
-from discord import utils
 
-from modron.config import config
-from modron.bot import ModronClient
 from modron.db import ModronState
 from modron.interact import InteractionModule
 
@@ -107,80 +100,3 @@ class ReminderModule(InteractionModule):
 
         # Reply to user
         await context.reply(reply)
-
-
-class FollowupModule(InteractionModule):
-    """Simple module for users leaving themselves reminders to respond later"""
-
-    def __init__(self, bot: ModronClient):
-        """
-        Args:
-            bot: Bot, which we'll use to map user to reminder channel
-        """
-        super().__init__('rem', 'Remind self about a message later',
-                         'Have Modron remind you to reply to a message later')
-
-        # Map user to channel object
-        self.user_map: Dict[str, Dict[str, TextChannel]] = {}  # guild_id -> user_id -> TextChannel
-        for guild_id, guild_options in config.team_options.items():
-            self.user_map[guild_id] = {}
-            guild: Guild = bot.get_guild(guild_id)
-            for user_id, channel_name in guild_options.private_channels.items():
-                channel = utils.get(guild.channels, name=channel_name)
-                self.user_map[guild_id][user_id] = channel
-
-    def register_argparse(self, parser: ArgumentParser):
-        parser.add_argument('time', nargs='?', default='3 hours',
-                            help='How long to wait for a message (default: 3 hours)')
-
-    async def interact(self, args: Namespace, context: Context) -> Optional[Task]:
-        # Get the pause time
-        try:
-            duration = parse_delay(args.time)
-        except ValueError as error:
-            await context.reply(str(error))
-            return
-
-        # Set up a timer to reply when that occurs
-        task = asyncio.create_task(
-            self.reply_if_needed(duration, context.author, context.channel)
-        )
-        logger.info('Submitted a reminder to run as a co-routine')
-        return task
-
-    async def reply_if_needed(self, sleep_time: timedelta, user: User, channel: TextChannel) -> bool:
-        """Send a reminder if the user did not reply within
-
-        Args:
-            sleep_time: How long until we check
-            user: User who made this request
-            channel: Text channel in which to reply
-        """
-        # Wait until the sleep is over
-        start_time = datetime.utcnow()
-        await asyncio.sleep(sleep_time.total_seconds())
-        logger.info(f'Awake and looking for messages from {user.display_name} after {start_time}')
-
-        # See what the latest message from this user is
-        any_from_user = False
-        async for message in channel.history(after=start_time):
-            if message.author == user:
-                logger.info(f'Found a message from user: {message.content[:32]}')
-                any_from_user = True
-                break
-        if any_from_user:
-            print(any_from_user)
-            logger.info('The user already responded, so we don\'t need to remind them')
-            return False
-
-        # Determine where to remind the user
-        channel = self.user_map[channel.guild.id].get(user.id, channel)
-        logger.info(f'Reminding user on back on {channel.name}')
-
-        # Otherwise, message them
-        await channel.send(
-            f"<@{user.id}>, you asked me to remind you to reply to a message in <#{channel.id}>",
-            delete_after=10 * 60,
-            allowed_mentions=AllowedMentions(users=[user])
-        )
-        return True
