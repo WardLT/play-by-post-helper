@@ -1,10 +1,11 @@
 import asyncio
 from asyncio import Task
 
-from discord import Message
+from discord import Message, utils
 from pytest import mark, fixture, raises
 
-from modron.interact.reminder import ReminderModule, FollowupModule, parse_delay
+from modron.interact.reminder import ReminderModule, parse_delay
+from modron.interact.followup import FollowupModule
 from modron.services.reminder import ReminderService
 
 reminders = ReminderModule()
@@ -38,19 +39,18 @@ async def test_delay_pause(payload):
 
 
 @fixture()
-def followup(bot):
-    return FollowupModule(bot)
+def followup():
+    return FollowupModule()
 
 
 @mark.asyncio
-async def test_msg_reminders(payload, followup):
+async def test_msg_reminders(payload, followup, guild):
     # Make sure we get a default that is reasonable
     args = followup.parser.parse_args([])
     assert args.time == '3 hours'
 
-    # Ensure that the map was build correctly
-    followup_channel = followup.user_map[payload.guild.id][payload.author.id]
-    assert followup_channel.name == 'bot_testing', followup.user_map
+    # Get a link to the channel used for testing
+    test_channel = utils.get(guild.channels, name='bot_testing')
 
     # See that we follow up on the correct channel
     args = followup.parser.parse_args(['5 second'])
@@ -60,13 +60,13 @@ async def test_msg_reminders(payload, followup):
     assert task.result(), payload.last_message
 
     # Delete that reminder message
-    await followup_channel.last_message.delete()
+    await test_channel.last_message.delete()
 
     # Send a message between the last reminder, make sure we do not remind twice
     args.time = '30 seconds'
     task: Task = await followup.interact(args, payload)
     await asyncio.sleep(15)
-    msg: Message = await followup_channel.send('I did something!')
+    msg: Message = await test_channel.send('I did something!')
     assert task is not None, payload.last_message
     await task
     assert not task.result(), 'We sent a reminder anyway'
