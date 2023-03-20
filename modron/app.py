@@ -15,7 +15,7 @@ from modron.interact.followup import FollowupModule
 from modron.interact.stats import StatisticModule
 
 
-def main(testing: bool = True):
+def main(testing: bool = False):
     """Launch the bot"""
 
     # Write logs only in test mode
