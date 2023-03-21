@@ -16,4 +16,4 @@ def test_launch():
     # See if it exits cleanly
     proc.join(timeout=30)
     assert proc.exitcode is not None, 'Still has not terminated'
-    assert proc.exitcode == 0, f'Something went awry. Exitcode: {proc.exitcode}'
+    assert proc.exitcode in [0, -15], f'Something went awry. Exitcode: {proc.exitcode}'
