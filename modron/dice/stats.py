@@ -96,7 +96,7 @@ class FairDie(DieModel):
         return []
 
     def compute_likelihood(self, rolls: Union[np.ndarray, int, List[int]]) -> np.ndarray:
-        x = np.zeros_like(rolls, dtype=np.float)
+        x = np.zeros_like(rolls, dtype=float)
         x += 1. / self.n_faces
         return x
 
