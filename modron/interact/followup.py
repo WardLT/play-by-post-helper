@@ -88,7 +88,6 @@ class FollowupModule(InteractionModule):
                 any_from_user = True
                 break
         if any_from_user:
-            print(any_from_user)
             logger.info('The user already responded, so we don\'t need to remind them')
             return False
 
