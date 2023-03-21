@@ -56,7 +56,7 @@ class FollowupModule(InteractionModule):
 
         # Send a confirmation to the user
         await context.reply(
-            f'Ok! I\'ll remind you at <t:{int((datetime.now() + duration).timestamp())} if need be.',
+            f'Ok! I\'ll remind you at <t:{int((datetime.now() + duration).timestamp())}> if need be.',
             delete_after=15,
         )
 
