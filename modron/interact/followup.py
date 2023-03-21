@@ -45,13 +45,20 @@ class FollowupModule(InteractionModule):
         reply_channel = context.channel
         if context.author.id in team_options.private_channels:
             reply_channel = utils.get(context.guild.channels, name=team_options.private_channels[context.author.id])
-        logger.info(f'Watching for reminders on {context.channel.name}, reminding user on {reply_channel.name}')
+        logger.info(f'Watching for reminders on {context.channel.name},'
+                    f' reminding user on {reply_channel.name} at {datetime.now() + duration}')
 
         # Set up a timer to reply when that occurs
         task = asyncio.create_task(
             self.reply_if_needed(duration, context.author, context.channel, reply_channel)
         )
         logger.info('Submitted a reminder to run as a co-routine')
+
+        # Send a confirmation to the user
+        await context.reply(
+            f'Ok! I\'ll remind you at <t:{int((datetime.now() + duration).timestamp())} if need be.',
+            delete_after=15,
+        )
 
         return task
 

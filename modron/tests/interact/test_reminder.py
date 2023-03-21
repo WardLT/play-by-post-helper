@@ -55,6 +55,7 @@ async def test_msg_reminders(payload, followup, guild):
     # See that we follow up on the correct channel
     args = followup.parser.parse_args(['5 second'])
     task: Task = await followup.interact(args, payload)
+    assert 'I\'ll remind you at' in payload.last_message
     assert task is not None, payload.last_message
     await task
     assert task.result(), payload.last_message
