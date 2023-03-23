@@ -1,10 +1,13 @@
 from argparse import ArgumentParser
-import os
+from datetime import datetime
 from csv import DictReader
+from time import sleep
+import os
 
 from discord import Guild, utils
 from pytest import raises, fixture, mark
 
+from modron.discord import timestamp_to_local_tz
 from modron.interact._argparse import NoExitParserError
 from modron.config import config
 from modron.interact.dice_roll import DiceRollInteraction
@@ -59,11 +62,6 @@ async def test_rolling(parser, roller: DiceRollInteraction, payload: MockContext
     await roller.interact(args, payload)
     assert 'for luck' in payload.last_message
 
-    # Test a blind roll
-    args = parser.parse_args(['luck', '--blind'])
-    await roller.interact(args, payload)
-    assert 'rolled 1d20' in payload.last_message
-
     # Make sure the log file does not yet exist
     print(f'Checking if the log was created or modified at {log_path}')
     assert not os.path.isfile(log_path) or os.path.getmtime(log_path) == original_time
@@ -94,3 +92,34 @@ async def test_ability_roll(parser, roller, payload):
     args = parser.parse_args(['-a', 'str', 'save'])
     await roller.interact(args, payload)
     assert 'at advantage' in payload.last_message
+
+
+@mark.asyncio()
+async def test_blind_roll(parser, roller, payload, guild: Guild):
+    # Make perception rolls blind
+    config.team_options[guild.id].blind_rolls = ['perception']
+
+    # Test a blind roll
+    args = parser.parse_args(['luck', '--blind'])
+    assert args.blind is not None
+    assert args.blind
+    await roller.interact(args, payload)
+    assert 'only the GM will see the result' in payload.last_message
+
+    # See if it was reported in the "blind_channel"
+    sleep(5)
+    reminder_channel = utils.get(guild.channels, name="bot_testing")
+    assert (timestamp_to_local_tz(reminder_channel.last_message.created_at) - datetime.now()).total_seconds() < 5
+    await reminder_channel.last_message.delete()
+
+    # Make sure perception starts out at blind
+    args = parser.parse_args(['perception'])
+    await roller.interact(args, payload)
+    assert 'only the GM will see the result' in payload.last_message
+    sleep(5)
+    await reminder_channel.last_message.delete()
+
+    # Make sure blindness can be overridden
+    args = parser.parse_args(['perception', '--show'])
+    await roller.interact(args, payload)
+    assert 'only the GM will see the result' not in payload.last_message

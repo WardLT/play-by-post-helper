@@ -100,7 +100,11 @@ class DiceRollInteraction(InteractionModule):
                                   action='store_true')
 
         # Mark how it is logged
-        parser.add_argument('--blind', '-b', help='Whether to only report the roll to the GM', action='store_true')
+        blind_group = parser.add_mutually_exclusive_group(required=False)
+        blind_group.add_argument('--blind', '-b', help='Only report the roll to the GM, regardless of the defaults',
+                                 action='store_const', const=True)
+        blind_group.add_argument('--show', '-s', help='Report the roll to this channel, regardless of the defaults',
+                                 action='store_const', const=True)
 
     def log_dice_roll(self, context: Context, roll: DiceRoll, purpose: str) -> NoReturn:
         """Log a dice roll to disk
@@ -206,8 +210,16 @@ class DiceRollInteraction(InteractionModule):
                         f' Result = {roll.value}')
         reply += f'\nRolls: {", ".join(_render_dice_rolls(roll))}'
 
-        # Send the message
-        if args.blind:
+        # Determine whether to roll blindly or not
+        blind = True if ' '.join(args.purpose).lower() in config.team_options[context.guild.id].blind_rolls else False
+        if args.blind and not blind:
+            logger.info('Overriding default to make this roll blind')
+            blind = True
+        elif args.show and blind:
+            logger.info('Overriding default to show this roll')
+            blind = False
+
+        if blind:
             # Send the dice roll to the blind channel
             channel_name = config.team_options[context.guild.id].blind_channel
             channel: TextChannel = utils.get(context.guild.channels, name=channel_name)
