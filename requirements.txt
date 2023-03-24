@@ -1,7 +1,7 @@
 flask>=1.1
 pandas==1.1.*
 scipy==1.5.*
-numpy<=1.21.4
+numpy==1.22.*
 humanize
 pytimeparse
 discord.py<2
