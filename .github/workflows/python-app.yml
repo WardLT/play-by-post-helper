@@ -2,6 +2,8 @@ name: CI
 
 on: [push]
 
+concurrency: playbypost  # Places all jobs in the same concurrency group
+
 permissions:
   contents: read
 

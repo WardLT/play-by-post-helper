@@ -33,7 +33,7 @@ async def test_delay_status(payload, guild):
 
 @mark.asyncio
 async def test_delay_pause(payload):
-    args = reminders.parser.parse_args(['break', '1 second'])
+    args = reminders.parser.parse_args(['break', '1', 'second'])
     await reminders.interact(args, payload)
     assert 'paused' in payload.last_message.lower()
 

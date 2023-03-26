@@ -80,7 +80,7 @@ class ReminderModule(InteractionModule):
 
         # Subcommand for snoozing the reminder
         subparser = subparsers.add_parser('break', help='Delay the reminder thread for a certain time')
-        subparser.add_argument('time', help='How long to delay the reminder for', type=str)
+        subparser.add_argument('time', help='How long to delay the reminder for', type=str, nargs="+")
 
     async def interact(self, args: Namespace, context: Context):
         if args.reminder_command is None or args.reminder_command == 'status':
@@ -94,7 +94,8 @@ class ReminderModule(InteractionModule):
                 reply += f"\n\nLast message was from {state.last_message.sender} in #{state.last_message.channel}" \
                          f" <t:{int(state.last_message.last_time.timestamp())}:R>"
         elif args.reminder_command == 'break':
-            reply = _add_delay(context.guild.id, args.time)
+            delay_time = " ".join(args.time)
+            reply = _add_delay(context.guild.id, delay_time)
         else:
             raise ValueError('Support for {args.reminder_command} has not been implemented (blame Logan)')
 
