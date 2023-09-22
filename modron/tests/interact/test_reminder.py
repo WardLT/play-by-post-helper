@@ -21,7 +21,7 @@ def test_delay_parser():
 @mark.asyncio
 async def test_delay_status(payload, guild):
     # Update the state by checking for the last message
-    service = ReminderService(guild, "ic_all", 853806638346534962)  # Look at all IC channels
+    service = ReminderService(guild, "ic_all", ['In Character Channels'])  # Look at all IC channels
     await service.perform_reminder_check()
 
     # Run a status check

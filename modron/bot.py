@@ -34,7 +34,7 @@ class ModronClient(Bot):
             # Start the reminder thread
             if team_config.reminders:
                 reminder = ReminderService(guild, team_config.reminder_channel,
-                                           team_config.ic_category)
+                                           team_config.watched_channels)
                 self.loop.create_task(reminder.run())
                 logger.info(f'Launched reminder service for {team_config.name}')
             else:
