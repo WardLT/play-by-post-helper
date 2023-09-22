@@ -60,6 +60,8 @@ class ModronState(BaseModel):
         """
         with open(path, 'r') as fp:
             data = yaml.load(fp, yaml.SafeLoader)
+            if data.get('reminder_time') is not None:
+                data['reminder_time'] = dict((int(k), v) for k, v in data['reminder_time'].items())
             return ModronState.parse_obj(data)
 
     def save(self, path: str = config.state_path):
