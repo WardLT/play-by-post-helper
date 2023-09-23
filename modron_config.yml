@@ -6,5 +6,17 @@ team_options:
     reminders: True
     private_channels:
       862094786956886035: bot_testing
+      359173183779373058: gm_notes
+      854826609101111317: adrianna_gm
+      854162623326715915: mezu_gm
+      337413337199411200: hubryr_gm
     backup_channels:
       - 853806638346534962
+    blind_channel: blind_rolls
+    blind_rolls:
+      - stealth
+      - perception
+      - investigation
+      - insight
+      - survival
+      - luck
