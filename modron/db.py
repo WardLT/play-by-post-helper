@@ -13,7 +13,7 @@ from typing import Dict, Optional
 
 import yaml
 from discord import Message
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, validator
 
 from modron.config import config
 from modron.discord import timestamp_to_local_tz
@@ -49,6 +49,12 @@ class ModronState(BaseModel):
     reminder_time: Dict[int, datetime] = Field(None, description='Next time to check if a reminder is needed')
     last_message: Optional[LastMessage] = Field(None, description='Information about the last message')
 
+    @validator('reminder_time')
+    def convert_str_to_int(cls, value: Optional[Dict]):
+        if value is not None:
+            return dict((int(k), v) for k, v in value.items())
+        return value
+
     @classmethod
     def load(cls, path: str = config.state_path) -> 'ModronState':
         """Load the configuration from disk
@@ -60,8 +66,6 @@ class ModronState(BaseModel):
         """
         with open(path, 'r') as fp:
             data = yaml.load(fp, yaml.SafeLoader)
-            if data.get('reminder_time') is not None:
-                data['reminder_time'] = dict((int(k), v) for k, v in data['reminder_time'].items())
             return ModronState.parse_obj(data)
 
     def save(self, path: str = config.state_path):
