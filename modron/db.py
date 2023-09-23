@@ -53,7 +53,7 @@ class ModronState(BaseModel):
     def convert_str_to_int(cls, value: Optional[Dict]):
         if value is not None:
             return dict((int(k), v) for k, v in value.items())
-        return value
+        return dict()
 
     @classmethod
     def load(cls, path: str = config.state_path) -> 'ModronState':

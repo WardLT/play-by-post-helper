@@ -13,7 +13,7 @@ from modron.services.reminder import ReminderService
 @mark.timeout(60)
 @mark.asyncio
 async def test_reminder(guild: Guild):
-    service = ReminderService(guild, "bot_testing", 863442378592878602, max_sleep_time=5)
+    service = ReminderService(guild, "bot_testing", ["bot_testing"], max_sleep_time=5)
 
     # Send a message to the bot-test channel
     test_channel: TextChannel = utils.get(guild.channels, name='bot_testing')
