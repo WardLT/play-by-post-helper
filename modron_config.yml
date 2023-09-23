@@ -1,7 +1,12 @@
 team_options:
   853806073906593832:
     name: kaluth
-    ic_category: 853806638346534962
+    watch_channels:
+      - ic_all
+      - adrianna_gm
+      - adrianna_mezu
+      - mezu_hubryr
+      - hubryr_gm
     dice_tracked_categories: [853806638346534962]
     reminders: True
     private_channels:

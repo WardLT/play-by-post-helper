@@ -13,7 +13,7 @@ from modron.services.reminder import ReminderService
 @mark.timeout(60)
 @mark.asyncio
 async def test_reminder(guild: Guild):
-    service = ReminderService(guild, "bot_testing", 863442378592878602, max_sleep_time=5)
+    service = ReminderService(guild, "bot_testing", ["bot_testing"], max_sleep_time=5)
 
     # Send a message to the bot-test channel
     test_channel: TextChannel = utils.get(guild.channels, name='bot_testing')
@@ -23,7 +23,7 @@ async def test_reminder(guild: Guild):
     last_time = await service.assess_last_activity()
     assert ((message.created_at.replace(tzinfo=None) + get_local_tz_offset()) - last_time).total_seconds() < 5, \
         'Did not pick up the latest message'
-    assert service.watch_channels[0].name == 'bot_testing'
+    assert service.watched_channels[0].name == 'bot_testing'
 
     # Delete the message
     await message.delete()

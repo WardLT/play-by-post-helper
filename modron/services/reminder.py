@@ -20,18 +20,22 @@ logger = logging.getLogger(__name__)
 class ReminderService(BaseService):
     """Thread that issues a reminder to players if play stalls"""
 
-    def __init__(self, guild: Guild, reminder_channel: str, watch_channel_id: int, max_sleep_time: float = inf):
+    def __init__(self,
+                 guild: Guild,
+                 reminder_channel: str,
+                 channels_to_watch: List[str],
+                 max_sleep_time: float = inf):
         """
         Args:
             guild: Authenticated BotClient
             reminder_channel: Name of channel on which to post reminders
-            watch_channel_id: ID of the channel or category channel to watch
+            channels_to_watch: IDs of the channels, which could include category channels, channels to watch
             max_sleep_time: Longest time the thread is allowed to sleep for
         """
         short_name = config.team_options[guild.id].name
         super().__init__(guild, max_sleep_time, name=f'reminder_{short_name}')
         self.reminder_channel: TextChannel = utils.get(self._guild.channels, name=reminder_channel)
-        self.watch_channel_id = watch_channel_id
+        self.channels_to_watch = channels_to_watch
         self.allowed_stall_time = config.team_options[guild.id].allowed_stall_time
 
         # Status attributes
@@ -39,7 +43,7 @@ class ReminderService(BaseService):
         self.last_message: Optional[Message] = None
         self.time_last_activity = datetime.now()
         self.last_channel_poll = datetime.now()
-        self.watch_channels: List[TextChannel] = []
+        self.watched_channels: List[TextChannel] = []
 
     @property
     def is_expired(self) -> bool:
@@ -162,23 +166,25 @@ class ReminderService(BaseService):
         """
 
         # Get the channels to watch
-        watch_channel = self._guild.get_channel(self.watch_channel_id)
-        if isinstance(watch_channel, TextChannel):
-            self.watch_channels = [watch_channel]
-        elif isinstance(watch_channel, CategoryChannel):
-            self.watch_channels = watch_channel.text_channels
-        else:
-            raise ValueError(f'Unrecognized type of channel: {type(watch_channel)}')
-        logger.info(f'Watching {len(self.watch_channels)} channels for activity')
+        self.watched_channels = []
+        for name in self.channels_to_watch:
+            watch_channel = utils.get(self._guild.channels, name=name)
+            if isinstance(watch_channel, TextChannel):
+                self.watched_channels.append(watch_channel)
+            elif isinstance(watch_channel, CategoryChannel):
+                self.watched_channels.extend(watch_channel.text_channels)
+            else:
+                raise ValueError(f'Unrecognized type of channel: {type(watch_channel)}')
+        logger.info(f'Watching {len(self.watched_channels)} channels for activity')
 
         # Warn user if the bot does not write a channel watched for stalling
-        if self.reminder_channel not in self.watch_channels:
+        if self.reminder_channel not in self.watched_channels:
             logger.warning('Bot will write reminders to a channel not being watched for stalling, which '
                            'means it will issue reminders even if no other activity has occurred since the '
                            'previous reminder.')
 
         # Check every channel
-        tasks = [await get_last_activity(c) for c in self.watch_channels]
+        tasks = [await get_last_activity(c) for c in self.watched_channels]
         last_times, last_messages = zip(*tasks)
 
         # Get the most recent activity and info on most recent channel
@@ -186,5 +192,5 @@ class ReminderService(BaseService):
         self.time_last_activity = last_time
         active_channel_ind = last_times.index(last_time)
         self.last_message = last_messages[active_channel_ind]
-        self.active_channel = self.watch_channels[active_channel_ind]
+        self.active_channel = self.watched_channels[active_channel_ind]
         return last_time
