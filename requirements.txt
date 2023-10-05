@@ -1,6 +1,6 @@
-flask>=1.1
+flask>=1.1,<3
 pandas==1.1.*
-scipy==1.5.*
+scipy==1.11.*
 numpy==1.22.*
 humanize
 pytimeparse
