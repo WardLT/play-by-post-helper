@@ -58,7 +58,7 @@ async def test_rolling(parser, roller: DiceRollInteraction, payload: MockContext
     assert '1d6+1 at advantage' in payload.last_message
 
     # Test a luck roll (always a d20)
-    args = parser.parse_args(['luck'])
+    args = parser.parse_args(['--show', 'luck'])
     await roller.interact(args, payload)
     assert 'for luck' in payload.last_message
 
