@@ -34,7 +34,7 @@ class ModronClient(Bot):
             # Start the reminder thread
             if team_config.reminders:
                 reminder = ReminderService(guild, team_config.reminder_channel,
-                                           team_config.watched_channels)
+                                           team_config.watch_channels)
                 self.loop.create_task(reminder.run())
                 logger.info(f'Launched reminder service for {team_config.name}')
             else:
@@ -51,7 +51,7 @@ class ModronClient(Bot):
                 logger.info(f'No backup for {team_config.name}')
 
             # Make a hello message, if we're not in testing mode
-            ooc_channel = utils.get(guild.channels, name='ooc_discussion')  # TODO: Make channel name configurable
+            ooc_channel = utils.get(guild.channels, name=team_config.ooc_channel)
             await ooc_channel.send('I have been summoned. Your incense was appreciated. 🤖')
 
         logger.info('Successfully started Modron.')
