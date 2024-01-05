@@ -77,6 +77,7 @@ class TeamConfig(BaseModel):
     dice_tracked_categories: List[int] = Field(default_factory=list, help="List of categories of channel to track")
     blind_channel: str = Field("blind_rolls", help='Name of the channel on which to post blind rolls')
     blind_rolls: List[str] = Field(default=(), help='Purposes of rolls which are always blind')
+    public_channel: Optional[str] = Field(default=None, help='If provided, public roll results will be sent here')
 
     # Character sheets
     character_sheet_path: str = Field('characters', help='Path to a directory with the character sheet YAML files')

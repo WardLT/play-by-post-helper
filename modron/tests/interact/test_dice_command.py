@@ -4,7 +4,7 @@ from csv import DictReader
 from time import sleep
 import os
 
-from discord import Guild, utils
+from discord import Guild, utils, TextChannel
 from pytest import raises, fixture, mark
 
 from modron.discord import timestamp_to_local_tz
@@ -123,3 +123,26 @@ async def test_blind_roll(parser, roller, payload, guild: Guild):
     args = parser.parse_args(['perception', '--show'])
     await roller.interact(args, payload)
     assert 'only the GM will see the result' not in payload.last_message
+
+
+@mark.asyncio()
+async def test_public_channel(parser, roller, payload, guild: Guild):
+    """Test routing rolls to a public channel"""
+    # Set the public channel
+    config.team_options[guild.id].public_channel = 'bot_testing'
+
+    # Test a regular roll
+    args = parser.parse_args(['luck', '--show'])
+    await roller.interact(args, payload)
+    assert payload.last_message is None  # No roll in that channel
+    channel: TextChannel = utils.get(guild.channels, name='bot_testing')
+    msg = channel.last_message
+    assert 'luck' in msg.clean_content
+    await msg.delete()
+
+    # Test a blind roll
+    args = parser.parse_args(['luck', '--blind'])
+    assert args.blind is not None
+    assert args.blind
+    await roller.interact(args, payload)
+    assert 'only the GM will see the result' in payload.last_message

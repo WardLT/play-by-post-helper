@@ -228,6 +228,11 @@ class DiceRollInteraction(InteractionModule):
             # Send a confirmation message as a reply
             await context.send(f'<@!{context.author.id}> rolled {roll.roll_description}, and '
                                'only the GM will see the result')
+        elif config.team_options[context.guild.id].public_channel is not None:
+            # Send to public channel if defined
+            channel_name = config.team_options[context.guild.id].public_channel
+            channel: TextChannel = utils.get(context.guild.channels, name=channel_name)
+            await channel.send(reply)
         else:
             await context.send(reply)
 
