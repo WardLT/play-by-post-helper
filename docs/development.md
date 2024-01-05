@@ -1,5 +1,7 @@
 # Development Guide
 
+> **Note**: This documentation is from the Slack version of Modron and is out of date
+
 Modron runs as a multi-threaded application that is launched by `server.py`.
 We explain Modron by describing each of the types of threads:
 what they do, how are they launched, and how they are built.

@@ -61,7 +61,7 @@ class TeamConfig(BaseModel):
                                              help='Mapping between user ID and name of their private channel.')
 
     # Reminders
-    reminders: bool = Field(True, help='Whether to post inactivity reminders')
+    reminders: bool = Field(False, help='Whether to post inactivity reminders')
     reminder_channel: str = Field('ic_all', help='Channel on which to post reminders')
     watch_channels: List[str] = Field(None, help='Names of channels to watch for activity. '
                                                  'Can include categories or specific channels')

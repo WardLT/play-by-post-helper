@@ -198,7 +198,7 @@ class BackupService(BaseService):
         assert output.get('mimeType', None) == 'application/vnd.google-apps.folder'
         logger.info(f'Ready to upload to \"{output["name"]}\" ({config.gdrive_backup_folder})')
 
-        # List out all of the files to be backed-up
+        # List out all files to be backed-up
         files = glob(os.path.join(self.backup_dir, '**', '*.json'), recursive=True)
         folders = set(Path(p).parent.name for p in files)
         logger.info(f'Found {len(files)} files to upload in {len(folders)} folders')

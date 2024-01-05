@@ -1,9 +1,11 @@
 # User Guide
 
+> **Note**: This documentation is from the Slack version of Modron and is out of date 
+
 There are several routes for players to interact with Modron:
 
 1. [Slash Commands](#slash-commands)
-1. [Direct Messages](#direct-messages)
+2. [Direct Messages](#direct-messages)
 
 There are also passive services that users may interact with:
 

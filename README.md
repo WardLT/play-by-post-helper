@@ -8,7 +8,7 @@ Modron can do common tasks for D&D and other TTRPG games, including:
 
 - Messaging the channel to remind people if play has stalled
 - Performing rolls according to D&D 5e rules
-- Keeping track of character abilitiy and health
+- Keeping track of character ability and health
 
 ## Setting Up Modron
 
