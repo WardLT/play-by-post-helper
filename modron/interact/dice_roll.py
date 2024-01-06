@@ -58,18 +58,16 @@ _description = """Roll dice with all the options of D&D 5e.
 
 Dice are expressed in the format: `<number of dice>d<number of sides>[+|-]<modifier>`
 
+Dice results will be sent to the public roll channel for public in-character channels,
+a GM-only channel if the roll is blind,
+and to the channel in which you made the roll otherwise.
+
 *examples*
 
-A common dice roll without any special rolls: `/modron roll 1d20+1`
-A common dice roll, with a defined purpose: `/modron roll 10d6+5 sneak attack damage`
+A common dice roll without any special rolls: `$modron roll 1d20+1`
+A common dice roll, with a defined purpose: `$modron roll 10d6+5 sneak attack damage`
 
-Option flags alter rules when rolling. Example: rolling at disadvantage: `/roll -d 1d20+2`
-
-If you have a character sheet registered, (call `/modron character` to find out) you can
-instead list the name of the ability you wish to roll. For example, `/roll str save` to
-roll a strength save.
-
-Call `/modron roll --help` for full details
+Option flags alter rules when rolling. Example: rolling at disadvantage: `$roll -d 1d20+2`
 """
 
 
