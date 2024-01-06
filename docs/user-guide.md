@@ -30,7 +30,7 @@ describing what was wrong about your command.
 
 ![rolling_dice](img/roll-command.png)
 
-Modron supports all of the D&D 5e rules for dice rolling, such
+Modron supports all D&D 5e rules for dice rolling, such
 as advantage and re-rolling ones.
 Roll dice by calling `/modron roll`, `/mroll`, or just `/roll`.
 A few examples include:

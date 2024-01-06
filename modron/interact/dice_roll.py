@@ -3,6 +3,7 @@ import csv
 import json
 import logging
 import os
+import re
 from argparse import ArgumentParser, Namespace
 from datetime import datetime
 from typing import List, NoReturn
@@ -17,6 +18,8 @@ from modron.interact.base import InteractionModule
 from modron.characters import list_available_characters, load_character
 
 logger = logging.getLogger(__name__)
+
+_private_channel_pattern = re.compile(r'(?:[-_]|^)gm(?:[-_]|$)')
 
 
 def _render_dice_rolls(roll: DiceRoll) -> List[str]:
@@ -210,31 +213,31 @@ class DiceRollInteraction(InteractionModule):
                         f' Result = {roll.value}')
         reply += f'\nRolls: {", ".join(_render_dice_rolls(roll))}'
 
-        # Determine whether to roll blindly or not
-        blind = True if ' '.join(args.purpose).lower() in config.team_options[context.guild.id].blind_rolls else False
-        if args.blind and not blind:
-            logger.info('Overriding default to make this roll blind')
-            blind = True
-        elif args.show and blind:
-            logger.info('Overriding default to show this roll')
-            blind = False
+        # Conditions which define where the dice roll is going
+        blind_channel = ' '.join(args.purpose).lower() in config.team_options[context.guild.id].blind_rolls
+        force_blind = args.blind
+        force_show = args.show
+        ic_channel = context.channel.name in config.team_options[context.guild.id].watch_channels
+        is_private = _private_channel_pattern.search(context.channel.name) is not None
+        has_public_channel = config.team_options[context.guild.id].public_channel is not None
 
-        if blind:
-            # Send the dice roll to the blind channel
+        # Send the result appropriate
+        if force_blind or (blind_channel and not force_show):  # Role blind
             channel_name = config.team_options[context.guild.id].blind_channel
             channel: TextChannel = utils.get(context.guild.channels, name=channel_name)
-            await channel.send(reply)
 
-            # Send a confirmation message as a reply
+            # Tell the user we are rolling blind
             await context.send(f'<@!{context.author.id}> rolled {roll.roll_description}, and '
                                'only the GM will see the result')
-        elif config.team_options[context.guild.id].public_channel is not None:
-            # Send to public channel if defined
+            await channel.send(reply)
+        elif (ic_channel and is_private) or not ic_channel or not has_public_channel:
+            # Reply in channel
+            await context.send(reply)
+        else:  # Public channel exists, we're in an IC channel and that channel is not private
+            # Reply in the public dice roll
             channel_name = config.team_options[context.guild.id].public_channel
             channel: TextChannel = utils.get(context.guild.channels, name=channel_name)
             await channel.send(reply)
-        else:
-            await context.send(reply)
 
         # Log the dice roll
         self.log_dice_roll(context, roll, purpose)
