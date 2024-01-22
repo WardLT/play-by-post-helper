@@ -36,11 +36,20 @@ async def test_reminder(guild: Guild):
 @mark.timeout(60)
 @mark.asyncio
 async def test_backup(guild: Guild, tmpdir):
+    config.team_options[guild.id].name = 'kaluth-test'
     # Make a temporary directory
     log_dir = os.path.join(tmpdir, 'test')
     os.makedirs(log_dir, exist_ok=True)
-    service = BackupService(guild, log_dir, timedelta(days=1), channels=[863442378592878602],
+    service = BackupService(guild,
+                            log_dir,
+                            timedelta(days=1),
+                            channels=[863442378592878602],
                             max_sleep_time=5)
+
+    # Make sure the path to the output folder has the correct name
+    folder_id = service.get_folder_id()
+    folder = service.gdrive_client.files().get(fileId=folder_id).execute()
+    assert folder['name'] == 'kaluth-test'
 
     # Run the code
     backup_channel: TextChannel = utils.get(guild.channels, name='bot_testing')
@@ -55,15 +64,9 @@ async def test_backup(guild: Guild, tmpdir):
     counts = await service.backup_all_channels()
     assert counts == {'bot_testing': 0}
 
-    # Delete the previously-uploaded folder
-    gd_client = service.get_gdrive_client()
-    result = gd_client.files().list(
-        q=f"name = 'test' and '{config.gdrive_backup_folder}' in parents and trashed = false",
-        pageSize=1
-    ).execute()
-    hits = result.get('files', [])
-    if len(hits) == 1:
-        gd_client.files().delete(fileId=hits[0]['id']).execute()
+    # Delete the upload folder
+    service.gdrive_client.files().delete(fileId=folder_id).execute()
+    folder_id = service.get_folder_id()
 
     # Upload once, which should get the files
     n_uploaded, file_sizes = service.upload_to_gdrive()
@@ -87,3 +90,9 @@ async def test_backup(guild: Guild, tmpdir):
 
     # Delete the test message
     await message.delete()
+
+    # Make sure only file was created
+    result = service.gdrive_client.files().list(
+        q=f'"{folder_id}" in parents and trashed = false'
+    ).execute()
+    assert len(result['files']) == 1
