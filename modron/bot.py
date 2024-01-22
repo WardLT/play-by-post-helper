@@ -42,7 +42,8 @@ class ModronClient(Bot):
 
             # Start the backup thread
             if len(team_config.backup_channels) > 0:
-                backup = BackupService(guild, backup_dir=config.backup_dir,
+                backup = BackupService(guild,
+                                       backup_dir=config.backup_dir,
                                        frequency=timedelta(days=1),
                                        channels=team_config.backup_channels)
                 self.loop.create_task(backup.run())

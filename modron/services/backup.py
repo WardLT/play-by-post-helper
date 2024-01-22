@@ -1,15 +1,15 @@
 """Services related to backing up channels"""
 import asyncio
-from glob import glob
-import pickle as pkl
+import logging
 import json
 import os
+import pickle as pkl
 from hashlib import md5
 from pathlib import Path
+from typing import List, Dict, Tuple, Union
 from datetime import datetime, timedelta
+from functools import cached_property
 from math import inf, isclose
-import logging
-from typing import List, Dict, Optional, Tuple
 
 import humanize
 from discord import Guild, TextChannel, Message, User, CategoryChannel
@@ -48,26 +48,37 @@ class BackupService(BaseService):
     """Download and write messages from certain channels to disk
 
     Messages are written in a special "backup directory" which contains the channels
-    being backed up as separate json-ld files.
+    being backed up as separate json files.
     """
 
-    def __init__(self, guild: Guild, backup_dir: Optional[str] = None, frequency: timedelta = timedelta(days=1),
-                 channels: List[int] = (), max_sleep_time: float = inf):
+    def __init__(self,
+                 guild: Guild,
+                 backup_dir: str,
+                 frequency: timedelta = timedelta(days=1),
+                 channels: List[int] = (),
+                 max_sleep_time: float = inf):
         """
 
         Args:
             guild: Connection to the guild
-            backup_dir: Directory to store the
+            backup_dir: Directory in which
             channels: List of channels or categories to back up
             max_sleep_time: Longest time to sleep before
         """
         short_name = config.team_options[guild.id].name
         super().__init__(guild, max_sleep_time, name=f'backup_{short_name}')
         self.frequency = frequency
-        self.backup_dir = backup_dir
+        self.backup_dir = Path(backup_dir) / short_name
         self.channels = channels
+        self.guild_name = short_name
 
-        # Create a Google-drive page, if credentials are available
+        # Store status information
+        self.last_backup_date = datetime.now()
+        self.last_backup_successful = True
+        self.total_uploaded = 0
+        self.next_run_time = datetime.now()
+
+        # Determine where to upload to Google, if credentials are available
         cred_path = config.get_gdrive_credentials_path()
         self._creds = None
         if os.path.isfile(cred_path):
@@ -77,36 +88,56 @@ class BackupService(BaseService):
         else:
             logger.info('No Google Drive conventions available')
 
-        # Store status information
-        self.last_backup_date = datetime.now()
-        self.last_backup_successful = True
-        self.total_uploaded = 0
-        self.next_run_time = datetime.now()
-        self.gdrive_backup_folder = None
-        if self._creds is not None:
-            gdc = self.get_gdrive_client()
-            self.gdrive_backup_folder = self._get_folder_id(gdc, short_name)
-
     @property
     def since_last_backup(self) -> timedelta:
         """Time since the last backup"""
         return datetime.now() - self.last_backup_date
 
     @property
-    def backup_url(self) -> Optional[str]:
-        """URL for the backup folder"""
-        if self.gdrive_backup_folder is None:
-            return None
-        return f'https://drive.google.com/drive/folders/{self.gdrive_backup_folder}'
-
-    @property
     def until_next_backup(self) -> timedelta:
         """Time until the next backup"""
         return self.next_run_time - datetime.now()
 
-    def get_gdrive_client(self) -> Resource:
+    @property
+    def using_gdrive(self) -> bool:
+        """Whether we will upload chat history to Google drive"""
+        return self._creds is not None
+
+    @cached_property
+    def gdrive_client(self) -> Resource:
         """Build the GDrive client with stored credentials"""
         return build('drive', 'v3', credentials=self._creds)
+
+    def get_folder_id(self) -> str:
+        """Create or locate the backup folder for this channel
+
+        Returns:
+            Identifier for the Google Drive backup folder for this particular channel
+        """
+
+        # Get the root folder
+        result = self.gdrive_client.files().list(
+            q=f"name = '{self.guild_name}' and '{config.gdrive_backup_folder}' in parents and trashed = false",
+            pageSize=2
+        ).execute()
+        hits = result.get('files', [])
+
+        # Operate!
+        if len(hits) > 1:
+            raise ValueError('>1 folder with this name in the backup directory')
+        elif len(hits) == 1:
+            return hits[0].get('id')
+        else:
+            file_metadata = {
+                'name': self.guild_name,
+                'mimeType': 'application/vnd.google-apps.folder',
+                'parents': [config.gdrive_backup_folder]
+            }
+            result = self.gdrive_client.files().create(
+                body=file_metadata
+            ).execute()
+            logger.info('Created a new upload folder')
+            return result.get('id')
 
     async def backup_messages(self, channel: TextChannel) -> int:
         """Backup all messages from a certain channel
@@ -116,14 +147,14 @@ class BackupService(BaseService):
         Returns:
             (int) Number of messages written
         """
-        logger.info(f'Starting to backup {channel}')
+        # Determine where backup the channels
+        output_path = self.backup_dir / f'{channel}.json'
+        logger.info(f'Starting to backup chanel {channel} from {self.guild_name} to {output_path}')
 
         # Get the time of the last message
-        output_path = os.path.join(self.backup_dir, f'{channel}.json')
-        logger.info(f'Backup path: {output_path}')
         if not os.path.isfile(output_path):
             start_time = 0
-            os.makedirs(os.path.dirname(output_path), exist_ok=True)
+            output_path.parent.mkdir(exist_ok=True, parents=True)
         else:
             # Get the last line of the file
             start_time = 0
@@ -190,53 +221,44 @@ class BackupService(BaseService):
         """
 
         # Make sure the gdrive credentials are available
-        assert self._creds is not None, "Google Drive credentials are unavailable"
-        gdrive_service = self.get_gdrive_client()
+        if not self.using_gdrive:
+            raise ValueError('No Google Drive credentials were provided')
 
-        # Make sure the target folder exists
-        output = gdrive_service.files().get(fileId=config.gdrive_backup_folder).execute()
+        # Make sure the root folder exists
+        output = self.gdrive_client.files().get(fileId=config.gdrive_backup_folder).execute()
         assert output.get('mimeType', None) == 'application/vnd.google-apps.folder'
         logger.info(f'Ready to upload to \"{output["name"]}\" ({config.gdrive_backup_folder})')
 
         # List out all files to be backed-up
-        files = glob(os.path.join(self.backup_dir, '**', '*.json'), recursive=True)
+        files = list(Path(self.backup_dir).glob('*.json'))
         folders = set(Path(p).parent.name for p in files)
         logger.info(f'Found {len(files)} files to upload in {len(folders)} folders')
-
-        # Make the folders for each of the Slacks
-        folder_ids = dict(
-            (f, self._get_folder_id(gdrive_service, f)) for f in folders
-        )
 
         # Upload the documents
         updated_count = 0
         uploaded_size = 0
         for file in files:
-            was_updated, file_size = self._upload_file(gdrive_service, file, folder_ids)
+            was_updated, file_size = self.upload_file(file)
             if was_updated:
                 updated_count += 1
                 uploaded_size += file_size
         return updated_count, uploaded_size
 
-    def _upload_file(self, gdrive_service: Resource, file: str, folder_ids: Dict[str, str]) -> Tuple[bool, int]:
+    def upload_file(self, file: Union[str, Path]) -> Tuple[bool, int]:
         """Upload a file if it has changed
 
         Args:
-            gdrive_service: Authenticated GDrive client
-            file (str): Path to the file to be uploaded
-            folder_ids (dict): Map of the workspace name to folder ids
+            file: Path to the file to be uploaded
         Returns:
             - (bool) Whether the file was updated
             - (int) Amount of data uploaded
         """
         # Get the appropriate folder
         file_path = Path(file)
-        folder_name = file_path.parent.name
-        folder_id = folder_ids[folder_name]
 
         # See if the file already exists
-        # Lookup the folder
-        result = gdrive_service.files().list(
+        folder_id = self.get_folder_id()
+        result = self.gdrive_client.files().list(
             q=f"name = '{file_path.name}' and '{folder_id}' in parents and trashed = false",
             pageSize=2, fields='files/id,files/md5Checksum,files/size'
         ).execute()
@@ -246,11 +268,11 @@ class BackupService(BaseService):
         if len(hits) > 1:
             raise ValueError('>1 file with this name in the backup directory')
         elif len(hits) == 1:
-            # Otherwise, udate a new copy
+            # Determine whether we need to update the file
             file_id = hits[0].get('id')
             logger.info(f'Matched existing file {file_id} to {file}')
 
-            # Check if the file's md5 has has changed
+            # Check if the file's md5 has changed
             my_hash = md5()
             with open(file_path, 'rb') as fp:
                 buff = fp.read(4096)
@@ -263,8 +285,8 @@ class BackupService(BaseService):
 
             # Update the file
             file_metadata = {'name': file_path.name}
-            media = MediaFileUpload(file, mimetype='application/ld+json')
-            result = gdrive_service.files().update(
+            media = MediaFileUpload(file, mimetype='application/jsonlines')
+            result = self.gdrive_client.files().update(
                 fileId=file_id, body=file_metadata, media_body=media, fields='id,size').execute()
             logger.info(f'Uploaded {file} to {result.get("id")}')
             return True, int(result.get('size'))
@@ -272,48 +294,12 @@ class BackupService(BaseService):
             # Upload the file
             file_metadata = {'name': file_path.name,
                              'parents': [folder_id]}
-            media = MediaFileUpload(file, mimetype='application/ld+json')
-            result = gdrive_service.files().create(body=file_metadata,
-                                                   media_body=media,
-                                                   fields='id,size').execute()
+            media = MediaFileUpload(file, mimetype='application/jsonlines')
+            result = self.gdrive_client.files().create(body=file_metadata,
+                                                       media_body=media,
+                                                       fields='id,size').execute()
             logger.info(f'Uploaded {file} to {result.get("id")}')
             return True, int(result.get('size'))
-
-    def _get_folder_id(self, gdrive_service: Resource, name: str) -> str:
-        """Get ID for the folder to hold logs for a certain Slack
-
-        Args:
-            gdrive_service (Resource): Authenticated GDrive client
-            name (str): Name of the folder
-        Returns:
-            (str) ID of the folder
-        """
-
-        # Lookup the folder
-        result = gdrive_service.files().list(
-            q=f"name = '{name}' and '{config.gdrive_backup_folder}' in parents and trashed = false",
-            pageSize=2
-        ).execute()
-        hits = result.get('files', [])
-
-        # Operate!
-        if len(hits) > 1:
-            raise ValueError('>1 folder with this name in the backup directory')
-        elif len(hits) == 1:
-            output = hits[0].get('id')
-            logger.info(f'Matched existing folder {output} to {name}')
-        else:
-            file_metadata = {
-                'name': name,
-                'mimeType': 'application/vnd.google-apps.folder',
-                'parents': [config.gdrive_backup_folder]
-            }
-            result = gdrive_service.files().create(
-                body=file_metadata
-            ).execute()
-            output = result.get('id')
-            logger.info(f'Created new folder {output} for {name}')
-        return output
 
     async def run(self):
         # Run the main loop
