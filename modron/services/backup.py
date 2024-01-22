@@ -4,7 +4,6 @@ import logging
 import json
 import os
 import pickle as pkl
-from hashlib import md5
 from pathlib import Path
 from typing import List, Dict, Tuple, Union
 from datetime import datetime, timedelta
@@ -23,6 +22,22 @@ from modron.config import config
 logger = logging.getLogger(__name__)
 
 
+def _get_last_write_time(output_path) -> float:
+    """Get the last timestamp from a file
+
+    Args:
+        output_path: Path to a backup file
+    Returns:
+        Timestamp of latest message
+    """
+    start_time = 0
+    with open(output_path) as fp:
+        for line in fp:
+            msg = json.loads(line)
+            start_time = max(start_time, float(msg["timestamp"]))
+    return start_time
+
+
 def _write_messages(messages: List[Dict], output_path: str):
     """Write messages to disk
 
@@ -35,12 +50,8 @@ def _write_messages(messages: List[Dict], output_path: str):
     logger.debug(f'Writing {len(messages)} to {output_path}')
     with open(output_path, 'a') as fp:
         for msg in messages:
-            # Drop the team column and convert ts to a float
-            msg = dict(msg)
-            if 'team' in msg:
-                msg.pop('team')
-
             # Write it out
+            msg = dict(msg)
             print(json.dumps(msg), file=fp)
 
 
@@ -157,11 +168,7 @@ class BackupService(BaseService):
             output_path.parent.mkdir(exist_ok=True, parents=True)
         else:
             # Get the last line of the file
-            start_time = 0
-            with open(output_path) as fp:
-                for line in fp:
-                    msg = json.loads(line)
-                    start_time = max(start_time, float(msg["timestamp"]))
+            start_time = _get_last_write_time(output_path)
         logger.info(f'Starting timestamp {start_time}, which is {datetime.fromtimestamp(start_time)}')
 
         # Pulling the most recent message
@@ -260,7 +267,7 @@ class BackupService(BaseService):
         folder_id = self.get_folder_id()
         result = self.gdrive_client.files().list(
             q=f"name = '{file_path.name}' and '{folder_id}' in parents and trashed = false",
-            pageSize=2, fields='files/id,files/md5Checksum,files/size'
+            pageSize=2, fields='files/id,files/md5Checksum,files/size,files/modifiedTime'
         ).execute()
         hits = result.get('files', [])
 
@@ -272,15 +279,10 @@ class BackupService(BaseService):
             file_id = hits[0].get('id')
             logger.info(f'Matched existing file {file_id} to {file}')
 
-            # Check if the file's md5 has changed
-            my_hash = md5()
-            with open(file_path, 'rb') as fp:
-                buff = fp.read(4096)
-                while len(buff) > 0:
-                    my_hash.update(buff)
-                    buff = fp.read(4096)
-            if my_hash.hexdigest() == hits[0].get('md5Checksum'):
-                logger.info('MD5 checksum is unchanged. Skipping upload')
+            # Check the last time this file was modified
+            last_message_time = datetime.fromtimestamp(_get_last_write_time(file))
+            last_uploaded = datetime.strptime(hits[0]['modifiedTime'], '%Y-%m-%dT%H:%M:%S.%fZ')
+            if last_message_time <= last_uploaded:
                 return False, 0
 
             # Update the file
