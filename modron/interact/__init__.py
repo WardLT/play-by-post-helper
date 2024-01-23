@@ -3,7 +3,7 @@
 Holds logic of how Modron should respond a certain direct message"""
 import logging
 from functools import partial, update_wrapper
-from typing import Sequence, NoReturn
+from typing import Sequence
 
 from discord.ext.commands import Context, Command
 
