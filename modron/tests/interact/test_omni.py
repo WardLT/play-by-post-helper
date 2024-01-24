@@ -17,3 +17,12 @@ async def test_omni(bot: ModronClient, payload: MockContext):
     # Run the help command
     await handle_generic_command(parser, payload, '-h')
     assert "- `roll`" in payload.last_message
+
+    # Run the roll command
+    await handle_generic_command(parser, payload, 'roll', 'd20')
+    assert "rolled 1d20" in payload.last_message
+
+    # Make an error
+    await handle_generic_command(parser, payload, 'nope')
+    print(payload.last_message)
+    assert "invalid" in payload.last_message
