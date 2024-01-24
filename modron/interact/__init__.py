@@ -66,9 +66,7 @@ async def handle_generic_command(parser: NoExitParser, context: Context, *args):
         args: Arguments passed to the command
     """
 
-    # Expand shortcut commands
-    logger.info(f'Received command: {" ".join(args)}')
-    logger.debug(f'Command was from user {context.author.name} on {context.channel.name}')
+    logger.info(f'Received command from user {context.author.name} on {context.channel.name}: {" ".join(args)}')
 
     # Parse the command
     try:
@@ -83,6 +81,6 @@ async def handle_generic_command(parser: NoExitParser, context: Context, *args):
         parser.print_help()
         msg = parser.text_buffer.getvalue()
         logger.info(f'Sending some help messages back. {repr(msg[:64])}...{len(msg)} char')
-        return
-
-    await args.interact(args, context)
+        await context.reply(msg, delete_after=60)
+    else:
+        await args.interact(args, context)
