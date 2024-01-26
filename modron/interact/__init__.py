@@ -2,7 +2,6 @@
 
 Holds logic of how Modron should respond a certain direct message"""
 import logging
-from functools import partial, update_wrapper
 from typing import Sequence
 
 from discord.ext.commands import Context, Command
@@ -48,9 +47,9 @@ def attach_commands(bot: ModronClient, modules: Sequence[InteractionModule]) -> 
         subparser.set_defaults(interact=module.interact)
 
     # Attach it to the bot
-    new_func = partial(handle_generic_command, parser)
-    update_wrapper(new_func, handle_generic_command)
-    cmd = Command(new_func, name='modron')
+    async def _wrapped_func(context, *args):
+        await handle_generic_command(parser, context, *args)
+    cmd = Command(_wrapped_func, name='modron')
     bot.add_command(cmd)
 
     logger.info(f'Created a parse function with {len(modules)} interaction modules')
