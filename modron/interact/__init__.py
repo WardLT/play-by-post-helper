@@ -56,12 +56,12 @@ def attach_commands(bot: ModronClient, modules: Sequence[InteractionModule]) -> 
     return parser
 
 
-async def handle_generic_command(parser: NoExitParser, context: Context, *args):
-    """Respond to a generic "/modron" slash command
+async def handle_generic_command(parser: NoExitParser, modules: Sequence[InteractionModule], context: Context, *args):
+    """Respond to a generic "modron" command
 
     Args:
         parser: Parser to use to understand command
-        context: Slash command data sent from Slack
+        context: Command data sent from Discord
         args: Arguments passed to the command
     """
 
@@ -77,9 +77,11 @@ async def handle_generic_command(parser: NoExitParser, context: Context, *args):
 
     # If there is not an interact command, return help message
     if not hasattr(args, 'interact'):
-        parser.print_help()
-        msg = parser.text_buffer.getvalue()
-        logger.info(f'Sending some help messages back. {repr(msg[:64])}...{len(msg)} char')
+        msg = 'Modron is here to help with roleplaying on Slack.\nIt comes installed with many commands:\n'
+        for module in modules:
+            msg += f"\n- `${module.name}`: {module.description}"
+
+        logger.info('Sending a list of command strings back.')
         await context.reply(msg, delete_after=60)
     else:
         await args.interact(args, context)
