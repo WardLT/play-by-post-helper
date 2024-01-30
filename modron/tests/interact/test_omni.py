@@ -18,12 +18,16 @@ async def test_omni(bot: ModronClient, payload: MockContext, guild):
     modules = [DiceRollInteraction()]
     parser = attach_commands(bot, modules)
 
+    # Run an empty command in
+    await handle_generic_command(parser, modules, payload)
+    assert '- `$roll`: ' in payload.last_message
+
     # Run the help command
-    await handle_generic_command(parser, payload, '-h')
+    await handle_generic_command(parser, modules, payload, '-h')
     assert "- `roll`" in payload.last_message
 
     # Run the roll command
-    await handle_generic_command(parser, payload, 'roll', 'd20')
+    await handle_generic_command(parser, modules, payload, 'roll', 'd20')
     roll_channel: TextChannel = utils.get(guild.channels, name="bot_testing")
     sleep(5.)
     async for last_message in roll_channel.history(limit=1, oldest_first=False):
@@ -32,5 +36,5 @@ async def test_omni(bot: ModronClient, payload: MockContext, guild):
     await last_message.delete()
 
     # Make an error
-    await handle_generic_command(parser, payload, 'nope')
+    await handle_generic_command(parser, modules, payload, 'nope')
     assert "invalid" in payload.last_message
