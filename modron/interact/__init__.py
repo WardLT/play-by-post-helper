@@ -48,7 +48,7 @@ def attach_commands(bot: ModronClient, modules: Sequence[InteractionModule]) -> 
 
     # Attach it to the bot
     async def _wrapped_func(context, *args):
-        await handle_generic_command(parser, context, *args)
+        await handle_generic_command(parser, modules, context, *args)
     cmd = Command(_wrapped_func, name='modron')
     bot.add_command(cmd)
 
@@ -61,6 +61,7 @@ async def handle_generic_command(parser: NoExitParser, modules: Sequence[Interac
 
     Args:
         parser: Parser to use to understand command
+        modules: List of molecules available to Discord users
         context: Command data sent from Discord
         args: Arguments passed to the command
     """
