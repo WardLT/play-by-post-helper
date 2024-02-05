@@ -12,14 +12,12 @@ Modron can do common tasks for D&D and other TTRPG games, including:
 
 ## Setting Up Modron
 
-Modron is a Python-based web server that you will need to install and then register with Slack.
-The [installation guide](./docs/installation.md) describes how to install 
-and run the Python server, register the service with Slack and 
-then configure it for your campaign.
+Modron is a Python-based web server that you will need to install and then register with Discord.
+The [installation guide](./docs/installation.md) describes how to install it for your Guild.
 
 ## Using Modron
 
-Modron is a collection of Slack slash commands and persistant services. 
+Modron is a collection of Discord slash commands and persistent services. 
 We briefly introduce them here and refer you to the [user guide](./docs/user-guide.md)
 for the full documentation. 
 
@@ -27,16 +25,20 @@ for the full documentation.
 
 ![rolling_dice](docs/img/roll-command.png)
 
-Modron supports all of the D&D 5e rules for dice rolling, such
-as advantage and re-rolling ones.
-Roll dice by calling `/modron roll`, `/mroll`, or just `/roll`.
+Modron supports the D&D 5e rules for dice rolling, such as advantage and re-rolling ones.
 A few examples include:
 
-   - `/modron roll 1d20+5`: Rolling a single D20
-   - `/modron roll 4d6 -1`: Roll 4d6 and re-roll any dice that are 1 on the first roll
+   - `$roll 1d20+5`: Rolling a single D20
+   - `$roll 4d6 -1`: Roll 4d6 and re-roll any dice that are 1 on the first roll
+
+### Tracking HP and Character Sheets
+
+![HP Tracking](./docs/img/manage-hp.png)
+
+Modron can look up values from a character sheet for each player and change its HP over time.
 
 ### Channel Reminders
 
 ![reminder](docs/img/reminder.png) 
 
-Modron will automatically watch the Slack and issue reminders if play stalls.
+Modron will issue reminders if play stalls for more than a configurable amount.

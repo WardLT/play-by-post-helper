@@ -2,20 +2,20 @@
 
 Installing Modron requires:
 
-1. [Installing the Computational Environment](#installing-python-requirements)
-2. [Registering the Bot with Discord and your Server](#creating-the-discord-app)
-3. [Configuring the Server]()
+1. [Installing the Computational Environment](#where-to-install-and-run-modron)
+2. [Registering the Bot with Discord](#creating-the-discord-app)
+3. [Configuring the Server](#launching-modron-for-first-time)
 4. [Adding Character Sheets](#adding-character-sheets)
 
 ## Where to Install and Run Modron
 
 Modron is designed to run as a persistent service and will need to be running
-whenever you are using Slack to play an RPG.
+whenever you are using Discord to play an RPG.
 The resource requirements for Modron are minimal and can easily run on
 a second generation Raspberry Pi (512 MB RAM, 700 MHz ARM processor)
 or an Amazon `t2.nano`.
 
-## Installing Python Requirements
+### Installing Python Requirements
 
 Modron has limited Python requirements, which we describe with Anaconda.
 Install the environment using conda with the command:
@@ -141,6 +141,6 @@ Folder IDs are available from the URL: `https://drive.google.com/drive/u/0/folde
 
 Character sheets for Modron are stored in a YAML format on your server.
 See [`Adrianna`](../characters/kaluth/adrianna.yml) as an example.
-Add your own characters by first creating a subdirectory in `characters` named
-after your campaign and then add characters following the schema described
-in [`characters.py`](../modron/characters.py).
+
+Add your own characters by first creating a subdirectory in `characters` using the name of your 
+campaign and then add characters following the schema described in [`characters.py`](../modron/characters.py).
