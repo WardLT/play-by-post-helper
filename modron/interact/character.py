@@ -1,6 +1,7 @@
 """Get information about a specific character"""
 from argparse import Namespace, ArgumentParser
 import logging
+from pathlib import Path
 from typing import Tuple
 
 from discord.ext.commands import Context
@@ -29,7 +30,7 @@ This command can be used to get current HP, apply damage or healing, or
 make temporary changes to the HP'''
 
 
-def load_sheet(context: Context) -> Tuple[Character, str]:
+def load_sheet(context: Context) -> Tuple[Character, Path]:
     """Load the requested character sheet
 
     Args:
