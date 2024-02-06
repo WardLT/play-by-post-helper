@@ -51,7 +51,7 @@ class ModronState(BaseModel):
     characters: Dict[int, str] = Field(default_factory=dict, description='Character being played by each player')
 
     @validator('reminder_time')
-    def convert_str_to_int(self, value: Optional[Dict]):
+    def convert_str_to_int(cls, value: Optional[Dict]):
         if value is not None:
             return dict((int(k), v) for k, v in value.items())
         return dict()
