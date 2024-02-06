@@ -47,10 +47,11 @@ class ModronState(BaseModel):
     or need to be persistent across restarts"""
 
     reminder_time: Dict[int, datetime] = Field(None, description='Next time to check if a reminder is needed')
-    last_message: Optional[LastMessage] = Field(None, description='Information about the last message')
+    last_message: Dict[int, LastMessage] = Field(default_factory=dict, description='Information about the last message')
+    characters: Dict[int, str] = Field(default_factory=dict, description='Character being played by each player')
 
     @validator('reminder_time')
-    def convert_str_to_int(cls, value: Optional[Dict]):
+    def convert_str_to_int(self, value: Optional[Dict]):
         if value is not None:
             return dict((int(k), v) for k, v in value.items())
         return dict()
