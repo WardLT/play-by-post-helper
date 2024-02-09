@@ -39,7 +39,7 @@ def load_sheet(context: Context) -> Tuple[Character, Path]:
         Character sheet for player's character
     """
     # Get the characters available for this player
-    available_chars = list_available_characters(context.guild, context.author.id)
+    available_chars = list_available_characters(context.guild.id, context.author.id)
     if len(available_chars) == 0:
         logger.warning('No character found for this player')
         raise ValueError('You have not defined a character yet. Talk to Logan.')
@@ -47,7 +47,7 @@ def load_sheet(context: Context) -> Tuple[Character, Path]:
     # Determine which character is being played
     assert len(available_chars) == 1, "Modron does not yet support >1 character per user"
     character = available_chars[0]
-    sheet, sheet_path = load_character(context.guild, character)
+    sheet, sheet_path = load_character(context.guild.id, character)
     logger.info(f'User {context.author} mapped to character {sheet.name}. Loaded their sheet')
     return sheet, sheet_path
 

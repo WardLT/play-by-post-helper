@@ -174,7 +174,7 @@ class DiceRollInteraction(InteractionModule):
             args.purpose = ['luck']
         elif dice_regex.match(args.dice) is None:
             logger.info('Dice did not match regex, attempting to match to character ability')
-            available_chars = list_available_characters(context.guild, context.author.id)
+            available_chars = list_available_characters(context.guild.id, context.author.id)
             if len(available_chars) == 0:
                 logging.info(f'Seems like user {context.author.id} needs to register a character')
                 raise ValueError(
@@ -183,7 +183,7 @@ class DiceRollInteraction(InteractionModule):
                 )
             elif len(available_chars) == 1:
                 # Reformat command to use a specific character roll
-                sheet, _ = load_character(context.guild, available_chars[0])
+                sheet, _ = load_character(context.guild.id, available_chars[0])
                 ability_name = ' '.join([args.dice] + args.purpose)
 
                 # Lookup the ability
