@@ -24,7 +24,7 @@ def test_save_and_load(state_path):
     assert 1234 in state.reminder_time
 
 
-def test_active_character(guild_id, run_in_repo_run, player_id):
+def test_active_character(guild_id, run_in_repo_root, player_id):
     # Make a clean state
     state = ModronState()
     assert state.get_active_character(guild_id, player_id)[1].player == player_id

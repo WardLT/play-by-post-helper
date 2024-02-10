@@ -27,7 +27,7 @@ def repo_root() -> Path:
 
 
 @fixture()
-def run_in_repo_run(repo_root):
+def run_in_repo_root(repo_root):
     """Runs a test in the repo root where it can find config files
 
     Must be a nondestructive test"""

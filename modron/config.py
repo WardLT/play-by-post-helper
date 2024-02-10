@@ -88,7 +88,8 @@ class ModronConfig(BaseModel):
                                                 'labelled with name of team defined in this config file.')
     backup_dir: str = Field('backup', help='Path to where to store the backup. Each team will get its own '
                                            'subdirectory')
-    character_dir: str = Field('characters', help='Path to the character sheets. Each team has its own subdirectory')
+    character_dir: str = Field(str((my_path / '..' / 'characters').absolute()),
+                               help='Path to the character sheets. Each team has its own subdirectory')
     credentials_dir: str = Field('creds', help='Path to the credentials for third-party (i.e., non-Discord) apps')
 
     # Miscellaneous options
