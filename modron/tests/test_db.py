@@ -27,8 +27,8 @@ def test_save_and_load(state_path):
 def test_active_character(guild_id, run_in_repo_run, player_id):
     # Make a clean state
     state = ModronState()
-    assert state.get_active_character(guild_id, player_id).player == player_id
+    assert state.get_active_character(guild_id, player_id)[1].player == player_id
 
     # Make sure the character name was stored
     assert state.characters[guild_id][player_id] == 'adrianna'
-    assert state.get_active_character(guild_id, player_id).player == player_id
+    assert state.get_active_character(guild_id, player_id)[1].player == player_id

@@ -75,14 +75,16 @@ class ModronState(BaseModel):
             data = yaml.load(fp, yaml.SafeLoader)
             return ModronState.parse_obj(data)
 
-    def get_active_character(self, guild_id: int, player_id: int) -> Character:
+    def get_active_character(self, guild_id: int, player_id: int) -> tuple[str, Character, Path]:
         """Get the active character for a player
 
         Args:
             guild_id: Active guild
             player_id: Player id number
         Returns:
-            Character sheet for the active character
+            - Short name of the character
+            - Character sheet for the active character
+            - Path to the character sheet
         """
 
         # Assemble the dictionary, if needed
@@ -92,14 +94,15 @@ class ModronState(BaseModel):
 
         # Load the character's sheet already selected are already defined
         if player_id in self.characters[guild_id]:
-            return load_character(guild_id, self.characters[guild_id][player_id])[0]
+            choice = self.characters[guild_id][player_id]
+        else:
+            # Pick one at random
+            choice = list_available_characters(guild_id, player_id)[0]
+            logger.info(f'Chose a character at random to start with, {choice}')
+            self.characters[guild_id][player_id] = choice
 
-        # Pick one at random
-        choice = list_available_characters(guild_id, player_id)[0]
-        logger.info(f'Chose a character at random to start with, {choice}')
-        self.characters[guild_id][player_id] = choice
-
-        return load_character(guild_id, choice)[0]
+        sheet, path = load_character(guild_id, choice)
+        return choice, sheet, path
 
     def save(self, path: Union[str, Path] = config.state_path):
         """Save the state to disk in YML format

@@ -2,10 +2,11 @@
 from argparse import Namespace, ArgumentParser
 import logging
 from pathlib import Path
-from typing import Tuple
+from typing import Tuple, Optional
 
 from discord.ext.commands import Context
 
+from modron.db import ModronState
 from modron.interact.base import InteractionModule
 from modron.characters import list_available_characters, load_character, Character
 
@@ -30,25 +31,36 @@ This command can be used to get current HP, apply damage or healing, or
 make temporary changes to the HP'''
 
 
-def load_sheet(context: Context) -> Tuple[Character, Path]:
+def load_sheet(context: Context, character: Optional[str] = None) -> Tuple[Character, Path]:
     """Load the requested character sheet
 
     Args:
         context: Context from the command
+        character: Requested character, optional
     Returns:
         Character sheet for player's character
     """
     # Get the characters available for this player
     available_chars = list_available_characters(context.guild.id, context.author.id)
     if len(available_chars) == 0:
-        logger.warning('No character found for this player')
+        logger.warning(f'No character found for {context.author.name}')
         raise ValueError('You have not defined a character yet. Talk to Logan.')
 
     # Determine which character is being played
-    assert len(available_chars) == 1, "Modron does not yet support >1 character per user"
-    character = available_chars[0]
-    sheet, sheet_path = load_character(context.guild.id, character)
-    logger.info(f'User {context.author} mapped to character {sheet.name}. Loaded their sheet')
+    if character is not None:
+        # Use the user's choice by default
+        character = character.lower()
+        try:
+            sheet, sheet_path = load_character(context.guild.id, character)
+            if sheet.player != context.author.id:
+                raise ValueError()
+        except (FileNotFoundError, ValueError):
+            raise ValueError(f'You are not authorized to play: {character}')
+    else:
+        # Load the state variable if not
+        state = ModronState.load()
+        _, sheet, sheet_path = state.get_active_character(context.guild.id, context.author.id)
+        logger.info(f'User {context.author} mapped to character {sheet.name}. Loaded their sheet')
     return sheet, sheet_path
 
 
@@ -59,6 +71,9 @@ class CharacterSheet(InteractionModule):
         super().__init__(name='character', help_string='Work with character sheets', description=_description)
 
     def register_argparse(self, parser: ArgumentParser):
+        parser.add_argument('--character', '-c',
+                            help='Name of the character whose sheet to load', default=None)
+
         # Add a subparser group
         subparsers = parser.add_subparsers(description='Available options for working with characters',
                                            dest='char_subcommand')
@@ -68,9 +83,15 @@ class CharacterSheet(InteractionModule):
                                                description=_ability_description)
         ability_parser.add_argument('name', help='Which ability to look up', nargs='+')
 
+        # Add ability to list the available characters and update the current one
+        subparsers.add_parser('list', help='List characters available for you to play')
+
+        set_parser = subparsers.add_parser('set', help='Change your default character')
+        set_parser.add_argument("choice", help='Name of character you would like to play')
+
     async def interact(self, args: Namespace, context: Context):
         # Get the character sheet
-        sheet, _ = load_sheet(context)
+        sheet, _ = load_sheet(context, character=args.character)
 
         # Switch on the chosen subcommand
         if args.char_subcommand is None:
@@ -87,6 +108,27 @@ class CharacterSheet(InteractionModule):
                 return
             logger.info(f'Retrieved modifier for {ability_name} rolls: {modifier:+d}')
             await context.reply(f'{sheet.name}\'s modifier for {ability_name} is {modifier:+d}')
+        elif args.char_subcommand == "list":
+            state = ModronState.load()
+            active = state.get_active_character(context.guild.id, context.author.id)[0]
+            characters = list_available_characters(context.guild.id, context.author.id)
+            await context.reply("Available characters: " + ", ".join(
+                f"{name}" + (" (_active_)" if name == active else "") for name in characters
+            ), delete_after=60)
+        elif args.char_subcommand == "set":
+            # First make sure it's an allowed character
+            available = list_available_characters(context.guild.id, context.author.id)
+            if args.choice not in available:
+                await context.reply(f'{args.choice} is not within your list of characters: {", ".join(available)}',
+                                    delete_after=120)
+                return
+
+            # Update the state
+            state = ModronState.load()
+            active = state.get_active_character(context.guild.id, context.author.id)
+            state.characters[context.guild.id][context.author.id] = args.choice
+            await context.reply(f'Set your active character to {args.choice} from {active}', delete_after=120)
+            state.save()
         else:
             raise ValueError(f'Subcommand {args.char_subcommand} not yet implemented')
 
@@ -98,6 +140,8 @@ class HPTracker(InteractionModule):
         super(HPTracker, self).__init__(name='hp', description=_hp_description, help_string='Track character HP')
 
     def register_argparse(self, parser: ArgumentParser):
+        parser.add_argument('--character', '-c', help='Name of character whose HP to change', default=None)
+
         # Add the "hp" command
         hp_subparsers = parser.add_subparsers(description='Available options for tracking HP', dest='hp_subcommand')
 
@@ -115,7 +159,7 @@ class HPTracker(InteractionModule):
 
     async def interact(self, args: Namespace, context: Context):
         # Get the character sheet
-        sheet, sheet_path = load_sheet(context)
+        sheet, sheet_path = load_sheet(context, character=args.character)
 
         # Make any changes
         change_msg = ''
