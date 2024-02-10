@@ -160,6 +160,8 @@ async def test_public_channel(parser, roller, payload, guild: Guild):
 
 @mark.asyncio
 async def test_set_character(parser, roller, payload):
+    payload.channel.name = 'bot_testing_gm'  # Forces it to print to screen
+
     # Test with a different character
     args = parser.parse_args(['athletics'])
     await roller.interact(args, payload)
