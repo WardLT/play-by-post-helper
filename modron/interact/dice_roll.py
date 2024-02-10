@@ -188,7 +188,7 @@ class DiceRollInteraction(InteractionModule):
         elif dice_regex.match(args.dice) is None:
             logger.info('Dice did not match regex, attempting to match to character ability')
             if character is None:
-                raise ValueError(f'No characters available for your player')
+                raise ValueError('No characters available for your player')
 
             # Reformat command to use a specific character roll
             sheet, _ = load_character(context.guild.id, character)

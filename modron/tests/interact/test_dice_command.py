@@ -168,4 +168,3 @@ async def test_set_character(parser, roller, payload):
     args = parser.parse_args(['-c', 'adrianna', 'athletics'])
     await roller.interact(args, payload)
     assert "+0" not in payload.last_message  # Adrianna has a good one
-
