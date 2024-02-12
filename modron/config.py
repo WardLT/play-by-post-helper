@@ -181,7 +181,7 @@ class ModronConfig(BaseModel):
             return cls.parse_obj(yaml.load(fp, yaml.SafeLoader))
 
 
-def _get_config() -> ModronConfig:
+def get_config() -> ModronConfig:
     cfg_path = my_path / '..' / 'modron_config.yml'
     if cfg_path.is_file():
         logger.info(f'Loading Modron config from {cfg_path.absolute()}')
@@ -191,4 +191,4 @@ def _get_config() -> ModronConfig:
         return ModronConfig()
 
 
-config = _get_config()
+config = get_config()

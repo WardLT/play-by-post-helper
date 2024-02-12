@@ -7,6 +7,13 @@ from pytest_asyncio import fixture as async_fixture
 from pytest import fixture
 
 from modron.bot import ModronClient
+from modron import config
+
+
+@fixture(autouse=True)
+def clean_config():
+    """Reset the configuration between tests"""
+    config.config = config.get_config()
 
 
 @fixture()
