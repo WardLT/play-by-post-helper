@@ -1,5 +1,6 @@
 """"Configuration details"""
 import logging
+import warnings
 from datetime import timedelta
 from pathlib import Path
 from typing import List, Dict, Tuple, Union, Optional
@@ -153,7 +154,11 @@ class ModronConfig(BaseModel):
         """
 
         team_name = self.team_options[guild_id].name
-        return list(Path(self.character_dir).joinpath(team_name).glob('*.yml'))
+        character_dir = Path(self.character_dir).joinpath(team_name)
+        found = list(character_dir.glob('*.yml'))
+        if len(found) == 0:
+            warnings.warn(f'Did not find any characters in {character_dir}')
+        return found
 
     def get_character_sheet_path(self, guild_id: int, name: str) -> Path:
         """Get the path to a certain character sheet
