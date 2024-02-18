@@ -1,0 +1,22 @@
+name: Dave
+player: 854162623326715915
+alignment: neutral
+background: ????
+race: ????
+classes:
+  warlock: 1
+strength: 14
+dexterity: 17
+constitution: 13
+intelligence: 11
+wisdom: 12
+charisma: 6
+hit_points: 10
+current_hit_points: 10
+armor_class: 13
+speed: 30
+saving_throws: []
+proficiencies:
+  - insight
+  - stealth
+

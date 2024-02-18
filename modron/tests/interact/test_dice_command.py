@@ -156,3 +156,17 @@ async def test_public_channel(parser, roller, payload, guild: Guild):
     args = parser.parse_args(['luck', '--show'])
     await roller.interact(args, payload)
     assert 'luck' in payload.last_message
+
+
+@mark.asyncio
+async def test_set_character(parser, roller, payload):
+    payload.channel.name = 'bot_testing_gm'  # Forces it to print to screen
+
+    # Test with a different character
+    args = parser.parse_args(['athletics'])
+    await roller.interact(args, payload)
+    assert "+0" in payload.last_message  # Modron has a +0 str mod
+
+    args = parser.parse_args(['-c', 'adrianna', 'athletics'])
+    await roller.interact(args, payload)
+    assert "+0" not in payload.last_message  # Adrianna has a good one

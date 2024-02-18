@@ -43,7 +43,7 @@ def _add_delay(team_id: int, time: str) -> str:
         return f'Paused reminders until at least {humanize.naturaldate(new_time)}'
     else:
         logger.info('No update')
-        return f'Reminders are already paused until {humanize.naturaldate(state.reminder_time)}'
+        return f'Reminders are already paused until {humanize.naturaldate(state.reminder_time[team_id])}'
 
 
 def parse_delay(time: str) -> timedelta:
@@ -83,19 +83,22 @@ class ReminderModule(InteractionModule):
         subparser.add_argument('time', help='How long to delay the reminder for', type=str, nargs="+")
 
     async def interact(self, args: Namespace, context: Context):
+        guild_id = context.guild.id
         if args.reminder_command is None or args.reminder_command == 'status':
             # Get the reminder time as a time
             state = ModronState.load()
-            reminder_time = state.reminder_time[context.guild.id]
+            reminder_time = state.reminder_time[guild_id]
             reply = f'Next check for reminder: <t:{int(reminder_time.timestamp())}>'  # Format as a time
 
             # Display the last message
-            if state.last_message is not None:
-                reply += f"\n\nLast message was from {state.last_message.sender} in #{state.last_message.channel}" \
-                         f" <t:{int(state.last_message.last_time.timestamp())}:R>"
+            if guild_id in state.last_message is not None:
+                last_message = state.last_message[guild_id]
+                reply += (f"\n\nLast message was from {last_message.sender}"
+                          f" in #{last_message.channel}"
+                          f" <t:{int(last_message.last_time.timestamp())}:R>")
         elif args.reminder_command == 'break':
             delay_time = " ".join(args.time)
-            reply = _add_delay(context.guild.id, delay_time)
+            reply = _add_delay(guild_id, delay_time)
         else:
             raise ValueError('Support for {args.reminder_command} has not been implemented (blame Logan)')
 

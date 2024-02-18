@@ -2,12 +2,19 @@ import os
 from datetime import timedelta, datetime
 
 from discord import Guild, utils, TextChannel
-from pytest import mark
+from pytest import mark, fixture
 
 from modron.config import config
 from modron.utils import get_local_tz_offset
 from modron.services.backup import BackupService
 from modron.services.reminder import ReminderService
+
+
+@fixture()
+def change_team_name(guild_id):
+    config.team_options[guild_id].name = 'kaluth-test'
+    yield
+    config.team_options[guild_id].name = 'kaluth'
 
 
 @mark.timeout(60)
@@ -35,8 +42,7 @@ async def test_reminder(guild: Guild):
 
 @mark.timeout(60)
 @mark.asyncio
-async def test_backup(guild: Guild, tmpdir):
-    config.team_options[guild.id].name = 'kaluth-test'
+async def test_backup(guild: Guild, change_team_name, tmpdir):
     # Make a temporary directory
     log_dir = os.path.join(tmpdir, 'test')
     os.makedirs(log_dir, exist_ok=True)

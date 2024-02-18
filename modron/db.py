@@ -7,16 +7,21 @@ that performance requirements will not require a formal database.
 Using YAML to store state on disk has the advantage of it being easy to
 assess and alter the server state from the command line.
 """
+from typing import Dict, Optional, Union
 from datetime import datetime
+from pathlib import Path
+import logging
 import json
-from typing import Dict, Optional
 
 import yaml
 from discord import Message
 from pydantic import BaseModel, Field, validator
 
+from modron.characters import Character, load_character, list_available_characters
 from modron.config import config
 from modron.discord import timestamp_to_local_tz
+
+logger = logging.getLogger(__name__)
 
 
 class LastMessage(BaseModel):
@@ -47,7 +52,9 @@ class ModronState(BaseModel):
     or need to be persistent across restarts"""
 
     reminder_time: Dict[int, datetime] = Field(None, description='Next time to check if a reminder is needed')
-    last_message: Optional[LastMessage] = Field(None, description='Information about the last message')
+    last_message: Dict[int, LastMessage] = Field(default_factory=dict, description='Information about the last message')
+    characters: Dict[int, Dict[int, str]] = Field(default_factory=dict,
+                                                  description='Character being played by each player')
 
     @validator('reminder_time')
     def convert_str_to_int(cls, value: Optional[Dict]):
@@ -56,19 +63,48 @@ class ModronState(BaseModel):
         return dict()
 
     @classmethod
-    def load(cls, path: str = config.state_path) -> 'ModronState':
+    def load(cls, path: Union[str, Path] = config.state_path) -> 'ModronState':
         """Load the configuration from disk
 
         Args:
-            path (str): Path to the state as a YML file
+            path: Path to the state as a YML file
         Returns:
-            (ModronState) State from disk
+            State from disk
         """
         with open(path, 'r') as fp:
             data = yaml.load(fp, yaml.SafeLoader)
             return ModronState.parse_obj(data)
 
-    def save(self, path: str = config.state_path):
+    def get_active_character(self, guild_id: int, player_id: int) -> tuple[str, Character, Path]:
+        """Get the active character for a player
+
+        Args:
+            guild_id: Active guild
+            player_id: Player id number
+        Returns:
+            - Short name of the character
+            - Character sheet for the active character
+            - Path to the character sheet
+        """
+
+        # Assemble the dictionary, if needed
+        if guild_id not in self.characters:
+            logger.info(f'Initializing character dictionary for {guild_id}')
+            self.characters[guild_id] = dict()
+
+        # Load the character's sheet already selected are already defined
+        if player_id in self.characters[guild_id]:
+            choice = self.characters[guild_id][player_id]
+        else:
+            # Pick one at random
+            choice = list_available_characters(guild_id, player_id)[0]
+            logger.info(f'Chose a character at random to start with, {choice}')
+            self.characters[guild_id][player_id] = choice
+
+        sheet, path = load_character(guild_id, choice)
+        return choice, sheet, path
+
+    def save(self, path: Union[str, Path] = config.state_path):
         """Save the state to disk in YML format
 
         Args:

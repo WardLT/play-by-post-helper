@@ -1,11 +1,10 @@
 """Saving and using information about characters"""
 import json
-import os
 from enum import Enum
-from typing import Dict, List, Optional, Tuple
+from pathlib import Path
+from typing import Dict, List, Optional, Tuple, Union
 
 import yaml
-from discord import Guild
 from pydantic import BaseModel, Field, validator
 
 from modron.config import config
@@ -125,7 +124,7 @@ class Character(BaseModel):
             data = yaml.load(fp, yaml.SafeLoader)
             return cls.parse_obj(data)
 
-    def to_yaml(self, path: str):
+    def to_yaml(self, path: Union[str, Path]):
         """Save character sheet to a YAML file"""
 
         with open(path, 'w') as fp:
@@ -398,36 +397,33 @@ class Character(BaseModel):
         return output
 
 
-def list_available_characters(guild: Guild, user_id: int) -> List[str]:
+def list_available_characters(guild_id: int, user_id: int) -> List[str]:
     """List the names of character sheets that are available to a user
 
     Args:
-        guild: Associated guild
+        guild_id: Associated guild
         user_id: ID of the user in question
     Returns:
-        ([str]): List of characters available to this player
+        List of characters available to this player
     """
 
-    # Get all characters for this team
-    sheets = config.list_character_sheets(guild.id)
-
-    # Return only the sheets
+    # Return only the sheets for this player
     return [
-        os.path.basename(s)[:-4]  # Remove the ".yml"
-        for s in sheets
+        s.name[:-4]  # Remove the ".yml"
+        for s in config.list_character_sheets(guild_id)
         if Character.from_yaml(s).player == user_id
     ]
 
 
-def load_character(guild: Guild, name: str) -> Tuple[Character, str]:
+def load_character(guild_id: int, name: str) -> Tuple[Character, Path]:
     """Load a character sheet
 
     Arg:
-        guild: Associated guild
-        name (str): Name of the character
+        guild_id: Associated guild
+        name: Name of the character
     Returns:
-        - (Character) Desired character sheet
-        - (str): Absolute path to the character sheet, in case you must save it later
+        - Desired character sheet
+        - Absolute path to the character sheet, in case you must save it later
     """
-    sheet_path = config.get_character_sheet_path(guild.id, name)
-    return Character.from_yaml(sheet_path), os.path.abspath(sheet_path)
+    sheet_path = config.get_character_sheet_path(guild_id, name)
+    return Character.from_yaml(sheet_path), sheet_path.absolute()

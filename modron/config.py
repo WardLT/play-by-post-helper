@@ -1,7 +1,6 @@
 """"Configuration details"""
-import os
 import logging
-from glob import glob
+import warnings
 from datetime import timedelta
 from pathlib import Path
 from typing import List, Dict, Tuple, Union, Optional
@@ -79,9 +78,6 @@ class TeamConfig(BaseModel):
     blind_rolls: List[str] = Field(default=(), help='Purposes of rolls which are always blind')
     public_channel: Optional[str] = Field(default=None, help='If provided, public roll results will be sent here')
 
-    # Character sheets
-    character_sheet_path: str = Field('characters', help='Path to a directory with the character sheet YAML files')
-
 
 class ModronConfig(BaseModel):
     """Configuration items that customize Modron's behavior"""
@@ -93,7 +89,8 @@ class ModronConfig(BaseModel):
                                                 'labelled with name of team defined in this config file.')
     backup_dir: str = Field('backup', help='Path to where to store the backup. Each team will get its own '
                                            'subdirectory')
-    character_dir: str = Field('characters', help='Path to the character sheets. Each team has its own subdirectory')
+    character_dir: str = Field(str((my_path / '..' / 'characters').absolute()),
+                               help='Path to the character sheets. Each team has its own subdirectory')
     credentials_dir: str = Field('creds', help='Path to the credentials for third-party (i.e., non-Discord) apps')
 
     # Miscellaneous options
@@ -127,7 +124,7 @@ class ModronConfig(BaseModel):
                                 ' with the largest minimum roll that is less than or equal to the dice roll.'
     )
 
-    def get_backup_dir(self, guild_id: int) -> str:
+    def get_backup_dir(self, guild_id: int) -> Path:
         """Get the path to the directory that holds backup files for a certain guild
 
         Args:
@@ -135,9 +132,9 @@ class ModronConfig(BaseModel):
         Returns:
             Path to the backup directory
         """
-        return os.path.join(self.backup_dir, self.team_options[guild_id].name)
+        return Path(self.backup_dir) / self.team_options[guild_id].name
 
-    def get_dice_log_path(self, guild_id: int) -> str:
+    def get_dice_log_path(self, guild_id: int) -> Path:
         """Get the path to the dice log for a certain guild
 
         Args:
@@ -145,22 +142,25 @@ class ModronConfig(BaseModel):
         Returns:
             Path to the log
         """
-        return os.path.join(self.dice_log_dir, f'{self.team_options[guild_id].name}.csv')
+        return Path(self.dice_log_dir) / f'{self.team_options[guild_id].name}.csv'
 
-    def list_character_sheets(self, guild_id: int) -> List[str]:
+    def list_character_sheets(self, guild_id: int) -> List[Path]:
         """List all paths to the character sheets for a certain workspace
 
         Args:
             guild_id: ID number of the guild
         Returns:
-            ([str]): List paths to all character sheets
+            List paths to all character sheets
         """
 
         team_name = self.team_options[guild_id].name
-        paths = glob(os.path.join(self.character_dir, team_name, '*.yml'))
-        return paths
+        character_dir = Path(self.character_dir).joinpath(team_name)
+        found = list(character_dir.glob('*.yml'))
+        if len(found) == 0:
+            warnings.warn(f'Did not find any characters in {character_dir.absolute()}')
+        return found
 
-    def get_character_sheet_path(self, guild_id: int, name: str) -> str:
+    def get_character_sheet_path(self, guild_id: int, name: str) -> Path:
         """Get the path to a certain character sheet
 
         Args:
@@ -171,13 +171,13 @@ class ModronConfig(BaseModel):
             (str): Path to the character sheet
         """
         team_name = self.team_options[guild_id].name
-        return os.path.join(self.character_dir, team_name, f'{name}.yml')
+        return Path(self.character_dir) / team_name / f'{name}.yml'
 
-    def get_gdrive_credentials_path(self) -> str:
+    def get_gdrive_credentials_path(self) -> Path:
         """Get the path to the Google Drive credentials,
         which are stored as a pickle file"""
 
-        return os.path.join(self.credentials_dir, 'gdrive', 'token.pickle')
+        return Path(self.credentials_dir) / 'gdrive' / 'token.pickle'
 
     @classmethod
     def parse_yaml(cls, path: Union[str, Path]):
@@ -186,7 +186,7 @@ class ModronConfig(BaseModel):
             return cls.parse_obj(yaml.load(fp, yaml.SafeLoader))
 
 
-def _get_config() -> ModronConfig:
+def get_config() -> ModronConfig:
     cfg_path = my_path / '..' / 'modron_config.yml'
     if cfg_path.is_file():
         logger.info(f'Loading Modron config from {cfg_path.absolute()}')
@@ -196,4 +196,4 @@ def _get_config() -> ModronConfig:
         return ModronConfig()
 
 
-config = _get_config()
+config = get_config()

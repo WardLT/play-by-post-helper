@@ -6,16 +6,17 @@ import os
 import re
 from argparse import ArgumentParser, Namespace
 from datetime import datetime
-from typing import List, NoReturn
+from typing import List, Optional
 
 from discord import TextChannel, Guild
 from discord.ext.commands import Context
 from discord import utils
 
 from modron.config import config
+from modron.db import ModronState
 from modron.dice import DiceRoll, dice_regex
 from modron.interact.base import InteractionModule
-from modron.characters import list_available_characters, load_character
+from modron.characters import load_character, list_available_characters
 
 logger = logging.getLogger(__name__)
 
@@ -89,6 +90,7 @@ class DiceRollInteraction(InteractionModule):
         parser.add_argument("purpose", help='Purpose of the roll. Used for making the reply prettier '
                                             'and tracking player statistics.',
                             nargs='*', default=None, type=str)
+        parser.add_argument("--character", "-c", help='Name of the character sheet to use')
 
         # Add modifiers to how the roll is computed
         adv_group = parser.add_mutually_exclusive_group(required=False)
@@ -107,16 +109,17 @@ class DiceRollInteraction(InteractionModule):
         blind_group.add_argument('--show', '-s', help='Report the roll to this channel, regardless of the defaults',
                                  action='store_const', const=True)
 
-    def log_dice_roll(self, context: Context, roll: DiceRoll, purpose: str) -> NoReturn:
+    def log_dice_roll(self, context: Context, character: Optional[str], roll: DiceRoll, purpose: str):
         """Log a dice roll to disk
 
         Only logs dice rolls if ``config.DICE_LOG`` is not ``None``
         and the requests comes from a channel that is not on the skip list.
 
         Args:
-            context (SlashCommandPayload): Command send to Modron
-            roll (DiceRoll): Value of the dice roll
-            purpose (str): Purpose of the roll
+            context: Command send to Modron
+            character:
+            roll: Value of the dice roll
+            purpose: Purpose of the roll
         """
 
         # Get the channels where tracking is allowed
@@ -144,7 +147,7 @@ class DiceRollInteraction(InteractionModule):
             'time': datetime.now().isoformat(),
             'user': context.author.name,
             'user_id': context.author.id,
-            'character': context.author.nick,
+            'character': character,
             'channel': channel_name,
             'reason': purpose,
             'dice': roll.dice_description,
@@ -168,31 +171,34 @@ class DiceRollInteraction(InteractionModule):
             writer.writerow(dice_info)
 
     async def interact(self, args: Namespace, context: Context):
+        # Get the associated character
+        if args.character is None:
+            if len(list_available_characters(context.guild.id, context.author.id)) == 0:
+                character = None
+            else:
+                state = ModronState.load()
+                character = state.get_active_character(context.guild.id, context.author.id)[0]
+        else:
+            character = args.character.lower()
+
         # Check if the user is requesting a roll by name
         if args.dice.lower() == 'luck':
             args.dice = '1d20'
             args.purpose = ['luck']
         elif dice_regex.match(args.dice) is None:
             logger.info('Dice did not match regex, attempting to match to character ability')
-            available_chars = list_available_characters(context.guild, context.author.id)
-            if len(available_chars) == 0:
-                logging.info(f'Seems like user {context.author.id} needs to register a character')
-                raise ValueError(
-                    f'Did you mean to request a character roll? {args.dice} does not seem like a dice roll, '
-                    'but you have not registered a character yet. Talk to Logan about registering your sheet.',
-                )
-            elif len(available_chars) == 1:
-                # Reformat command to use a specific character roll
-                sheet, _ = load_character(context.guild, available_chars[0])
-                ability_name = ' '.join([args.dice] + args.purpose)
+            if character is None:
+                raise ValueError('No characters available for your player')
 
-                # Lookup the ability
-                modifier = sheet.lookup_modifier(ability_name)
-                args.dice = f'1d20{modifier:+d}'
-                args.purpose = [ability_name]
-                logger.info(f'Reformatted command to be for {ability_name} for {sheet.name}')
-            else:
-                raise ValueError('Multi-character support is not yet implemented')
+            # Reformat command to use a specific character roll
+            sheet, _ = load_character(context.guild.id, character)
+            ability_name = ' '.join([args.dice] + args.purpose)
+
+            # Lookup the ability
+            modifier = sheet.lookup_modifier(ability_name)
+            args.dice = f'1d20{modifier:+d}'
+            args.purpose = [ability_name]
+            logger.info(f'Reformatted command to be for {ability_name} for {sheet.name}')
 
         # Make the dice roll
         roll = DiceRoll.make_roll(args.dice, advantage=args.advantage, disadvantage=args.disadvantage,
@@ -238,4 +244,4 @@ class DiceRollInteraction(InteractionModule):
             await channel.send(reply)
 
         # Log the dice roll
-        self.log_dice_roll(context, roll, purpose)
+        self.log_dice_roll(context, character, roll, purpose)

@@ -47,6 +47,44 @@ async def test_lookup_hp(payload):
 
 
 @mark.asyncio
+async def test_overrule_character_choice(payload):
+    hp = HPTracker()
+    args = hp.parser.parse_args(['-c', 'modron'])
+    await hp.interact(args, payload)
+    assert 'Modron has ' in payload.last_message
+
+    with raises(ValueError) as ex:
+        args = hp.parser.parse_args(['-c', 'imp'])
+        await hp.interact(args, payload)
+    assert 'imp' in str(ex)
+
+    with raises(ValueError) as ex:
+        args = hp.parser.parse_args(['-c', 'adrianna'])
+        await hp.interact(args, payload)
+    assert 'adrianna' in str(ex)
+
+
+@mark.asyncio
+async def test_change_active(payload):
+    character = CharacterSheet()
+
+    # List the possible choices
+    args = character.parser.parse_args(['list'])
+    await character.interact(args, payload)
+    assert ': modron (_active_)' in payload.last_message
+
+    # Set a new one
+    args = character.parser.parse_args(["set", "modron"])
+    await character.interact(args, payload)
+    assert 'Set your active character to modron' in payload.last_message
+
+    # Try to set one you're not allowed to
+    args = character.parser.parse_args(["set", "imp"])
+    await character.interact(args, payload)
+    assert 'imp is not within'
+
+
+@mark.asyncio
 async def test_harm_and_heal(payload, test_sheet_path):
     hp = HPTracker()
 

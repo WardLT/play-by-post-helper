@@ -105,7 +105,7 @@ class ReminderService(BaseService):
         reminder_time = last_time + self.allowed_stall_time
 
         # Update the lass message in the state
-        state.last_message = LastMessage.from_discord(self.last_message)
+        state.last_message[self._guild.id] = LastMessage.from_discord(self.last_message)
 
         # If it is after any previous reminder time, replace that reminder time
         team_reminder_time = state.reminder_time.get(self._guild.id, None)
