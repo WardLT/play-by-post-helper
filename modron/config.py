@@ -157,7 +157,7 @@ class ModronConfig(BaseModel):
         character_dir = Path(self.character_dir).joinpath(team_name)
         found = list(character_dir.glob('*.yml'))
         if len(found) == 0:
-            warnings.warn(f'Did not find any characters in {character_dir}')
+            warnings.warn(f'Did not find any characters in {character_dir.absolute()}')
         return found
 
     def get_character_sheet_path(self, guild_id: int, name: str) -> Path:
