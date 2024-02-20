@@ -1,36 +1,28 @@
 from datetime import datetime, timedelta
+from functools import cache
+from pathlib import Path
+from hashlib import sha1
+import logging
 
 from dateutil.tz import tzlocal
 
-# Colors based on the Material design scheme
-
-colors = {
-    'red': '#B71C1C',
-    'green': '#2E7D32',
-    'gray': '#263238'
-}
-
-
-def escape_slack_characters(raw: str) -> str:
-    """Escape the special characters that are used by Slack
-    in their messaging API.
-
-    See `Slack API docs <https://api.slack.com/reference/surfaces/formatting#escaping>`_.
-
-    Args:
-        raw (str): String to be escaped
-    Returns:
-        (str) String with problematic escape strings
-    """
-
-    # Escape &
-    out = raw.replace("&", "&amp;")
-
-    # Escape < and >
-    return out.replace("<", "&lt;").replace(">", "&gt;")
+logger = logging.getLogger(__name__)
 
 
 def get_local_tz_offset() -> timedelta:
     """Get the local offset to the current time"""
 
     return tzlocal().utcoffset(datetime.now())
+
+
+@cache
+def get_version() -> str:
+    """Compute a version of the library via a hash"""
+
+    lib_path = Path(__file__).parent
+    py_files = sorted(lib_path.rglob("*.py"))
+    logger.info(f'Computing hash over {len(py_files)} Python files')
+    hasher = sha1()
+    for file in py_files:
+        hasher.update(file.read_bytes())
+    return hasher.hexdigest()

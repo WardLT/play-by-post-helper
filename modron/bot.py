@@ -7,9 +7,10 @@ from discord.ext.commands import Bot
 from discord import utils
 
 from modron.config import config
+from modron.db import ModronState
 from modron.services.backup import BackupService
 from modron.services.reminder import ReminderService
-
+from modron.utils import get_version
 
 logger = logging.getLogger(__name__)
 
@@ -26,6 +27,16 @@ class ModronClient(Bot):
         # If testing, do nothing
         if self.testing:
             return
+
+        # Determine if this is a new version
+        my_version = get_version()
+        state = ModronState().load()
+        was_updated = False
+        if state.library_version != my_version:
+            logger.info(f'Library has been updated since last boot. New version: {my_version}')
+            was_updated = True
+            state.library_version = my_version
+            state.save()
 
         # Launch the services for each time
         for team_id, team_config in config.team_options.items():
@@ -53,7 +64,10 @@ class ModronClient(Bot):
 
             # Make a hello message, if we're not in testing mode
             ooc_channel = utils.get(guild.channels, name=team_config.ooc_channel)
-            await ooc_channel.send('I have been summoned. Your incense was appreciated. 🤖')
+            if was_updated:
+                await ooc_channel.send('I have been leveled up. My summoner knows my new powers')
+            else:
+                await ooc_channel.send('I have been re-summoned. Your incense was appreciated. 🤖')
 
         logger.info('Successfully started Modron.')
 
