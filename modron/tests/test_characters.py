@@ -4,7 +4,6 @@ from pytest import fixture, raises
 
 from modron.characters import Character
 
-
 _joe_path = os.path.join(os.path.dirname(__file__), 'joe.yaml')
 
 
@@ -141,3 +140,19 @@ def test_temporary_hit_points(joe):
     # Reset
     joe.reset_hit_point_maximum()
     assert joe.current_hit_point_maximum == joe.hit_points
+
+
+def test_jack_of_all_trades(joe):
+    # Make Joe a bard
+    joe.classes['bard'] = 2
+
+    # Test initiative
+    assert joe.initiative == joe.dexterity_mod + joe.proficiency_bonus // 2
+    assert joe.lookup_modifier('initiative') == joe.dexterity_mod + joe.proficiency_bonus // 2
+
+    # No additional bonus to proficient skills
+    assert joe.skill_modifier('medicine') == joe.wisdom_mod + joe.proficiency_bonus
+    assert joe.skill_modifier('athletics') == joe.strength_mod + joe.proficiency_bonus * 2
+
+    # But a bonus to others
+    assert joe.skill_modifier('insight') == joe.wisdom_mod + joe.proficiency_bonus // 2

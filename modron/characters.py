@@ -176,7 +176,10 @@ class Character(BaseModel):
 
     @property
     def initiative(self) -> int:
-        return self.dexterity_mod
+        output = self.dexterity_mod
+        if self.classes.get('bard', 0) >= 2:
+            output += self.proficiency_bonus // 2
+        return output
 
     @property
     def total_hit_points(self) -> int:
@@ -336,6 +339,8 @@ class Character(BaseModel):
             return mod + self.proficiency_bonus * 2
         elif name_lower in self.proficiencies:
             return mod + self.proficiency_bonus
+        elif self.classes.get('bard', 0) >= 2:
+            return mod + self.proficiency_bonus // 2
         else:
             return mod
 
@@ -351,6 +356,10 @@ class Character(BaseModel):
         # Make it all lowercase
         check = check.lower()
         words = check.split(" ")
+
+        # Start with initiative
+        if words == ['initiative'] or words == ['init']:
+            return self.initiative
 
         # Save
         if 'save' in words:
