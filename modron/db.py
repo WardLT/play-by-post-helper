@@ -51,6 +51,7 @@ class ModronState(BaseModel):
     """Holder for elements of Modron's configuration that can change during runtime
     or need to be persistent across restarts"""
 
+    library_version: str = Field(None, description='Version of Modron last booted')
     reminder_time: Dict[int, datetime] = Field(None, description='Next time to check if a reminder is needed')
     last_message: Dict[int, LastMessage] = Field(default_factory=dict, description='Information about the last message')
     characters: Dict[int, Dict[int, str]] = Field(default_factory=dict,
