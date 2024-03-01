@@ -156,3 +156,18 @@ def test_jack_of_all_trades(joe):
 
     # But a bonus to others
     assert joe.skill_modifier('insight') == joe.wisdom_mod + joe.proficiency_bonus // 2
+
+
+def test_complex_roll(joe):
+    """Test a roll which combines dice types and sheet modifiers"""
+
+    simplified = joe.substitute_modifiers('1d20+2')
+    assert simplified == '1d20+2'
+
+    # Try an attribute
+    simplified = joe.substitute_modifiers('1d20+STR')
+    assert simplified == f'1d20+{joe.strength_mod}'
+
+    # Try a skill
+    simplified = joe.substitute_modifiers('1d21+3d6 + animal handling-3')
+    assert simplified == f"1d21+3d6{joe.skill_modifier('animal handling') - 3:+d}"

@@ -1,5 +1,6 @@
 """Saving and using information about characters"""
 import json
+import re
 from enum import Enum
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Union
@@ -113,6 +114,12 @@ class Character(BaseModel):
     proficiencies: List[str] = Field(..., description='Names of skills in which the characters is proficient.')
     expertise: List[str] = Field([], description='Skills in which the character is an expert')
 
+    # Conveniences
+    roll_aliases: Dict[str, str] = Field(default_factory=dict,
+                                         description='User-defined map of skill to rolls. Rolls can '
+                                                     'be a combination of dice, additive multipliers and traits. '
+                                                     'For example, "4d6+str+2" or "1d20+proficiency"')
+
     @classmethod
     def from_yaml(cls, path: str) -> 'Character':
         """Parse the character sheet from YAML
@@ -136,9 +143,9 @@ class Character(BaseModel):
     def _val_lowercase(cls, v: str) -> str:
         return v.lower()
 
-    @validator('custom_skills', 'classes')
+    @validator('custom_skills', 'classes', 'roll_aliases')
     def _val_dicts(cls, v: dict):
-        """Makes keys for dictionaries """
+        """Makes keys for dictionaries"""
         return dict((k.lower(), v) for k, v in v.items())
 
     # Derived quantities, such as modifiers
@@ -321,7 +328,7 @@ class Character(BaseModel):
         for a certain skill (as in how Monks can use Wisdom for many checks).
 
         Args:
-            name (str): Name of the skill. Not case sensitive
+            name (str): Name of the skill. Not case-sensitive
         """
         name_lower = name.lower()
 
@@ -356,6 +363,14 @@ class Character(BaseModel):
         # Make it all lowercase
         check = check.lower()
         words = check.split(" ")
+
+        # Get the proficiency bonus
+        if len(words) == 1:
+            word = words[0]
+            if word in ['initiative', 'init']:
+                return self.initiative
+            elif word in ['proficiency', 'prof']:
+                return self.proficiency_bonus
 
         # Start with initiative
         if words == ['initiative'] or words == ['init']:
@@ -404,6 +419,46 @@ class Character(BaseModel):
             else:
                 output[skill] = "untrained"
         return output
+
+    def substitute_modifiers(self, roll_description: str) -> str:
+        """Substitute then combine the modifiers in a roll description
+
+        Roll descriptions can combine dice (e.g., "3d10")
+        skill modifiers (e.g., "proficiency," "strength"),
+        and integers.
+
+        Algorithm:
+            1. Split roll description based on addition or subtraction markers
+            2. Resolve skill modifiers
+            3. Combine into a single dice roll description
+        Returns:
+            String describing a dice roll
+        """
+
+        # Split based on +-
+        split_description = re.split('([+-])', roll_description)
+
+        # Prepend a + sign if none provided
+        if split_description[0] not in ['-', '+']:
+            split_description.insert(0, '+')
+
+        # Separate dice and
+        dice = []
+        mods = []
+        for sign, part in zip(split_description[::2], split_description[1::2]):
+            # Convert sign to +/-1, part to lower case
+            sign = 1 if sign == "+" else -1
+            part = part.strip()
+
+            if part.isdigit():  # It is an integer
+                mods.append(sign * int(part))
+            elif 'd' in part and any(x.isdigit() for x in part):  # It contains at least one digit and d
+                dice.append(part)
+            else:  # Assume it is a modifier
+                mods.append(sign * self.lookup_modifier(part))
+
+        # Combine everything together into a single dice roll
+        return f'{"+".join(dice)}{sum(mods):+d}'
 
 
 def list_available_characters(guild_id: int, user_id: int) -> List[str]:
