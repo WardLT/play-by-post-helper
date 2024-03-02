@@ -194,9 +194,12 @@ class DiceRollInteraction(InteractionModule):
             sheet, _ = load_character(context.guild.id, character)
             ability_name = ' '.join([args.dice] + args.purpose)
 
-            # Lookup the ability
-            modifier = sheet.lookup_modifier(ability_name)
-            args.dice = f'1d20{modifier:+d}'
+            # Get the roll
+            if ability_name in sheet.roll_aliases:
+                args.dice = sheet.substitute_modifiers(sheet.roll_aliases[ability_name])
+            else:
+                modifier = sheet.lookup_modifier(ability_name)
+                args.dice = f'1d20{modifier:+d}'
             args.purpose = [ability_name]
             logger.info(f'Reformatted command to be for {ability_name} for {sheet.name}')
 

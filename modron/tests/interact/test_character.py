@@ -1,14 +1,7 @@
-from discord import Guild
 from pytest import raises, fixture, mark
 
 from modron.characters import Character
-from modron.config import config
 from modron.interact.character import CharacterSheet, HPTracker
-
-
-@fixture()
-def test_sheet_path(guild: Guild):
-    return config.get_character_sheet_path(guild.id, 'modron')
 
 
 @fixture(autouse=True)

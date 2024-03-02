@@ -18,3 +18,5 @@ speed: 30
 saving_throws: []
 proficiencies:
   - history
+roll_aliases:
+  cheat: 20

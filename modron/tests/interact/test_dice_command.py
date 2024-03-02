@@ -93,6 +93,11 @@ async def test_ability_roll(parser, roller, payload):
     await roller.interact(args, payload)
     assert 'at advantage' in payload.last_message
 
+    # Test an alias
+    args = parser.parse_args(['cheat'])
+    await roller.interact(args, payload)
+    assert '20' in payload.last_message
+
 
 @mark.asyncio()
 async def test_blind_roll(parser, roller, payload, guild: Guild):
