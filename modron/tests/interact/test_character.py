@@ -142,3 +142,26 @@ async def test_harm_and_heal(payload, test_sheet_path):
         args = hp.parser.parse_args([sub, 'asdf'])
         with raises(ValueError):
             await hp.interact(args, payload)
+
+
+@mark.asyncio
+async def test_aliases(payload, test_sheet_path):
+    character = CharacterSheet()
+    parser = character.parser
+
+    args = parser.parse_args(['roll', 'list'])
+    await character.interact(args, payload)
+    assert payload.last_message.startswith('Available rolls')
+
+    args = parser.parse_args(['roll', 'set', 'damage', '1d6+str'])
+    await character.interact(args, payload)
+    assert payload.last_message.startswith('Set damage to mean "1d6+str')
+    assert 'damage' in Character.from_yaml(test_sheet_path).roll_aliases
+
+    args = parser.parse_args(['roll', 'remove', 'damage'])
+    await character.interact(args, payload)
+    assert payload.last_message.startswith('Removed damage')
+
+    args = parser.parse_args(['roll', 'list'])
+    await character.interact(args, payload)
+    assert 'damage' not in payload.last_message
