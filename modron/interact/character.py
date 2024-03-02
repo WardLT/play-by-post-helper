@@ -83,6 +83,22 @@ class CharacterSheet(InteractionModule):
                                                description=_ability_description)
         ability_parser.add_argument('name', help='Which ability to look up', nargs='+')
 
+        # Add commands for controlling roll aliases
+        alias_parser = subparsers.add_parser('roll',
+                                             help='Control aliases for common types of rolls. '
+                                                  'Aliases can be a combination of ability mods, dice, '
+                                                  'proficiency, and skill modifiers. Ex: 4d6+STR', )
+        alias_subparsers = alias_parser.add_subparsers(description='Commands for adjusting aliases',
+                                                       dest='alias_subcommand')
+        alias_subparsers.add_parser('list', help='Print out the available roll aliases')
+
+        alias_rm = alias_subparsers.add_parser('remove', help='Remove an alias')
+        alias_rm.add_argument('name', help='Name of the alias to remove')
+
+        alias_add = alias_subparsers.add_parser('set', help='Add or edit an alias')
+        alias_add.add_argument('name', help='Name of the alias')
+        alias_add.add_argument('roll', help='Description of the roll.')
+
         # Add ability to list the available characters and update the current one
         subparsers.add_parser('list', help='List characters available for you to play')
 
@@ -91,7 +107,7 @@ class CharacterSheet(InteractionModule):
 
     async def interact(self, args: Namespace, context: Context):
         # Get the character sheet
-        sheet, _ = load_sheet(context, character=args.character)
+        sheet, path = load_sheet(context, character=args.character)
 
         # Switch on the chosen subcommand
         if args.char_subcommand is None:
@@ -129,8 +145,37 @@ class CharacterSheet(InteractionModule):
             state.characters[context.guild.id][context.author.id] = args.choice
             await context.reply(f'Set your active character to {args.choice} from {active}', delete_after=120)
             state.save()
+        elif args.char_subcommand == "roll":
+            await self.manage_aliases(context, args, sheet, path)
         else:
             raise ValueError(f'Subcommand {args.char_subcommand} not yet implemented')
+
+    async def manage_aliases(self, context: Context, args: Namespace, sheet: Character, path: Path):
+        """Remove, set or list aliases for rolls
+
+        Args:
+            context: Context for the command
+            args: Commands passed to Modron
+            sheet: Relevant character sheet
+            path: Path to save updated sheet
+        """
+
+        subcmd = args.alias_subcommand
+        if subcmd == 'list':
+            msg = f'Available rolls for {sheet.name}:\n'
+            msg += "\n".join(f'\t{name}: {roll}' for name, roll in sheet.roll_aliases.items())
+            await context.reply(msg, delete_after=120)
+        elif subcmd == "set":
+            sheet.roll_aliases[args.name] = args.roll
+            sheet.to_yaml(path)
+            await context.reply(f'Set {args.name} to mean "{args.roll}"', delete_after=120)
+        elif subcmd == 'remove':
+            if sheet.roll_aliases[args.name]:
+                sheet.roll_aliases.pop(args.name)
+            sheet.to_yaml(path)
+            await context.reply(f'Removed {args.name} from aliases', delete_after=120)
+        else:
+            raise ValueError(f'Alias subcommand "{subcmd} not yet implemented')
 
 
 class HPTracker(InteractionModule):

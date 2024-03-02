@@ -1,10 +1,17 @@
 from discord import TextChannel, Guild, Message, Member
 from discord import utils
 from pytest_asyncio import fixture as async_fixture
+from pytest import fixture
 
 from modron.interact.dice_roll import DiceRollInteraction
+from modron import config
 
 _test_modules = [DiceRollInteraction]
+
+
+@fixture()
+def test_sheet_path(guild: Guild):
+    return config.config.get_character_sheet_path(guild.id, 'modron')
 
 
 class MockContext:
