@@ -4,13 +4,13 @@ background: Outlander
 charisma: 10
 classes:
   barbarian: 8
-  fighter: 2
+  fighter: 3
 constitution: 16
-current_hit_points: 40
+current_hit_points: 110
 custom_skills: {}
 dexterity: 14
 expertise: []
-hit_points: 102
+hit_points: 120
 hit_points_adjustment: 0
 intelligence: 11
 name: Adrianna Bloodmoon
@@ -21,6 +21,7 @@ proficiencies:
 - intimidation
 - perception
 - survival
+- persuasion
 race: Half-Orc
 saving_throws:
 - strength

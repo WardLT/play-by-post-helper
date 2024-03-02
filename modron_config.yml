@@ -1,4 +1,15 @@
 team_options:
+  1156741684781133825:
+    name: pendragon
+    ooc_channel: ooc
+    reminders: True
+    watch_channels:
+      - ic-all
+      - logan-gm
+      - meagan-gm
+    public_channel: public-dice-rolls
+    backup_channels:
+      - 1156743775603925093
   853806073906593832:
     name: kaluth
     watch_channels:
@@ -7,8 +18,10 @@ team_options:
       - adrianna_mezu
       - mezu_hubryr
       - hubryr_gm
+      - hubryr_adrianna
     dice_tracked_categories: [853806638346534962]
     reminders: True
+    public_channel: public_dice_rolls
     private_channels:
       862094786956886035: bot_testing
       359173183779373058: gm_notes

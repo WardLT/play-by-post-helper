@@ -3,19 +3,19 @@ armor_class: 16
 background: Guild Artisan
 charisma: 10
 classes:
-  artificer: 10
+  artificer: 11
 constitution: 10
-current_hit_points: 56
+current_hit_points: 68
 custom_skills:
   tinkering: intelligence
 dexterity: 16
 expertise:
 - tinkering
-hit_points: 56
+hit_points: 65
 hit_points_adjustment: 0
-intelligence: 20
+intelligence: 18
 name: Hubryr Goldstone
-player: 2 # Until he gets an ID
+player: 337413337199411200
 proficiencies:
 - insight
 - perception
@@ -30,5 +30,5 @@ saving_throws:
 - constitution
 speed: 30
 strength: 8
-temporary_hit_points: 10
-wisdom: 14
+temporary_hit_points: 0
+wisdom: 16

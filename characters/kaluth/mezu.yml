@@ -1,26 +1,29 @@
-name: Mezu Kuranes
-player: 854162623326715915
 alignment: chaotic good
+armor_class: 13
 background: Sage
-race: Human
+charisma: 20
 classes:
   warlock: 10
-strength: 11
-dexterity: 16
 constitution: 12
+current_hit_points: 74
+custom_skills: {}
+dexterity: 16
+expertise: []
+hit_points: 74
+hit_points_adjustment: 0
 intelligence: 12
-wisdom: 12
-charisma: 18
-hit_points: 63
-current_hit_points: 63
-armor_class: 13
-speed: 30
-saving_throws:
-  - wisdom
-  - charisma
+name: Mezu Kuranes
+player: 854162623326715915
 proficiencies:
-  - deception 
-  - investigation
-  - perception
-  - stealth
-
+- deception
+- investigation
+- perception
+- stealth
+race: Human
+saving_throws:
+- wisdom
+- charisma
+speed: 30
+strength: 11
+temporary_hit_points: 0
+wisdom: 12
