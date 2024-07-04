@@ -182,26 +182,38 @@ class DiceRollInteraction(InteractionModule):
             character = args.character.lower()
 
         # Check if the user is requesting a roll by name
-        if args.dice.lower() == 'luck':
-            args.dice = '1d20'
-            args.purpose = ['luck']
-        elif dice_regex.match(args.dice) is None:
+        if dice_regex.match(args.dice) is None:
             logger.info('Dice did not match regex, attempting to match to character ability')
-            if character is None:
-                raise ValueError('No characters available for your player')
+            ability_name = ' '.join([args.dice] + args.purpose).lower()
 
-            # Reformat command to use a specific character roll
-            sheet, _ = load_character(context.guild.id, character)
-            ability_name = ' '.join([args.dice] + args.purpose)
+            # Remove "at advantage" if is in the roll
+            if ability_name.endswith('at advantage') or ability_name.endswith('at disadvantage'):
+                args.disadvantage = 'disadvantage' in ability_name
+                args.advantage = not args.disadvantage
+                ability_name = ' '.join(ability_name.rsplit(" ", maxsplit=2)[:1])  # Remove last two words
+                logger.info(f'User asked for a {ability_name} roll to be '
+                            f'at {"advantage" if args.advantage else "disadvantage"}')
 
-            # Get the roll
-            if ability_name in sheet.roll_aliases:
-                args.dice = sheet.substitute_modifiers(sheet.roll_aliases[ability_name])
-            else:
-                modifier = sheet.lookup_modifier(ability_name)
-                args.dice = f'1d20{modifier:+d}'
+            # Mark the ability name as the ability for the roll
             args.purpose = [ability_name]
-            logger.info(f'Reformatted command to be for {ability_name} for {sheet.name}')
+
+            if ability_name == "luck":
+                args.dice = "1d20"
+                args.purpose = ['luck']
+            else:
+                if character is None:
+                    raise ValueError('No characters available for your player')
+
+                # Reformat command to use a specific character roll
+                sheet, _ = load_character(context.guild.id, character)
+
+                # Get the roll
+                if ability_name in sheet.roll_aliases:
+                    args.dice = sheet.substitute_modifiers(sheet.roll_aliases[ability_name])
+                else:
+                    modifier = sheet.lookup_modifier(ability_name)
+                    args.dice = f'1d20{modifier:+d}'
+                logger.info(f'Reformatted command to be for {ability_name} for {sheet.name}')
 
         # Make the dice roll
         roll = DiceRoll.make_roll(args.dice, advantage=args.advantage, disadvantage=args.disadvantage,
