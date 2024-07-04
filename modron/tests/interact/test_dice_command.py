@@ -105,6 +105,21 @@ async def test_ability_roll(parser, roller, payload):
     assert '20' in payload.last_message
 
 
+@mark.asyncio
+async def test_at_advantage(parser, roller, payload):
+    # Test making luck at advantage
+    args = parser.parse_args(['--show', 'luck', 'at', 'advantage'])
+    await roller.interact(args, payload)
+    assert 'rolled for luck' in payload.last_message
+    assert 'at advantage' in payload.last_message
+
+    # Test animal handling at disadvantage
+    args = parser.parse_args(['--show', 'animal', 'handling', 'at', 'disadvantage'])
+    await roller.interact(args, payload)
+    assert 'rolled for animal handling' in payload.last_message
+    assert 'at disadvantage' in payload.last_message
+
+
 @mark.asyncio()
 async def test_blind_roll(parser, roller, payload, guild: Guild):
     # Make perception rolls blind
