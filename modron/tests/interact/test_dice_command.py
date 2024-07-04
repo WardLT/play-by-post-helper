@@ -4,7 +4,7 @@ from csv import DictReader
 from time import sleep
 import os
 
-from discord import Guild, utils, TextChannel
+from discord import Guild, utils, TextChannel, Message
 from pytest import raises, fixture, mark
 
 from modron.discord import timestamp_to_local_tz
@@ -70,7 +70,13 @@ async def test_rolling(parser, roller: DiceRollInteraction, payload: MockContext
     payload.channel = utils.get(guild.channels, name='ic_all')
     args = parser.parse_args(['1d6+2', 'test', '-a'])
     await roller.interact(args, payload)
-    assert '1d6+2' in payload.last_message
+
+    #  That roll is getting routed to the public dice rolls channel
+    public_channel: TextChannel = utils.get(guild.channels, name=config.team_options[guild.id].public_channel)
+    roll_msg: Message = public_channel.last_message
+
+    assert '1d6+2' in roll_msg.content
+    await roll_msg.delete()
     with open(log_path) as fp:
         reader = DictReader(fp)
         for roll in reader:
