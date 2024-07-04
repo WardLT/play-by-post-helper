@@ -1,12 +1,12 @@
 """"Configuration details"""
 import logging
 import warnings
-from datetime import timedelta
 from pathlib import Path
+from datetime import timedelta, time
 from typing import List, Dict, Tuple, Union, Optional
 
 import yaml
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, validator
 
 logger = logging.getLogger(__name__)
 
@@ -66,6 +66,9 @@ class TeamConfig(BaseModel):
                                                  'Can include categories or specific channels')
     allowed_stall_time: timedelta = Field(timedelta(days=1),
                                           description='How long to wait for activity before issuing reminders')
+    reminder_window: tuple[time, time] = Field((time(hour=9), time(hour=21)),
+                                               description='Time during which modron will send reminders. '
+                                                           'First is the wake time, second is the sleep time')
 
     # Backing up messages
     backup_channels: Optional[List[int]] = Field(default_factory=list,
@@ -77,6 +80,10 @@ class TeamConfig(BaseModel):
     blind_channel: str = Field("blind_rolls", help='Name of the channel on which to post blind rolls')
     blind_rolls: List[str] = Field(default=(), help='Purposes of rolls which are always blind')
     public_channel: Optional[str] = Field(default=None, help='If provided, public roll results will be sent here')
+
+    @validator('reminder_window')
+    def sort_window(cls, v: tuple):
+        return tuple(sorted(v))
 
 
 class ModronConfig(BaseModel):

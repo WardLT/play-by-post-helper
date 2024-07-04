@@ -12,7 +12,6 @@ from modron.config import config
 from modron.db import ModronState, LastMessage
 from modron.discord import get_last_activity
 from modron.services import BaseService
-from modron.utils import get_local_tz_offset
 
 logger = logging.getLogger(__name__)
 
@@ -119,15 +118,24 @@ class ReminderService(BaseService):
         state.save()
 
         # Check if we are past the stall time
-        if datetime.now() > reminder_time:
+        now = datetime.now()
+        if now > reminder_time:
             logger.info(f'Channel has been stalled for {stall_time - self.allowed_stall_time} too long')
 
             # Check if the last message was me giving a reminder message
             active_poster_was_me = (self.last_message is not None and
-                                    self.last_message.author == self._guild.me and
-                                    'Let\'s play some D&D!' in self.last_message.content and
-                                    abs(self.last_message.created_at + get_local_tz_offset()
-                                        - last_time).total_seconds())
+                                    self.last_message.author == self._guild.me)
+
+            # Check if we're in the middle of an off time
+            wake_time, sleep_time = config.team_options[self._guild.id].reminder_window
+            if now.time() > sleep_time or now.time() < wake_time:
+                # If so, sleep until
+                wake_datetime = now.replace(hour=wake_time.hour, minute=wake_time.minute)
+                if wake_datetime < now:
+                    wake_datetime += timedelta(days=1)
+
+                logger.info(f'It is a bad time to remind anyone. Sleeping until {wake_datetime.time()}')
+                return wake_datetime + timedelta(seconds=1)
 
             # If not, send a reminder
             if active_poster_was_me:
