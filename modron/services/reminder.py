@@ -124,10 +124,7 @@ class ReminderService(BaseService):
 
             # Check if the last message was me giving a reminder message
             active_poster_was_me = (self.last_message is not None and
-                                    self.last_message.author == self._guild.me and
-                                    'Let\'s play some D&D!' in self.last_message.content and
-                                    abs(self.last_message.created_at + get_local_tz_offset()
-                                        - last_time).total_seconds())
+                                    self.last_message.author == self._guild.me)
 
             # If not, send a reminder
             if active_poster_was_me:
