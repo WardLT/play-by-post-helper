@@ -280,7 +280,7 @@ class BackupService(BaseService):
         # See if the file already exists
         folder_id = self.get_folder_id()
         result = self.gdrive_client.files().list(
-            q=f"name = '{file_path.name}' and '{folder_id}' in parents and trashed = false",
+            q=f"name = '{file_path.name}.xz' and '{folder_id}' in parents and trashed = false",
             pageSize=2, fields='files/id,files/md5Checksum,files/size,files/modifiedTime'
         ).execute()
         hits = result.get('files', [])
