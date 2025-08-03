@@ -5,7 +5,7 @@ from pytest import mark
 from discord import Guild
 
 from modron.interact.npc import generate_and_render_npcs, NPCGenerator
-from modron.tests.interact.conftest import MockContext
+from .conftest import MockContext
 
 
 @mark.asyncio

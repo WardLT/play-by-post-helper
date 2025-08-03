@@ -11,7 +11,7 @@ from modron.discord import timestamp_to_local_tz
 from modron.interact._argparse import NoExitParserError
 from modron.config import config
 from modron.interact.dice_roll import DiceRollInteraction
-from modron.tests.interact.conftest import MockContext
+from .conftest import MockContext
 
 
 @fixture()

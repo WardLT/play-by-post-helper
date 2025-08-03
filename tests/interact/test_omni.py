@@ -9,7 +9,7 @@ from modron.bot import ModronClient
 from modron.discord import timestamp_to_local_tz
 from modron.interact import attach_commands, handle_generic_command
 from modron.interact.dice_roll import DiceRollInteraction
-from modron.tests.interact.conftest import MockContext
+from .conftest import MockContext
 
 
 @mark.asyncio()
