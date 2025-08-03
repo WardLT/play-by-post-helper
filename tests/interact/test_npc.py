@@ -3,13 +3,13 @@ import json
 
 from pytest import mark
 from discord import Guild
+from discord.ext.commands import Context
 
 from modron.interact.npc import generate_and_render_npcs, NPCGenerator
-from .conftest import MockContext
 
 
 @mark.asyncio
-async def test_npc_gen(payload: MockContext, guild: Guild, caplog):
+async def test_npc_gen(payload: Context, guild: Guild, caplog):
     generator = NPCGenerator()
     parser = generator.parser
     try:
