@@ -37,7 +37,7 @@ jobs:
       env:
         BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
       run: |
-        pytest --cov=modron modron/
+        pytest --cov=modron tests/
     - name: Coveralls
       run: |
         pip install coveralls
