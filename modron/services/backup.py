@@ -29,7 +29,7 @@ logger = logging.getLogger(__name__)
 @contextmanager
 def make_compressed_version(in_path: Path) -> Path:
     with TemporaryDirectory() as out_dir:
-        out_path = Path(out_dir) / (in_path.name + '.gz')
+        out_path = Path(out_dir) / (in_path.name + '.xz')
         logger.info(f'Compressing data to {out_path}')
         with open(in_path, 'rb') as fi, LZMAFile(out_path, mode='wb') as fo:
             copyfileobj(fi, fo)
