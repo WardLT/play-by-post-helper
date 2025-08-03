@@ -14,6 +14,8 @@ from modron.interact.reminder import ReminderModule
 from modron.interact.followup import FollowupModule
 from modron.interact.stats import StatisticModule
 
+logger = logging.getLogger(__name__)
+
 
 def main(testing: bool = False):
     """Launch the bot"""
@@ -26,6 +28,7 @@ def main(testing: bool = False):
                                                           maxBytes=1024 * 1024 * 2,
                                                           backupCount=1),
                                       logging.StreamHandler(sys.stdout)])
+    logger.info('Started the Modron service, about to attempt to connect to Discord')
 
     # Get the secure tokens
     BOT_TOKEN = os.environ.get('BOT_TOKEN')

@@ -4,6 +4,7 @@ from csv import DictReader
 from time import sleep
 import os
 
+from discord.ext.commands import Context
 from discord import Guild, utils, TextChannel, Message
 from pytest import raises, fixture, mark
 
@@ -11,7 +12,6 @@ from modron.discord import timestamp_to_local_tz
 from modron.interact._argparse import NoExitParserError
 from modron.config import config
 from modron.interact.dice_roll import DiceRollInteraction
-from modron.tests.interact.conftest import MockContext
 
 
 @fixture()
@@ -33,7 +33,7 @@ def test_roll_help(parser):
 
 
 @mark.asyncio
-async def test_rolling(parser, roller: DiceRollInteraction, payload: MockContext, guild: Guild):
+async def test_rolling(parser, roller: DiceRollInteraction, payload: Context, guild: Guild):
     # Delete any existing log file
     log_path = config.get_dice_log_path(payload.guild.id)
     if os.path.isfile(log_path):
