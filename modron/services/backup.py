@@ -5,9 +5,13 @@ import json
 import os
 import pickle as pkl
 from pathlib import Path
+from lzma import LZMAFile
+from shutil import copyfileobj
 from typing import List, Dict, Tuple, Union
 from datetime import datetime, timedelta
 from functools import cached_property
+from contextlib import contextmanager
+from tempfile import TemporaryDirectory
 from math import inf, isclose
 
 import humanize
@@ -20,6 +24,16 @@ from modron.services import BaseService
 from modron.config import config
 
 logger = logging.getLogger(__name__)
+
+
+@contextmanager
+def make_compressed_version(in_path: Path) -> Path:
+    with TemporaryDirectory() as out_dir:
+        out_path = Path(out_dir) / (in_path.name + '.gz')
+        logger.info(f'Compressing data to {out_path}')
+        with open(in_path, 'rb') as fi, LZMAFile(out_path, mode='wb') as fo:
+            copyfileobj(fi, fo)
+        yield out_path
 
 
 def _get_last_write_time(output_path) -> float:
@@ -159,7 +173,7 @@ class BackupService(BaseService):
             (int) Number of messages written
         """
         # Determine where backup the channels
-        output_path = self.backup_dir / f'{channel}.json'
+        output_path = self.backup_dir / f'{channel}.jsonl'
         logger.info(f'Starting to backup chanel {channel} from {self.guild_name} to {output_path}')
 
         # Get the time of the last message
@@ -237,7 +251,7 @@ class BackupService(BaseService):
         logger.info(f'Ready to upload to \"{output["name"]}\" ({config.gdrive_backup_folder})')
 
         # List out all files to be backed-up
-        files = list(Path(self.backup_dir).glob('*.json'))
+        files = list(Path(self.backup_dir).glob('*.jsonl'))
         folders = set(Path(p).parent.name for p in files)
         logger.info(f'Found {len(files)} files to upload in {len(folders)} folders')
 
@@ -286,22 +300,24 @@ class BackupService(BaseService):
                 return False, 0
 
             # Update the file
-            file_metadata = {'name': file_path.name}
-            media = MediaFileUpload(file, mimetype='application/jsonlines')
-            result = self.gdrive_client.files().update(
-                fileId=file_id, body=file_metadata, media_body=media, fields='id,size').execute()
-            logger.info(f'Uploaded {file} to {result.get("id")}')
-            return True, int(result.get('size'))
+            with make_compressed_version(file_path) as to_upload:
+                file_metadata = {'name': to_upload.name}
+                media = MediaFileUpload(str(to_upload), mimetype='application/jsonlines')
+                result = self.gdrive_client.files().update(
+                    fileId=file_id, body=file_metadata, media_body=media, fields='id,size').execute()
+                logger.info(f'Uploaded {file} to {result.get("id")}')
+                return True, int(result.get('size'))
         else:
             # Upload the file
-            file_metadata = {'name': file_path.name,
-                             'parents': [folder_id]}
-            media = MediaFileUpload(file, mimetype='application/jsonlines')
-            result = self.gdrive_client.files().create(body=file_metadata,
-                                                       media_body=media,
-                                                       fields='id,size').execute()
-            logger.info(f'Uploaded {file} to {result.get("id")}')
-            return True, int(result.get('size'))
+            with make_compressed_version(file_path) as to_upload:
+                file_metadata = {'name': to_upload.name,
+                                 'parents': [folder_id]}
+                media = MediaFileUpload(str(to_upload), mimetype='application/jsonlines')
+                result = self.gdrive_client.files().create(body=file_metadata,
+                                                           media_body=media,
+                                                           fields='id,size').execute()
+                logger.info(f'Uploaded {file} to {result.get("id")}')
+                return True, int(result.get('size'))
 
     async def run(self):
         # Run the main loop
