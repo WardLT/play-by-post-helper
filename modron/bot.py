@@ -1,6 +1,6 @@
 """Definition of the bot"""
-
 from datetime import timedelta
+from typing import List, Optional
 import logging
 
 from discord.ext.commands import Bot
@@ -8,6 +8,7 @@ from discord import utils
 
 from modron.config import config
 from modron.db import ModronState
+from modron.services import BaseService
 from modron.services.backup import BackupService
 from modron.services.reminder import ReminderService
 from modron.utils import get_version
@@ -19,6 +20,9 @@ class ModronClient(Bot):
     """Client used to connect to Discord"""
 
     testing: bool = False
+    """Whether we are running in test mode"""
+    services: Optional[List[BaseService]] = None
+    """Connections to active services"""
 
     async def on_ready(self):
         """Start the services when the bot is ready"""
@@ -27,6 +31,12 @@ class ModronClient(Bot):
         # If testing, do nothing
         if self.testing:
             return
+
+        # Determine whether we have launched services. If not, do nothing!
+        if self.services is not None:
+            logger.info('Connection already made, so will not relaunch services')
+            return
+        self.services = []
 
         # Determine if this is a new version
         my_version = get_version()
@@ -48,6 +58,7 @@ class ModronClient(Bot):
                                            team_config.watch_channels)
                 self.loop.create_task(reminder.run())
                 logger.info(f'Launched reminder service for {team_config.name}')
+                self.services.append(reminder)
             else:
                 logger.info(f'No reminders for {team_config.name}')
 
@@ -58,6 +69,7 @@ class ModronClient(Bot):
                                        frequency=timedelta(days=1),
                                        channels=team_config.backup_channels)
                 self.loop.create_task(backup.run())
+                self.services.append(backup)
                 logger.info(f'Launched backup service for {team_config.name}')
             else:
                 logger.info(f'No backup for {team_config.name}')
