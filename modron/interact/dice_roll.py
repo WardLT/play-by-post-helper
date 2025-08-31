@@ -240,8 +240,11 @@ class DiceRollInteraction(InteractionModule):
         is_private = _private_channel_pattern.search(context.channel.name) is not None
         has_public_channel = config.team_options[context.guild.id].public_channel is not None
 
-        # Send the result appropriate
+        # Send the result in the appropriate channel: blind, in channel, or publicly
+        postfix = (f'channel={context.channel.name} forced={force_show or force_blind} '
+                   f'has-public={has_public_channel} ic_channel={ic_channel}')
         if force_blind or (blind_channel and not force_show):  # Role blind
+            logger.info(f'Rolling blind. {postfix}')
             channel_name = config.team_options[context.guild.id].blind_channel
             channel: TextChannel = utils.get(context.guild.channels, name=channel_name)
 
@@ -249,11 +252,11 @@ class DiceRollInteraction(InteractionModule):
             await context.send(f'<@!{context.author.id}> rolled {roll.roll_description}, and '
                                'only the GM will see the result')
             await channel.send(reply)
-        elif (ic_channel and is_private) or not ic_channel or not has_public_channel:
-            # Reply in channel
+        elif (ic_channel and is_private) or not ic_channel or not has_public_channel:  # Reply in channel
+            logger.info(f'Rolling in channel. {postfix}')
             await context.send(reply)
         else:  # Public channel exists, we're in an IC channel and that channel is not private
-            # Reply in the public dice roll
+            logger.info(f'Rolling publicly. {postfix}')
             channel_name = config.team_options[context.guild.id].public_channel
             channel: TextChannel = utils.get(context.guild.channels, name=channel_name)
             await channel.send(reply)
