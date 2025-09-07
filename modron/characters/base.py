@@ -13,7 +13,7 @@ class Character(BaseModel, metaclass=ABCMeta):
     name: str = Field(..., description='Name of the character')
 
     @classmethod
-    def from_yaml(cls, path: str) -> 'Character':
+    def from_yaml(cls, path: Union[str, Path]) -> 'Character':
         """Parse the character sheet from YAML
 
         Args:
@@ -28,4 +28,4 @@ class Character(BaseModel, metaclass=ABCMeta):
 
         with open(path, 'w') as fp:
             data = json.loads(self.json())
-            yaml.dump(data, fp, indent=2)
+            yaml.dump(data, fp, indent=2, sort_keys=False)
