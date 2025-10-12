@@ -190,4 +190,4 @@ def test_pendragon_traits(alek):
         ('valorous', 'cowardly')
     ]
     for virtue, vice in pairs:
-        assert getattr(alek, virtue) + getattr(alek, vice) == 20
+        assert getattr(alek.traits, virtue) + getattr(alek.traits, vice) == 20
