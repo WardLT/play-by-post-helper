@@ -19,3 +19,9 @@ traits:
   temperate: 14
   trusting: 8
   valorous: 15
+
+passions:
+  fealty_lord: 19
+  love_family: 13
+  chivalry: 13
+  concern_commoners: 6

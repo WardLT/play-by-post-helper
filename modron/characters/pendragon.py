@@ -1,7 +1,7 @@
 """Character sheets for the Pendragon 6th edition."""
-from typing import Optional, List
+from typing import Optional, List, Set
 
-from pydantic import Field
+from pydantic import Field, Extra
 from pydantic.main import BaseModel
 
 from .base import Character
@@ -29,7 +29,7 @@ class Traits(BaseModel):
     valorous: int = Field(..., description='How brave and audacious a character may be during times of extreme duress',
                           gt=0)
 
-    checks: set[str] = Field(default_factory=set, description='Traits which have been checked in the current season')
+    checks: Set[str] = Field(default_factory=set, description='Traits which have been checked in the current season')
 
     # TODO (wardlt): Allow for directed traits
 
@@ -100,7 +100,7 @@ class Traits(BaseModel):
         return 20 - self.valorous
 
     @property
-    def chivarly_bonus(self):
+    def chivalry_bonus(self):
         return self.energetic + self.generous + self.just + self.merciful + self.modest + self.valorous
 
     def get_religious_bonus(self, religion: str) -> int:
@@ -116,6 +116,32 @@ class Traits(BaseModel):
         else:
             raise NotImplementedError(f'No such religion: {religion}')
 
+
+class Passions(BaseModel, extra=Extra.allow):
+    """What drives the knight's decisions
+
+    Knights only have a few passions and can pull from them to perform heroic deeds.
+    """
+
+    homage: Optional[int] = Field(None, description='A knight swears service to a lord')
+    fealty: Optional[int] = Field(None, description='A knight makes a lesser oath of loyalty')
+    loyalty_companions: Optional[int] = Field(None, description='A knight bonds to his compatriots')
+    loyalty_king: Optional[int] = Field(None, description='A knight supports his land\'s ruler.')
+
+    hate: Optional[int] = Field(None, description='A knight is driven by a bitter poison')
+    love_family: Optional[int] = Field(None, description='A knight protects those who share his blood.')
+    love_person: Optional[int] = Field(None, description='A knight has fervor for a specific individual')
+
+    adoration: Optional[int] = Field(None, description='A knight is commanded by admiration for a Beloved.')
+    devotion: Optional[int] = Field(None, description='A knight follows a faith in the supernatural.')
+
+    chivalry: Optional[int] = Field(None, description='A knight believes he must protect the weak')
+    hospitality: Optional[int] = Field(None, description='A knight provides for and protects visitors')
+    station: Optional[int] = Field(None, description='A knight is above the common but below the lords')
+
+    details: List[str] = Field(default_factory=list, description='Record notes about the passions')
+
+    checks: Set[str] = Field(default_factory=)
 
 class PendragonCharacter(Character):
     """Character sheet for the Pendragon system"""
@@ -133,4 +159,4 @@ class PendragonCharacter(Character):
 
     # Personality Traits
     traits: Traits = Field(..., description='Personality traits')
-    """Personality traits"""
+    passions: Passions = Field(..., description='Driving passions')

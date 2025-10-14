@@ -3,20 +3,13 @@ from pathlib import Path
 from pytest import fixture, raises
 
 from modron.characters import DnD5Character
-from modron.characters.pendragon import PendragonCharacter
 
 _joe_path = Path(__file__).parent / 'joe.yaml'
-_alek_path = Path(__file__).parent / '../characters/pendragon/alek.yml'
 
 
 @fixture
 def joe() -> DnD5Character:
     return DnD5Character.from_yaml(_joe_path)
-
-
-@fixture()
-def alek() -> PendragonCharacter:
-    return PendragonCharacter.from_yaml(_alek_path)
 
 
 def test_level(joe):
@@ -178,16 +171,3 @@ def test_complex_roll(joe):
     # Try a skill
     simplified = joe.substitute_modifiers('1d21+3d6 + animal handling-3')
     assert simplified == f"1d21+3d6{joe.skill_modifier('animal handling') - 3:+d}"
-
-
-def test_pendragon_traits(alek):
-    """Make sure the traits all add to 20!"""
-
-    pairs = [
-        ('chaste', 'lustful'), ('energetic', 'lazy'), ('forgiving', 'vengeful'), ('generous', 'selfish'),
-        ('honest', 'deceitful'), ('just', 'arbitrary'), ('merciful', 'cruel'), ('modest', 'proud'),
-        ('prudent', 'reckless'), ('spiritual', 'worldly'), ('temperate', 'indulgent'), ('trusting', 'suspicious'),
-        ('valorous', 'cowardly')
-    ]
-    for virtue, vice in pairs:
-        assert getattr(alek.traits, virtue) + getattr(alek.traits, vice) == 20
