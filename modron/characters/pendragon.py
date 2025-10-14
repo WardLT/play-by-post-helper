@@ -141,7 +141,8 @@ class Passions(BaseModel, extra=Extra.allow):
 
     details: List[str] = Field(default_factory=list, description='Record notes about the passions')
 
-    checks: Set[str] = Field(default_factory=)
+    checks: Set[str] = Field(default_factory=set, description='Passions that have been checked this season')
+
 
 class PendragonCharacter(Character):
     """Character sheet for the Pendragon system"""
