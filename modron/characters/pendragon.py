@@ -144,6 +144,51 @@ class Passions(BaseModel, extra=Extra.allow):
     checks: Set[str] = Field(default_factory=set, description='Passions that have been checked this season')
 
 
+class Statistics(BaseModel):
+    """Physical traits of the character"""
+
+    siz: int = Field(..., description='Size and weight compared to others. Also the knockdown modifier')
+    dex: int = Field(..., description='Agility and nimbleness')
+    str: int = Field(..., description='Physical power')
+    con: int = Field(..., description='Health and vitality')
+    app: int = Field(..., description='Natural charm, presence, and physical attractiveness')
+
+    @property
+    def damage(self) -> int:
+        """Modifier to damage.
+
+        Number of d6 rolled with a weapon, and the flat damage when brawling"""
+        return (self.str + self.siz) // 6
+
+    @property
+    def healing_rate(self):
+        """Number of hit points healed per week"""
+        return self.con // 5
+
+    @property
+    def move_rate(self):
+        """Speed of the character. (Feet per round?)"""
+        return (self.str + self.dex) // 2 + 5
+
+    @property
+    def hit_point_max(self):
+        """Number of hit points when fully healthy"""
+        return self.siz + self.con
+
+    @property
+    def unconscious(self):
+        """A character loses consciousness if hit points are below this value"""
+        return self.hit_point_max // 4
+
+    @property
+    def major_wound(self):
+        """Threshold for damage in a single attack
+
+        A character loses consciousness and receivees a Major Wound if they
+        take this much damage in a single round"""
+        return self.con
+
+
 class PendragonCharacter(Character):
     """Character sheet for the Pendragon system"""
 
@@ -157,7 +202,14 @@ class PendragonCharacter(Character):
     current_home: str = Field(..., description='Where they are when not traveling')
     distinctive_features: List[str] = Field(default_factory=list,
                                             description='Easy ways of telling them apart visually')
+    hit_points: Optional[None] = Field(None, description='Current level of health')
+    glory: int = Field(0, help='How much reknown the character has acquired')
+
+    @property
+    def glory_roll(self) -> int:
+        return int(round(self.glory / 1000., 0))
 
     # Personality Traits
     traits: Traits = Field(..., description='Personality traits')
     passions: Passions = Field(..., description='Driving passions')
+    statistics: Statistics = Field(..., description='Physical characterisitcs')

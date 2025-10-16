@@ -5,6 +5,13 @@ homeland: cambria
 current_class: Knight
 current_home: cambria
 
+statistics:
+  siz: 10
+  dex: 8
+  str: 14
+  con: 17
+  app: 13
+
 traits:
   chaste: 13
   energetic: 15

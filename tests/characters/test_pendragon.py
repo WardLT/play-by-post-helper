@@ -35,3 +35,12 @@ def test_passions(alek):
     assert alek.passions.hate is None
     assert alek.passions.concern_commoners == 6
     assert 'concern_commoners' in alek.passions.dict()
+
+
+def test_statistics(alek):
+    assert alek.statistics.damage == 4
+    assert alek.statistics.healing_rate == 3
+    assert alek.statistics.move_rate == 16
+    assert alek.statistics.hit_point_max == 27
+    assert alek.statistics.unconscious == 6
+    assert alek.statistics.major_wound == 17
