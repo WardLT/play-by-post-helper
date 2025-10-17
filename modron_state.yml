@@ -1,8 +1,11 @@
-characters: {}
+characters:
+  '853806073906593832':
+    '862094786956886035': modron
 last_message:
   '853806073906593832':
     channel: ic_all
     last_time: '2024-02-05T19:57:54.640000'
     sender: kati1210
+library_version: null
 reminder_time:
   '853806073906593832': '2024-02-06T19:57:54.640000'
