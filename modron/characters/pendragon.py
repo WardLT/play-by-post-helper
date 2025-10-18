@@ -1,13 +1,30 @@
 """Character sheets for the Pendragon 6th edition."""
 from typing import Optional, List, Set
 
-from pydantic import Field, Extra
+from pydantic import Field, model_validator
 from pydantic.main import BaseModel
 
 from .base import Character
 
 
-class Traits(BaseModel):
+class Checkable(BaseModel):
+    """Base class for parts of the character sheet that are checkable"""
+
+    checks: Set[str] = Field(default_factory=set, description='Scores which have had a critical success this season')
+
+
+class HasExtras(Checkable, extra='allow'):
+    """Base class for which allows custom, checkable scores are allowed"""
+
+    @model_validator(mode='after')
+    def _extras_are_ints(self):
+        for k, v in self.model_extra.items():
+            if not isinstance(v, int):
+                raise ValueError(f'All extra traits must be ints. {k} is a {type(v)}')
+        return self
+
+
+class Traits(HasExtras):
     """Personality traits for a character
 
     Only the "virtuous traits" are defined by a user. The "negative" ones are derived."""
@@ -28,8 +45,6 @@ class Traits(BaseModel):
                                            'in the motivations and intentions of others', gt=0)
     valorous: int = Field(..., description='How brave and audacious a character may be during times of extreme duress',
                           gt=0)
-
-    checks: Set[str] = Field(default_factory=set, description='Traits which have been checked in the current season')
 
     # TODO (wardlt): Allow for directed traits
 
@@ -117,7 +132,7 @@ class Traits(BaseModel):
             raise NotImplementedError(f'No such religion: {religion}')
 
 
-class Passions(BaseModel, extra=Extra.allow):
+class Passions(HasExtras):
     """What drives the knight's decisions
 
     Knights only have a few passions and can pull from them to perform heroic deeds.
@@ -144,7 +159,7 @@ class Passions(BaseModel, extra=Extra.allow):
     checks: Set[str] = Field(default_factory=set, description='Passions that have been checked this season')
 
 
-class Statistics(BaseModel):
+class Statistics(Checkable):
     """Physical traits of the character"""
 
     siz: int = Field(..., description='Size and weight compared to others. Also the knockdown modifier')
@@ -203,7 +218,7 @@ class PendragonCharacter(Character):
     distinctive_features: List[str] = Field(default_factory=list,
                                             description='Easy ways of telling them apart visually')
     hit_points: Optional[None] = Field(None, description='Current level of health')
-    glory: int = Field(0, help='How much reknown the character has acquired')
+    glory: int = Field(0, description='How much reknown the character has acquired')
 
     @property
     def glory_roll(self) -> int:
@@ -212,4 +227,4 @@ class PendragonCharacter(Character):
     # Personality Traits
     traits: Traits = Field(..., description='Personality traits')
     passions: Passions = Field(..., description='Driving passions')
-    statistics: Statistics = Field(..., description='Physical characterisitcs')
+    statistics: Statistics = Field(..., description='Physical characteristics')

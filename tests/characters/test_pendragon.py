@@ -1,8 +1,8 @@
 from pathlib import Path
 
-from pytest import fixture
+from pytest import fixture, raises
 
-from modron.characters.pendragon import PendragonCharacter
+from modron.characters.pendragon import PendragonCharacter, HasExtras
 
 _alek_path = Path(__file__).parent / '../../characters/pendragon/alek.yml'
 
@@ -34,7 +34,7 @@ def test_traits(alek):
 def test_passions(alek):
     assert alek.passions.hate is None
     assert alek.passions.concern_commoners == 6
-    assert 'concern_commoners' in alek.passions.dict()
+    assert 'concern_commoners' in alek.passions.model_dump()
 
 
 def test_statistics(alek):
@@ -44,3 +44,9 @@ def test_statistics(alek):
     assert alek.statistics.hit_point_max == 27
     assert alek.statistics.unconscious == 6
     assert alek.statistics.major_wound == 17
+
+
+def test_extras():
+    HasExtras.model_validate({'a': 1})
+    with raises(ValueError, match='a is a <class \'str'):
+        HasExtras.model_validate({'a': 'a'})
