@@ -1,6 +1,6 @@
 from pytest import raises, fixture, mark
 
-from modron.characters import Character
+from modron.characters import DnD5Character
 from modron.interact.character import CharacterSheet, HPTracker
 
 
@@ -100,7 +100,7 @@ async def test_harm_and_heal(payload, test_sheet_path):
     await hp.interact(args, payload)
     assert '2 hit points' in payload.last_message
 
-    sheet = Character.from_yaml(test_sheet_path)
+    sheet = DnD5Character.from_yaml(test_sheet_path)
     assert sheet.total_hit_points == sheet.hit_points - 2
 
     # Test healing
@@ -108,7 +108,7 @@ async def test_harm_and_heal(payload, test_sheet_path):
     await hp.interact(args, payload)
     assert '1 hit points' in payload.last_message
 
-    sheet = Character.from_yaml(test_sheet_path)
+    sheet = DnD5Character.from_yaml(test_sheet_path)
     assert sheet.total_hit_points == sheet.hit_points - 1
 
     # Test adding temporary hit points
@@ -116,7 +116,7 @@ async def test_harm_and_heal(payload, test_sheet_path):
     await hp.interact(args, payload)
     assert '2 temporary hit points' in payload.last_message
 
-    sheet = Character.from_yaml(test_sheet_path)
+    sheet = DnD5Character.from_yaml(test_sheet_path)
     assert sheet.total_hit_points == sheet.hit_points + 1
     assert sheet.temporary_hit_points == 2
 
@@ -125,7 +125,7 @@ async def test_harm_and_heal(payload, test_sheet_path):
     await hp.interact(args, payload)
     assert 'by -2 hit points' in payload.last_message
 
-    sheet = Character.from_yaml(test_sheet_path)
+    sheet = DnD5Character.from_yaml(test_sheet_path)
     assert sheet.total_hit_points == sheet.hit_points
     assert sheet.temporary_hit_points == 2
 
@@ -149,7 +149,7 @@ async def test_aliases(payload, test_sheet_path):
     args = parser.parse_args(['roll', 'set', 'damage', '1d6+str'])
     await character.interact(args, payload)
     assert payload.last_message.startswith('Set damage to mean "1d6+str')
-    assert 'damage' in Character.from_yaml(test_sheet_path).roll_aliases
+    assert 'damage' in DnD5Character.from_yaml(test_sheet_path).roll_aliases
 
     args = parser.parse_args(['roll', 'remove', 'damage'])
     await character.interact(args, payload)

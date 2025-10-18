@@ -16,7 +16,7 @@ import yaml
 from discord import Message
 from pydantic import BaseModel, Field, field_validator
 
-from modron.characters import Character, load_character, list_available_characters
+from modron.characters import DnD5Character, load_character, list_available_characters
 from modron.config import config
 from modron.discord import timestamp_to_local_tz
 
@@ -77,7 +77,7 @@ class ModronState(BaseModel):
             data = yaml.load(fp, yaml.SafeLoader)
             return ModronState.model_validate(data)
 
-    def get_active_character(self, guild_id: int, player_id: int) -> tuple[str, Character, Path]:
+    def get_active_character(self, guild_id: int, player_id: int) -> tuple[str, DnD5Character, Path]:
         """Get the active character for a player
 
         Args:

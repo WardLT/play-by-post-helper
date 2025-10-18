@@ -8,7 +8,7 @@ from discord.ext.commands import Context
 
 from modron.db import ModronState
 from modron.interact.base import InteractionModule
-from modron.characters import list_available_characters, load_character, Character
+from modron.characters import list_available_characters, load_character, DnD5Character
 
 logger = logging.getLogger(__name__)
 
@@ -31,7 +31,7 @@ This command can be used to get current HP, apply damage or healing, or
 make temporary changes to the HP'''
 
 
-def load_sheet(context: Context, character: Optional[str] = None) -> Tuple[Character, Path]:
+def load_sheet(context: Context, character: Optional[str] = None) -> Tuple[DnD5Character, Path]:
     """Load the requested character sheet
 
     Args:
@@ -150,7 +150,7 @@ class CharacterSheet(InteractionModule):
         else:
             raise ValueError(f'Subcommand {args.char_subcommand} not yet implemented')
 
-    async def manage_aliases(self, context: Context, args: Namespace, sheet: Character, path: Path):
+    async def manage_aliases(self, context: Context, args: Namespace, sheet: DnD5Character, path: Path):
         """Remove, set or list aliases for rolls
 
         Args:

@@ -137,8 +137,7 @@ async def test_blind_roll(parser, roller, payload, guild: Guild):
     # See if it was reported in the "blind_channel"
     sleep(5)
     reminder_channel: TextChannel = utils.get(guild.channels, name="bot_testing")
-    async for last_message in reminder_channel.history(limit=1, oldest_first=False):
-        break
+    last_message = reminder_channel.last_message
     assert (timestamp_to_local_tz(last_message.created_at) - datetime.now()).total_seconds() < 5
     await last_message.delete()
 
@@ -159,12 +158,13 @@ async def test_blind_roll(parser, roller, payload, guild: Guild):
 async def test_public_channel(parser, roller, payload, guild: Guild):
     """Test routing rolls to a public channel"""
     config.team_options[guild.id].watch_channels.append('bot_testing')
+    public_channel = 'bot_testing'
 
     # Test a regular roll
     args = parser.parse_args(['luck', '--show'])
     await roller.interact(args, payload)
     assert payload.last_message is None  # No roll in that channel
-    channel: TextChannel = utils.get(guild.channels, name='bot_testing')
+    channel: TextChannel = utils.get(guild.channels, name=public_channel)
     msg = channel.last_message
     assert 'luck' in msg.clean_content
     await msg.delete()
