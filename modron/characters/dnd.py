@@ -1,9 +1,9 @@
 """D&D and related character sheet systems"""
 import re
 from enum import Enum
-from typing import Dict, Optional, List
+from typing import Dict, Optional, List, Union
 
-from pydantic import Field, validator
+from pydantic import Field, field_validator
 
 from modron.characters import Character
 
@@ -108,17 +108,19 @@ class DnD5Character(Character):
     expertise: List[str] = Field([], description='Skills in which the character is an expert')
 
     # Conveniences
-    roll_aliases: Dict[str, str] = Field(default_factory=dict,
-                                         description='User-defined map of skill to rolls. Rolls can '
-                                                     'be a combination of dice, additive multipliers and traits. '
-                                                     'For example, "4d6+str+2" or "1d20+proficiency"')
+    roll_aliases: Dict[str, Union[int, str]] = Field(
+        default_factory=dict,
+        description='User-defined map of skill to rolls. Rolls can be a combination of dice, '
+                    'additive multipliers and traits. For example, "4d6+str+2" or "1d20+proficiency"')
 
     # Validators for different fields
-    @validator('proficiencies', 'expertise', each_item=True)
-    def _val_lowercase(cls, v: str) -> str:
-        return v.lower()
+    @field_validator('proficiencies', 'expertise', mode='after')
+    @classmethod
+    def _val_lowercase(cls, v: list[str]) -> list[str]:
+        return [x.lower() for x in v]
 
-    @validator('custom_skills', 'classes', 'roll_aliases')
+    @field_validator('custom_skills', 'classes', 'roll_aliases', mode='after')
+    @classmethod
     def _val_dicts(cls, v: dict):
         """Makes keys for dictionaries"""
         return dict((k.lower(), v) for k, v in v.items())

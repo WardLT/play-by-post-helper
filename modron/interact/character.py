@@ -141,7 +141,7 @@ class CharacterSheet(InteractionModule):
 
             # Update the state
             state = ModronState.load()
-            active = state.get_active_character(context.guild.id, context.author.id)
+            active, _, _ = state.get_active_character(context.guild.id, context.author.id)
             state.characters[context.guild.id][context.author.id] = args.choice
             await context.reply(f'Set your active character to {args.choice} from {active}', delete_after=120)
             state.save()

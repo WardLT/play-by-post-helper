@@ -209,7 +209,7 @@ class DiceRollInteraction(InteractionModule):
 
                 # Get the roll
                 if ability_name in sheet.roll_aliases:
-                    args.dice = sheet.substitute_modifiers(sheet.roll_aliases[ability_name])
+                    args.dice = sheet.substitute_modifiers(str(sheet.roll_aliases[ability_name]))
                 else:
                     modifier = sheet.lookup_modifier(ability_name)
                     args.dice = f'1d20{modifier:+d}'
