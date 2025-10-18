@@ -1,5 +1,4 @@
 """Minimum requirements for character sheets"""
-import json
 from abc import ABCMeta
 from pathlib import Path
 from typing import Union
@@ -21,11 +20,10 @@ class Character(BaseModel, metaclass=ABCMeta):
         """
         with open(path) as fp:
             data = yaml.load(fp, yaml.SafeLoader)
-            return cls.parse_obj(data)
+            return cls.model_validate(data)
 
     def to_yaml(self, path: Union[str, Path]):
         """Save character sheet to a YAML file"""
 
         with open(path, 'w') as fp:
-            data = json.loads(self.json())
-            yaml.dump(data, fp, indent=2, sort_keys=False)
+            yaml.dump(self.model_dump(), fp, indent=2, sort_keys=False)
