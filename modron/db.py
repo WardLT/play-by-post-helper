@@ -11,7 +11,6 @@ from typing import Dict, Optional, Union
 from datetime import datetime
 from pathlib import Path
 import logging
-import json
 
 import yaml
 from discord import Message
@@ -52,7 +51,8 @@ class ModronState(BaseModel):
     or need to be persistent across restarts"""
 
     library_version: Optional[str] = Field(None, description='Version of Modron last booted')
-    reminder_time: Dict[int, datetime] = Field(None, description='Next time to check if a reminder is needed')
+    reminder_time: Dict[int, datetime] = Field(default_factory=dict,
+                                               description='Next time to check if a reminder is needed')
     last_message: Dict[int, LastMessage] = Field(default_factory=dict, description='Information about the last message')
     characters: Dict[int, Dict[int, str]] = Field(default_factory=dict,
                                                   description='Character being played by each player')
@@ -114,5 +114,4 @@ class ModronState(BaseModel):
         """
         with open(path, 'w') as fp:
             # Convert to JSON so that it uses Pydantic's conversations of special types
-            ready = json.loads(self.model_dump_json())
-            yaml.dump(ready, fp, indent=2)
+            yaml.dump(self.model_dump(), fp, indent=2)

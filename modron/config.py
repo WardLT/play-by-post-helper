@@ -6,7 +6,7 @@ from datetime import timedelta, time
 from typing import List, Dict, Tuple, Union, Optional
 
 import yaml
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 
 logger = logging.getLogger(__name__)
 
@@ -84,7 +84,8 @@ class TeamConfig(BaseModel):
     public_channel: Optional[str] = Field(default=None,
                                           description='If provided, public roll results will be sent here')
 
-    @validator('reminder_window')
+    @field_validator('reminder_window', mode='before')
+    @classmethod
     def sort_window(cls, v: tuple):
         return tuple(sorted(v))
 
@@ -117,7 +118,7 @@ class ModronConfig(BaseModel):
     # NPC generator
     # TODO (wardlt): Build a more robust validator for each of these fields
     npc_race_weights: List[float] = Field(_RACE_TIER_WEIGHTS, description="Weights for different probability tiers",
-                                          min_items=4, max_items=4)
+                                          min_length=4, max_length=4)
     npc_race_dist: Dict[str, List[List[str]]] = Field(
         _RACE_DISTRIBUTION, description='Common races for different locations. Each location is defined by a list of '
                                         'four different tears. The first tier is the most prevalent '
