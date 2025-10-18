@@ -16,6 +16,8 @@ from modron.interact.dice_roll import DiceRollInteraction
 
 @fixture()
 def roller(guild) -> DiceRollInteraction:
+    # Set the public channel
+    config.team_options[guild.id].public_channel = 'bot_testing'
     config.team_options[guild.id].blind_channel = 'bot_testing'
     return DiceRollInteraction()
 
@@ -81,9 +83,9 @@ async def test_rolling(parser, roller: DiceRollInteraction, payload: Context, gu
         reader = DictReader(fp)
         for roll in reader:
             continue  # Loop until the last one
-        assert roll['reason'] == 'test'
-        assert roll['advantage']
-        assert roll['channel'] == 'ic_all'
+        assert roll['reason'] == 'test', log_path
+        assert roll['advantage'], log_path
+        assert roll['channel'] == 'ic_all', log_path
 
 
 @mark.asyncio
@@ -156,8 +158,6 @@ async def test_blind_roll(parser, roller, payload, guild: Guild):
 @mark.asyncio()
 async def test_public_channel(parser, roller, payload, guild: Guild):
     """Test routing rolls to a public channel"""
-    # Set the public channel
-    config.team_options[guild.id].public_channel = 'bot_testing'
     config.team_options[guild.id].watch_channels.append('bot_testing')
 
     # Test a regular roll

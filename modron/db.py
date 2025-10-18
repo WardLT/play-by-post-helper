@@ -11,11 +11,10 @@ from typing import Dict, Optional, Union
 from datetime import datetime
 from pathlib import Path
 import logging
-import json
 
 import yaml
 from discord import Message
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 
 from modron.characters import Character, load_character, list_available_characters
 from modron.config import config
@@ -51,13 +50,15 @@ class ModronState(BaseModel):
     """Holder for elements of Modron's configuration that can change during runtime
     or need to be persistent across restarts"""
 
-    library_version: str = Field(None, description='Version of Modron last booted')
-    reminder_time: Dict[int, datetime] = Field(None, description='Next time to check if a reminder is needed')
+    library_version: Optional[str] = Field(None, description='Version of Modron last booted')
+    reminder_time: Dict[int, datetime] = Field(default_factory=dict,
+                                               description='Next time to check if a reminder is needed')
     last_message: Dict[int, LastMessage] = Field(default_factory=dict, description='Information about the last message')
     characters: Dict[int, Dict[int, str]] = Field(default_factory=dict,
                                                   description='Character being played by each player')
 
-    @validator('reminder_time')
+    @field_validator('reminder_time', mode='after')
+    @classmethod
     def convert_str_to_int(cls, value: Optional[Dict]):
         if value is not None:
             return dict((int(k), v) for k, v in value.items())
@@ -74,7 +75,7 @@ class ModronState(BaseModel):
         """
         with open(path, 'r') as fp:
             data = yaml.load(fp, yaml.SafeLoader)
-            return ModronState.parse_obj(data)
+            return ModronState.model_validate(data)
 
     def get_active_character(self, guild_id: int, player_id: int) -> tuple[str, Character, Path]:
         """Get the active character for a player
@@ -113,5 +114,4 @@ class ModronState(BaseModel):
         """
         with open(path, 'w') as fp:
             # Convert to JSON so that it uses Pydantic's conversations of special types
-            ready = json.loads(self.json())
-            yaml.dump(ready, fp, indent=2)
+            yaml.dump(self.model_dump(), fp, indent=2)

@@ -60,9 +60,11 @@ async def bot() -> ModronClient:
     await client.wait_until_ready()
 
     # Give the client, but make sure to kill it later
-    yield client
-    await client.close()
-    task.result()
+    try:
+        yield client
+    finally:
+        await client.close()
+        task.result()
 
 
 @async_fixture()
