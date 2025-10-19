@@ -1,15 +1,15 @@
-import os
+from pathlib import Path
 
 from pytest import fixture, raises
 
-from modron.characters import Character
+from modron.characters import DnD5Character
 
-_joe_path = os.path.join(os.path.dirname(__file__), 'joe.yaml')
+_joe_path = Path(__file__).parent / 'joe.yaml'
 
 
 @fixture
-def joe() -> Character:
-    return Character.from_yaml(_joe_path)
+def joe() -> DnD5Character:
+    return DnD5Character.from_yaml(_joe_path)
 
 
 def test_level(joe):

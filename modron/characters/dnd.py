@@ -1,14 +1,11 @@
-"""Saving and using information about characters"""
-import json
+"""D&D and related character sheet systems"""
 import re
 from enum import Enum
-from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, Optional, List, Union
 
-import yaml
-from pydantic import BaseModel, Field, field_validator
+from pydantic import Field, field_validator
 
-from modron.config import config
+from modron.characters import Character
 
 
 def _compute_mod(score: int) -> int:
@@ -46,15 +43,6 @@ class Ability(str, Enum):
         return matched_abilities[0]
 
 
-_5e_skills = {
-    'acrobatics': Ability.DEX, 'animal handling': Ability.WIS, 'arcana': Ability.INT, 'athletics': Ability.STR,
-    'deception': Ability.CHA, 'history': Ability.INT, 'insight': Ability.WIS, 'intimidation': Ability.CHA,
-    'investigation': Ability.INT, 'medicine': Ability.WIS, 'nature': Ability.INT, 'perception': Ability.WIS,
-    'performance': Ability.CHA, 'persuasion': Ability.CHA, 'religion': Ability.INT, 'sleight of hand': Ability.DEX,
-    'stealth': Ability.DEX, 'survival': Ability.WIS
-}
-
-
 class Alignment(str, Enum):
     """Possible alignments"""
     LAWFUL_GOOD = 'lawful good'
@@ -68,6 +56,13 @@ class Alignment(str, Enum):
     CHAOTIC_EVIL = 'chaotic evil'
 
 
+_5e_skills = {
+    'acrobatics': Ability.DEX, 'animal handling': Ability.WIS, 'arcana': Ability.INT, 'athletics': Ability.STR,
+    'deception': Ability.CHA, 'history': Ability.INT, 'insight': Ability.WIS, 'intimidation': Ability.CHA,
+    'investigation': Ability.INT, 'medicine': Ability.WIS, 'nature': Ability.INT, 'perception': Ability.WIS,
+    'performance': Ability.CHA, 'persuasion': Ability.CHA, 'religion': Ability.INT, 'sleight of hand': Ability.DEX,
+    'stealth': Ability.DEX, 'survival': Ability.WIS
+}
 _class_hit_die = {
     'artificer': 8, 'barbarian': 12, 'bard': 8, 'cleric': 8, 'druid': 8, 'fighter': 10, 'monk': 8, 'paladin': 10,
     'ranger': 10, 'rogue': 8, 'sorcerer': 6, 'warlock': 8, 'wizard': 6
@@ -75,7 +70,7 @@ _class_hit_die = {
 """Hit die for each 5E class"""
 
 
-class Character(BaseModel):
+class DnD5Character(Character):
     """A D&D 5th edition character sheet, in Python form.
 
     This object stores only the mechanics-related aspects of a character sheet
@@ -83,8 +78,6 @@ class Character(BaseModel):
     maximum but not the current hit points and the skill ist but not the languages."""
 
     # Basic information about the character
-    name: str = Field(..., description='Name of the character')
-    player: int = Field(None, description='Discord user ID of the player')
     classes: Dict[str, int] = Field(..., description='Levels in different classes')
     background: str = Field(None, description='Character background')
     race: str = Field(None, description='Race of the character')
@@ -119,24 +112,6 @@ class Character(BaseModel):
         default_factory=dict,
         description='User-defined map of skill to rolls. Rolls can be a combination of dice, '
                     'additive multipliers and traits. For example, "4d6+str+2" or "1d20+proficiency"')
-
-    @classmethod
-    def from_yaml(cls, path: str) -> 'Character':
-        """Parse the character sheet from YAML
-
-        Args:
-            path: Path to the YAML file
-        """
-        with open(path) as fp:
-            data = yaml.load(fp, yaml.SafeLoader)
-            return cls.model_validate(data)
-
-    def to_yaml(self, path: Union[str, Path]):
-        """Save character sheet to a YAML file"""
-
-        with open(path, 'w') as fp:
-            data = json.loads(self.model_dump_json())
-            yaml.dump(data, fp, indent=2)
 
     # Validators for different fields
     @field_validator('proficiencies', 'expertise', mode='after')
@@ -461,35 +436,3 @@ class Character(BaseModel):
 
         # Combine everything together into a single dice roll
         return f'{"+".join(dice)}{sum(mods):+d}'
-
-
-def list_available_characters(guild_id: int, user_id: int) -> List[str]:
-    """List the names of character sheets that are available to a user
-
-    Args:
-        guild_id: Associated guild
-        user_id: ID of the user in question
-    Returns:
-        List of characters available to this player
-    """
-
-    # Return only the sheets for this player
-    return [
-        s.name[:-4]  # Remove the ".yml"
-        for s in config.list_character_sheets(guild_id)
-        if Character.from_yaml(s).player == user_id
-    ]
-
-
-def load_character(guild_id: int, name: str) -> Tuple[Character, Path]:
-    """Load a character sheet
-
-    Arg:
-        guild_id: Associated guild
-        name: Name of the character
-    Returns:
-        - Desired character sheet
-        - Absolute path to the character sheet, in case you must save it later
-    """
-    sheet_path = config.get_character_sheet_path(guild_id, name)
-    return Character.from_yaml(sheet_path), sheet_path.absolute()

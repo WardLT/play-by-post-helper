@@ -1,0 +1,76 @@
+name: Alek Felderwyn
+age: 22
+son_number: 3
+homeland: cambria
+current_class: Knight
+current_home: cambria
+
+statistics:
+  siz: 10
+  dex: 8
+  str: 14
+  con: 17
+  app: 13
+
+traits:
+  chaste: 13
+  energetic: 15
+  forgiving: 10
+  generous: 13
+  honest: 16
+  just: 8
+  merciful: 10
+  modest: 13
+  prudent: 9
+  spiritual: 8
+  temperate: 14
+  trusting: 8
+  valorous: 15
+
+passions:
+  fealty_lord: 19
+  love_family: 13
+  chivalry: 13
+  concern_commoners: 6
+
+skills:
+  # Battle
+  battle: 10
+  siege: 2
+  horsemanship: 15
+
+  # Weapons
+  sword: 10
+  lance: 10
+  spear: 10
+  dagger: 10
+
+  # Other
+  awareness: 10
+  boating: 1
+  compose: 3
+  courtesy: 15
+  dancing: 10
+  faerie_lore: 3
+  falconry: 10
+  fashion: 0
+  first_aid: 10
+  flirting: 13
+  folklore: 4
+  gaming: 3
+  heraldry: 1
+  hunting: 6
+  intrigue: 8
+  orate: 5
+  play_harp: 3
+  read_latin: 5
+  recognize: 10
+  religion_any: 2
+  romance: 1
+  singing: 4
+  stewardship: 2
+  swimming: 2
+  tourney: 0
+
+  checks:
+    - horsemanship
