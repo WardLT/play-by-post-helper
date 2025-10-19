@@ -26,4 +26,4 @@ class Character(BaseModel, metaclass=ABCMeta):
         """Save character sheet to a YAML file"""
 
         with open(path, 'w') as fp:
-            yaml.safe_dump(self.model_dump(), fp, indent=2, sort_keys=False)
+            yaml.safe_dump(self.model_dump(mode='json'), fp, indent=2, sort_keys=False)
