@@ -199,9 +199,47 @@ class Statistics(Checkable):
     def major_wound(self):
         """Threshold for damage in a single attack
 
-        A character loses consciousness and receivees a Major Wound if they
+        A character loses consciousness and receives a Major Wound if they
         take this much damage in a single round"""
         return self.con
+
+
+class Skills(HasExtras):
+    """Proficiency at specific actions"""
+
+    # Combat-oriented
+    battle: int = Field(..., description='Survive and lead in large-scale military conflict')
+    siege: int = Field(..., description='Overcoming the defenses of a stronghold')
+    horsemanship: int = Field(..., description='Guiding horses through difficult circumstances')
+
+    # Weapons
+    sword: int = Field(..., description='Wielding swords')
+    lance: int = Field(..., description='Wielding a lance while mounted')
+    spear: int = Field(..., description='Fighting with a polearm')
+    dagger: int = Field(..., description='Using a small knife in battle')
+
+    # Other
+    awareness: int = Field(..., description='Attentiveness and ability to use their senses')
+    boating: int = Field(..., description='Being useful on watercraft')
+    compose: int = Field(..., description='Preparing a speech or work of musical art')
+    courtesy: int = Field(..., description='Knowledge of culture, laws, and customs of the noble class')
+    dancing: int = Field(..., description='Demonstrating grace on the dance floor')
+    faerie_lore: int = Field(..., description='Knowledge of the unseen world')
+    fashion: int = Field(..., description='Expressing themselves with garments')
+    first_aid: int = Field(..., description='Providing immediate medical assistance')
+    flirting: int = Field(..., description='Communicating charm and gaining someone\'s interest')
+    folklore: int = Field(..., description='Knowledge of the culture, laws, and customs of the common class')
+    gaming: int = Field(..., description='Ability with amusements for either competition or entertainment')
+    heraldry: int = Field(..., description='Recognizing the markings of specific noble groups')
+    hunting: int = Field(..., description='Tracking, traveling in wilds, and concealing one\'s trail')
+    intrigue: int = Field(..., description='Learning and spreading secrets in court')
+    orate: int = Field(..., description='Influence others with well-delivered words')
+    recognize: int = Field(..., description='Remember and identify specific people')
+    romance: int = Field(..., description='Establishing long term courtship')
+    singing: int = Field(..., description='Delivering beautiful music without an instrument')
+    stewardship: int = Field(..., description='Understanding how to manage land')
+    swimming: int = Field(..., description='Moving about in water without a boat')
+    tourney: int = Field(..., description='Knowing the routine and intricacies of noble competition')
 
 
 class PendragonCharacter(Character):
