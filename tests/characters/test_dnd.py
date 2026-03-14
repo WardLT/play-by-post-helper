@@ -2,7 +2,7 @@ from pathlib import Path
 
 from pytest import fixture, raises
 
-from modron.characters import DnD5Character
+from modron.characters.dnd import DnD5Character
 
 _joe_path = Path(__file__).parent / 'joe.yaml'
 

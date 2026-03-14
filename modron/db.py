@@ -16,9 +16,10 @@ import yaml
 from discord import Message
 from pydantic import BaseModel, Field, field_validator
 
-from modron.characters import load_character, list_available_characters, Character
-from modron.config import config
+from modron.characters.base import Character
+from modron.characters.utils import list_available_characters, load_character
 from modron.discord import timestamp_to_local_tz
+from modron.config import config
 
 logger = logging.getLogger(__name__)
 

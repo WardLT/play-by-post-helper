@@ -1,6 +1,6 @@
 from pytest import raises, fixture, mark
 
-from modron.characters import DnD5Character
+from modron.characters.dnd import DnD5Character
 from modron.interact.character import CharacterSheet, HPTracker
 
 

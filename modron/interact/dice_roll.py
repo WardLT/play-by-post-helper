@@ -16,7 +16,7 @@ from modron.config import config
 from modron.db import ModronState
 from modron.dice import DiceRoll, dice_regex
 from modron.interact.base import InteractionModule
-from modron.characters import load_character, list_available_characters
+from modron.characters.utils import list_available_characters, load_character
 
 logger = logging.getLogger(__name__)
 

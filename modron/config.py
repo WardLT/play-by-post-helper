@@ -8,7 +8,8 @@ from typing import List, Dict, Tuple, Union, Optional, Literal
 import yaml
 from pydantic import BaseModel, Field, field_validator
 
-from modron.characters import Character, DnD5Character
+from modron.characters.base import Character
+from modron.characters.dnd import DnD5Character
 from modron.characters.pendragon import PendragonCharacter
 
 logger = logging.getLogger(__name__)
