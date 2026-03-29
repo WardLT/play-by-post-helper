@@ -76,7 +76,7 @@ class FollowupModule(InteractionModule):
             reply_channel: Text channel in which to reply
         """
         # Wait until the sleep is over
-        start_time = datetime.utcnow()
+        start_time = datetime.now()
         await asyncio.sleep(sleep_time.total_seconds())
         logger.info(f'Awake and looking for messages from {user.display_name} after {start_time}')
 
