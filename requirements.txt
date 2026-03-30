@@ -4,7 +4,7 @@ scipy==1.11.*
 numpy==1.26.*
 humanize
 pytimeparse
-discord.py<2
+discord.py>=2
 tabulate
 pdfkit
 pydantic>=2
