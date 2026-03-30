@@ -5,7 +5,7 @@ from typing import Dict, Optional, List, Union
 
 from pydantic import Field, field_validator
 
-from modron.characters import Character
+from modron.characters.base import Character
 
 
 def _compute_mod(score: int) -> int:

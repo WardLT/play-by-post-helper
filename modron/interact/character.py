@@ -8,7 +8,8 @@ from discord.ext.commands import Context
 
 from modron.db import ModronState
 from modron.interact.base import InteractionModule
-from modron.characters import list_available_characters, load_character, DnD5Character
+from modron.characters.dnd import DnD5Character
+from modron.characters.utils import list_available_characters, load_character
 
 logger = logging.getLogger(__name__)
 
