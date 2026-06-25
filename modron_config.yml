@@ -1,7 +1,9 @@
 team_options:
   1156741684781133825:
     name: pendragon
+    system: pendragon
     ooc_channel: ooc
+
     reminders: True
     watch_channels:
       - ic-all

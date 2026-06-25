@@ -436,3 +436,10 @@ class DnD5Character(Character):
 
         # Combine everything together into a single dice roll
         return f'{"+".join(dice)}{sum(mods):+d}'
+
+    def create_roll(self, ability_name: str) -> str:
+        if ability_name in self.roll_aliases:
+            return self.substitute_modifiers(str(self.roll_aliases[ability_name]))
+        else:
+            modifier = self.lookup_modifier(ability_name)
+            return f'1d20{modifier:+d}'

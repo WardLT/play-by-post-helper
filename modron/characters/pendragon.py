@@ -266,3 +266,6 @@ class PendragonCharacter(Character):
     traits: Traits = Field(..., description='Personality traits')
     passions: Passions = Field(..., description='Driving passions')
     statistics: Statistics = Field(..., description='Physical characteristics')
+
+    def create_roll(self, ability_name: str) -> str:
+        return '1d20'  # All rolls in pendragon are 1d20 (afaik)

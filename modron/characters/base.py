@@ -27,3 +27,7 @@ class Character(BaseModel, metaclass=ABCMeta):
 
         with open(path, 'w') as fp:
             yaml.safe_dump(self.model_dump(mode='json'), fp, indent=2, sort_keys=False)
+
+    def create_roll(self, ability_name: str) -> str:
+        """Generate a roll corresponding to a certain ability name"""
+        raise NotImplementedError()
