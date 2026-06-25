@@ -50,3 +50,15 @@ def test_extras():
     HasExtras.model_validate({'a': 1})
     with raises(ValueError, match='a is a <class \'str'):
         HasExtras.model_validate({'a': 'a'})
+
+def test_describe(alek):
+    assert alek.describe_ability('damage').endswith('d6')
+    assert alek.describe_ability('healing rate').endswith('per week')
+    assert alek.describe_ability('move rate').endswith('per round')
+    assert alek.describe_ability('unconscious').isdigit()
+    assert alek.describe_ability('major_wound').isdigit()
+    assert alek.describe_ability('wodinic').isdigit()
+    assert alek.describe_ability('chivalry').isdigit()
+    assert alek.describe_ability('chaste').startswith('TN')
+    with raises(KeyError, match='motorbike'):
+        alek.describe_ability('motorbikes')

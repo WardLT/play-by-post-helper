@@ -6,6 +6,7 @@ from typing import Tuple, Optional
 
 from discord.ext.commands import Context
 
+from modron.characters.base import Character
 from modron.db import ModronState
 from modron.interact.base import InteractionModule
 from modron.characters.dnd import DnD5Character
@@ -32,7 +33,7 @@ This command can be used to get current HP, apply damage or healing, or
 make temporary changes to the HP'''
 
 
-def load_sheet(context: Context, character: Optional[str] = None) -> Tuple[DnD5Character, Path]:
+def load_sheet(context: Context, character: Optional[str] = None) -> Tuple[Character, Path]:
     """Load the requested character sheet
 
     Args:
@@ -118,13 +119,13 @@ class CharacterSheet(InteractionModule):
         elif args.char_subcommand == "ability":
             ability_name = ' '.join(args.name)
             try:
-                modifier = sheet.lookup_modifier(ability_name)
+                description = sheet.describe_ability(ability_name)
             except ValueError:
-                logger.info(f'Modifier lookup failed for "{ability_name}"')
-                await context.reply(f'Could not find a modifier for "{ability_name}"')
+                logger.info(f'Ability lookup failed for "{ability_name}"')
+                await context.reply(f'Could not find ability "{ability_name}"')
                 return
-            logger.info(f'Retrieved modifier for {ability_name} rolls: {modifier:+d}')
-            await context.reply(f'{sheet.name}\'s modifier for {ability_name} is {modifier:+d}')
+            logger.info(f'{sheet.name} has a {ability_name} of {description}')
+            await context.reply(f'{sheet.name} has a {ability_name} of {description}')
         elif args.char_subcommand == "list":
             state = ModronState.load()
             active = state.get_active_character(context.guild.id, context.author.id)[0]
@@ -151,7 +152,7 @@ class CharacterSheet(InteractionModule):
         else:
             raise ValueError(f'Subcommand {args.char_subcommand} not yet implemented')
 
-    async def manage_aliases(self, context: Context, args: Namespace, sheet: DnD5Character, path: Path):
+    async def manage_aliases(self, context: Context, args: Namespace, sheet: Character, path: Path):
         """Remove, set or list aliases for rolls
 
         Args:

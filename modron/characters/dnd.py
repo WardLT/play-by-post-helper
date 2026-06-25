@@ -1,7 +1,7 @@
 """D&D and related character sheet systems"""
 import re
 from enum import Enum
-from typing import Dict, Optional, List, Union
+from typing import Dict, Optional, List
 
 from pydantic import Field, field_validator
 
@@ -106,12 +106,6 @@ class DnD5Character(Character):
                                                                   'Dictionary of skill names and associated ability')
     proficiencies: List[str] = Field(..., description='Names of skills in which the characters is proficient.')
     expertise: List[str] = Field([], description='Skills in which the character is an expert')
-
-    # Conveniences
-    roll_aliases: Dict[str, Union[int, str]] = Field(
-        default_factory=dict,
-        description='User-defined map of skill to rolls. Rolls can be a combination of dice, '
-                    'additive multipliers and traits. For example, "4d6+str+2" or "1d20+proficiency"')
 
     # Validators for different fields
     @field_validator('proficiencies', 'expertise', mode='after')
@@ -365,6 +359,11 @@ class DnD5Character(Character):
 
         # Skill
         return self.skill_modifier(check)
+
+    def describe_ability(self, ability_name: str) -> str:
+        # Use the modifier
+        modifier = self.lookup_modifier(ability_name)
+        return f'{modifier:+d}'
 
     def get_skills_by_ability(self, ability: str) -> Dict[str, str]:
         """List out the skills for this character that use a certain base ability
