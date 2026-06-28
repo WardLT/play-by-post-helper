@@ -51,6 +51,7 @@ def test_extras():
     with raises(ValueError, match='a is a <class \'str'):
         HasExtras.model_validate({'a': 'a'})
 
+
 def test_describe(alek):
     assert alek.describe_ability('damage').endswith('d6')
     assert alek.describe_ability('healing rate').endswith('per week')

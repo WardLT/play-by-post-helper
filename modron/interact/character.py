@@ -6,10 +6,9 @@ from typing import Tuple, Optional
 
 from discord.ext.commands import Context
 
-from modron.characters.base import Character
 from modron.db import ModronState
+from modron.characters.base import Character
 from modron.interact.base import InteractionModule
-from modron.characters.dnd import DnD5Character
 from modron.characters.utils import list_available_characters, load_character
 
 logger = logging.getLogger(__name__)
