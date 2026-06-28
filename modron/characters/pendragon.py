@@ -129,7 +129,7 @@ class Traits(HasExtras):
         elif religion == 'wodinic':
             return self.generous + self.indulgent + self.proud + self.reckless + self.valorous + self.worldly
         else:
-            raise NotImplementedError(f'No such religion: {religion}')
+            raise KeyError(f'No such religion: {religion}')
 
 
 class Passions(HasExtras):
@@ -255,7 +255,7 @@ class PendragonCharacter(Character):
     current_home: str = Field(..., description='Where they are when not traveling')
     distinctive_features: List[str] = Field(default_factory=list,
                                             description='Easy ways of telling them apart visually')
-    hit_points: Optional[None] = Field(None, description='Current level of health')
+    hit_points: Optional[int] = Field(None, description='Current level of health')
     glory: int = Field(0, description='How much reknown the character has acquired')
 
     @property
@@ -266,3 +266,42 @@ class PendragonCharacter(Character):
     traits: Traits = Field(..., description='Personality traits')
     passions: Passions = Field(..., description='Driving passions')
     statistics: Statistics = Field(..., description='Physical characteristics')
+    skills: Skills = Field(..., description='Capabilities')
+
+    def create_roll(self, ability_name: str) -> str:
+        ability_name = ability_name.lower()
+        if ability_name == "damage":
+            return f'{self.statistics.damage}d6'
+
+        return '1d20'  # All rolls in pendragon are 1d20 (afaik)
+
+    def describe_ability(self, ability_name: str) -> str:
+        ability_name = ability_name.lower().replace(" ", "_")
+
+        # Special cases for statistics
+        if ability_name == 'damage':
+            return f'{self.statistics.damage}d6'
+        elif ability_name == 'healing_rate':
+            return f'{self.statistics.healing_rate} per week'
+        elif ability_name in 'move_rate':
+            return f'{self.statistics.move_rate} per round'
+        elif ability_name == 'unconscious':
+            return f'{self.statistics.unconscious}'
+        elif ability_name == 'major_wound':
+            return f'{self.statistics.major_wound}'
+
+        # Special cases for traits
+        try:
+            bonus = self.traits.get_religious_bonus(ability_name)
+            return f'{bonus}'
+        except KeyError:
+            pass
+        if ability_name in {'chivalry', 'chivalry_bonus'}:
+            return f'{self.traits.chivalry_bonus}'
+
+        # Look for _anything_ else
+        for category in [self.skills, self.statistics, self.passions, self.traits]:
+            if (value := getattr(category, ability_name, None)) is not None and isinstance(value, int):
+                return f'TN{value}'
+        else:
+            raise KeyError(f'No such ability: {ability_name}')
