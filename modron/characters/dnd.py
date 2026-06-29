@@ -1,11 +1,11 @@
 """D&D and related character sheet systems"""
 import re
 from enum import Enum
-from typing import Dict, Optional, List, Union
+from typing import Dict, Optional, List
 
 from pydantic import Field, field_validator
 
-from modron.characters import Character
+from modron.characters.base import Character
 
 
 def _compute_mod(score: int) -> int:
@@ -106,12 +106,6 @@ class DnD5Character(Character):
                                                                   'Dictionary of skill names and associated ability')
     proficiencies: List[str] = Field(..., description='Names of skills in which the characters is proficient.')
     expertise: List[str] = Field([], description='Skills in which the character is an expert')
-
-    # Conveniences
-    roll_aliases: Dict[str, Union[int, str]] = Field(
-        default_factory=dict,
-        description='User-defined map of skill to rolls. Rolls can be a combination of dice, '
-                    'additive multipliers and traits. For example, "4d6+str+2" or "1d20+proficiency"')
 
     # Validators for different fields
     @field_validator('proficiencies', 'expertise', mode='after')
@@ -366,6 +360,11 @@ class DnD5Character(Character):
         # Skill
         return self.skill_modifier(check)
 
+    def describe_ability(self, ability_name: str) -> str:
+        # Use the modifier
+        modifier = self.lookup_modifier(ability_name)
+        return f'{modifier:+d}'
+
     def get_skills_by_ability(self, ability: str) -> Dict[str, str]:
         """List out the skills for this character that use a certain base ability
 
@@ -436,3 +435,10 @@ class DnD5Character(Character):
 
         # Combine everything together into a single dice roll
         return f'{"+".join(dice)}{sum(mods):+d}'
+
+    def create_roll(self, ability_name: str) -> str:
+        if ability_name in self.roll_aliases:
+            return self.substitute_modifiers(str(self.roll_aliases[ability_name]))
+        else:
+            modifier = self.lookup_modifier(ability_name)
+            return f'1d20{modifier:+d}'

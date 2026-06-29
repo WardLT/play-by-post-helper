@@ -47,3 +47,14 @@ async def payload(guild: Guild) -> MockContext:
         guild=guild,
         channel=channel
     )
+
+
+@async_fixture()
+async def pen_payload(pen_guild: Guild, guild: Guild) -> MockContext:
+    author = pen_guild.get_member(862094786956886035)  # Modron
+    channel = utils.get(guild.channels, name='bot_testing')
+    return MockContext(
+        author=author,
+        guild=pen_guild,
+        channel=channel
+    )

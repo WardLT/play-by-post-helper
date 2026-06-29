@@ -196,3 +196,10 @@ async def test_set_character(parser, roller, payload):
     args = parser.parse_args(['-c', 'adrianna', 'athletics'])
     await roller.interact(args, payload)
     assert "+0" not in payload.last_message  # Adrianna has a good one
+
+
+@mark.asyncio
+async def test_pendragon_roll(parser, roller, pen_payload):
+    args = parser.parse_args(['chaste'])
+    await roller.interact(args, pen_payload)
+    assert '1d20' in pen_payload.last_message
