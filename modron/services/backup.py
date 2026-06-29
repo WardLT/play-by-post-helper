@@ -7,12 +7,12 @@ import pickle as pkl
 from pathlib import Path
 from lzma import LZMAFile
 from shutil import copyfileobj
-from typing import List, Dict, Tuple, Union
+from typing import List, Dict, Tuple, Union, Generator
 from datetime import datetime, timedelta
 from functools import cached_property
 from contextlib import contextmanager
 from tempfile import TemporaryDirectory
-from math import inf, isclose
+from math import isclose
 
 import humanize
 from discord import Guild, TextChannel, Message, User, CategoryChannel
@@ -27,7 +27,14 @@ logger = logging.getLogger(__name__)
 
 
 @contextmanager
-def make_compressed_version(in_path: Path) -> Path:
+def make_compressed_version(in_path: Path) -> Generator[Path, None, None]:
+    """Produce a compressed version of a file then delete it once the context closes
+
+    Args:
+        in_path: Path to be converted
+    Yields:
+        Path to a xz-compressed version
+    """
     with TemporaryDirectory() as out_dir:
         out_path = Path(out_dir) / (in_path.name + '.xz')
         logger.info(f'Compressing data to {out_path}')
@@ -80,18 +87,16 @@ class BackupService(BaseService):
                  guild: Guild,
                  backup_dir: str,
                  frequency: timedelta = timedelta(days=1),
-                 channels: List[int] = (),
-                 max_sleep_time: float = inf):
+                 channels: List[int] = ()):
         """
 
         Args:
             guild: Connection to the guild
             backup_dir: Directory in which
             channels: List of channels or categories to back up
-            max_sleep_time: Longest time to sleep before
         """
         short_name = config.team_options[guild.id].name
-        super().__init__(guild, max_sleep_time, name=f'backup_{short_name}')
+        super().__init__(guild)
         self.frequency = frequency
         self.backup_dir = Path(backup_dir) / short_name
         self.channels = channels
@@ -322,7 +327,7 @@ class BackupService(BaseService):
     async def run(self):
         # Run the main loop
         logger.info('Starting backup thread')
-        while True:
+        while not self.stop.is_set():
             # Run the backup
             result = await self.backup_all_channels()
             logger.info(f'Backed up {sum(result.values())} messages in total. From: {", ".join(result.keys())}')
@@ -339,4 +344,4 @@ class BackupService(BaseService):
                     logger.info(f'Error during GDrive upload: {e}')
 
             self.next_run_time = datetime.now() + self.frequency
-            await self._sleep_until(self.next_run_time)
+            await self.sleep_until(self.next_run_time)
