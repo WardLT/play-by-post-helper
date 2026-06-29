@@ -1,6 +1,6 @@
 """D&D and related character sheet systems"""
 import re
-from enum import Enum
+from enum import StrEnum
 from typing import Dict, Optional, List
 
 from pydantic import Field, field_validator
@@ -19,7 +19,7 @@ def _compute_mod(score: int) -> int:
     return score // 2 - 5
 
 
-class Ability(str, Enum):
+class Ability(StrEnum):
     """Character abilities"""
     STR = 'strength'
     DEX = 'dexterity'
@@ -39,11 +39,12 @@ class Ability(str, Enum):
         """
         name = name.lower()
         matched_abilities = [x for x in cls.__members__.values() if x.startswith(name)]
-        assert len(matched_abilities) == 1, f"Unrecognized ability: {name}"
+        if len(matched_abilities) == 0:
+            raise KeyError(f"Unrecognized ability: {name}")
         return matched_abilities[0]
 
 
-class Alignment(str, Enum):
+class Alignment(StrEnum):
     """Possible alignments"""
     LAWFUL_GOOD = 'lawful good'
     GOOD = 'good'
@@ -310,7 +311,7 @@ class DnD5Character(Character):
             ability = _5e_skills[name_lower]
         else:
             raise ValueError(f'Unrecognized skill: {name}')
-        mod = getattr(self, f'{ability}_mod')
+        mod = getattr(self, f'{str(ability)}_mod')
 
         # Add proficiency or expertise
         if name_lower in self.expertise:
@@ -354,7 +355,7 @@ class DnD5Character(Character):
         # Ability check
         try:
             return self.ability_modifier(check)
-        except AssertionError:
+        except KeyError:
             pass  # and try something else
 
         # Skill
