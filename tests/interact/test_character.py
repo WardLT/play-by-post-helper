@@ -1,6 +1,6 @@
 from pytest import raises, fixture, mark
 
-from modron.characters import DnD5Character
+from modron.characters.dnd import DnD5Character
 from modron.interact.character import CharacterSheet, HPTracker
 
 
@@ -158,3 +158,13 @@ async def test_aliases(payload, test_sheet_path):
     args = parser.parse_args(['roll', 'list'])
     await character.interact(args, payload)
     assert 'damage' not in payload.last_message
+
+
+@mark.asyncio
+async def test_pendragon_ability(pen_payload):
+    character = CharacterSheet()
+    parser = character.parser
+
+    args = parser.parse_args(['ability', 'chaste'])
+    await character.interact(args, pen_payload)
+    assert 'TN' in pen_payload.last_message

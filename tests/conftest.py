@@ -29,6 +29,11 @@ def player_id() -> int:
 
 
 @fixture()
+def pendragon_guild_id() -> int:
+    return 1156741684781133825
+
+
+@fixture()
 def repo_root() -> Path:
     return Path(__file__).parents[2]
 
@@ -70,3 +75,8 @@ async def bot() -> ModronClient:
 @async_fixture()
 async def guild(bot: ModronClient, guild_id) -> Guild:
     return bot.get_guild(guild_id)
+
+
+@async_fixture()
+async def pen_guild(bot: ModronClient, pendragon_guild_id) -> Guild:
+    return bot.get_guild(pendragon_guild_id)

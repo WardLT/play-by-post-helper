@@ -16,7 +16,7 @@ from modron.config import config
 from modron.db import ModronState
 from modron.dice import DiceRoll, dice_regex
 from modron.interact.base import InteractionModule
-from modron.characters import load_character, list_available_characters
+from modron.characters.utils import list_available_characters, load_character
 
 logger = logging.getLogger(__name__)
 
@@ -208,11 +208,7 @@ class DiceRollInteraction(InteractionModule):
                 sheet, _ = load_character(context.guild.id, character)
 
                 # Get the roll
-                if ability_name in sheet.roll_aliases:
-                    args.dice = sheet.substitute_modifiers(str(sheet.roll_aliases[ability_name]))
-                else:
-                    modifier = sheet.lookup_modifier(ability_name)
-                    args.dice = f'1d20{modifier:+d}'
+                args.dice = sheet.create_roll(ability_name)
                 logger.info(f'Reformatted command to be for {ability_name} for {sheet.name}')
 
         # Make the dice roll
