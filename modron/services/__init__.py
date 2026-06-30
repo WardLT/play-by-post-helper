@@ -1,7 +1,7 @@
 """Persistent processes that perform pre-defined projects periodically"""
 from abc import ABCMeta, abstractmethod
 from datetime import datetime
-from asyncio import sleep, Event, wait_for
+from asyncio import Event, wait_for
 from discord import Guild
 import logging
 

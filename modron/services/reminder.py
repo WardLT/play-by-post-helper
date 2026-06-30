@@ -28,7 +28,6 @@ class ReminderService(BaseService):
             reminder_channel: Name of channel on which to post reminders
             channels_to_watch: IDs of the channels, which could include category channels, channels to watch
         """
-        short_name = config.team_options[guild.id].name
         super().__init__(guild)
         self.reminder_channel: TextChannel = utils.get(self._guild.channels, name=reminder_channel)
         self.channels_to_watch = channels_to_watch
