@@ -10,7 +10,7 @@ from shutil import copyfileobj
 from typing import List, Dict, Tuple, Union, Generator
 from datetime import datetime, timedelta
 from functools import cached_property
-from contextlib import contextmanager
+from contextlib import asynccontextmanager
 from tempfile import TemporaryDirectory
 from math import isclose
 
@@ -26,8 +26,8 @@ from modron.config import config
 logger = logging.getLogger(__name__)
 
 
-@contextmanager
-def make_compressed_version(in_path: Path) -> Generator[Path, None, None]:
+@asynccontextmanager
+async def make_compressed_version(in_path: Path) -> Generator[Path, None, None]:
     """Produce a compressed version of a file then delete it once the context closes
 
     Args:
@@ -39,7 +39,7 @@ def make_compressed_version(in_path: Path) -> Generator[Path, None, None]:
         out_path = Path(out_dir) / (in_path.name + '.xz')
         logger.info(f'Compressing data to {out_path}')
         with open(in_path, 'rb') as fi, LZMAFile(out_path, mode='wb') as fo:
-            copyfileobj(fi, fo)
+            await asyncio.to_thread(copyfileobj, fi, fo)
         yield out_path
 
 
@@ -238,7 +238,7 @@ class BackupService(BaseService):
             (c, await t) for c, t in tasks.items()
         ])
 
-    def upload_to_gdrive(self) -> Tuple[int, int]:
+    async def upload_to_gdrive(self) -> Tuple[int, int]:
         """Upload the log files to the Google Drive
 
         Returns:
@@ -264,13 +264,13 @@ class BackupService(BaseService):
         updated_count = 0
         uploaded_size = 0
         for file in files:
-            was_updated, file_size = self.upload_file(file)
+            was_updated, file_size = await self.upload_file(file)
             if was_updated:
                 updated_count += 1
                 uploaded_size += file_size
         return updated_count, uploaded_size
 
-    def upload_file(self, file: Union[str, Path]) -> Tuple[bool, int]:
+    async def upload_file(self, file: Union[str, Path]) -> Tuple[bool, int]:
         """Upload a file if it has changed
 
         Args:
@@ -305,7 +305,7 @@ class BackupService(BaseService):
                 return False, 0
 
             # Update the file
-            with make_compressed_version(file_path) as to_upload:
+            async with make_compressed_version(file_path) as to_upload:
                 file_metadata = {'name': to_upload.name}
                 media = MediaFileUpload(str(to_upload), mimetype='application/jsonlines')
                 result = self.gdrive_client.files().update(
@@ -314,7 +314,7 @@ class BackupService(BaseService):
                 return True, int(result.get('size'))
         else:
             # Upload the file
-            with make_compressed_version(file_path) as to_upload:
+            async with make_compressed_version(file_path) as to_upload:
                 file_metadata = {'name': to_upload.name,
                                  'parents': [folder_id]}
                 media = MediaFileUpload(str(to_upload), mimetype='application/jsonlines')
@@ -336,7 +336,7 @@ class BackupService(BaseService):
             # Upload backed-up files to GoogleDrive
             if self._creds is not None:
                 try:
-                    count, data_size = self.upload_to_gdrive()
+                    count, data_size = await self.upload_to_gdrive()
                     self.last_backup_successful = True
                     logger.info(f'Updated {count} files. Uploaded {humanize.naturalsize(data_size, binary=True)}')
                     self.total_uploaded += data_size

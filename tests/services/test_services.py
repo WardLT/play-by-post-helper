@@ -74,12 +74,12 @@ async def test_backup(guild: Guild, change_team_name, tmpdir):
     folder_id = service.get_folder_id()
 
     # Upload once, which should get the files
-    n_uploaded, file_sizes = service.upload_to_gdrive()
+    n_uploaded, file_sizes = await service.upload_to_gdrive()
     assert n_uploaded == 1
     assert file_sizes > 0
 
     # Attempt upload again, which should skip the process
-    n_uploaded, file_sizes = service.upload_to_gdrive()
+    n_uploaded, file_sizes = await service.upload_to_gdrive()
     assert n_uploaded == 0
     assert file_sizes == 0
 
@@ -89,7 +89,7 @@ async def test_backup(guild: Guild, change_team_name, tmpdir):
     count = await service.backup_messages(backup_channel)
     assert count > 0
 
-    n_uploaded, file_sizes = service.upload_to_gdrive()
+    n_uploaded, file_sizes = await service.upload_to_gdrive()
     assert n_uploaded == 1
     assert file_sizes > 0
 
