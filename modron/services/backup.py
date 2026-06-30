@@ -7,12 +7,12 @@ import pickle as pkl
 from pathlib import Path
 from lzma import LZMAFile
 from shutil import copyfileobj
-from typing import List, Dict, Tuple, Union
+from typing import List, Dict, Tuple, Union, Generator
 from datetime import datetime, timedelta
 from functools import cached_property
-from contextlib import contextmanager
+from contextlib import asynccontextmanager
 from tempfile import TemporaryDirectory
-from math import inf, isclose
+from math import isclose
 
 import humanize
 from discord import Guild, TextChannel, Message, User, CategoryChannel
@@ -26,13 +26,20 @@ from modron.config import config
 logger = logging.getLogger(__name__)
 
 
-@contextmanager
-def make_compressed_version(in_path: Path) -> Path:
+@asynccontextmanager
+async def make_compressed_version(in_path: Path) -> Generator[Path, None, None]:
+    """Produce a compressed version of a file then delete it once the context closes
+
+    Args:
+        in_path: Path to be converted
+    Yields:
+        Path to a xz-compressed version
+    """
     with TemporaryDirectory() as out_dir:
         out_path = Path(out_dir) / (in_path.name + '.xz')
         logger.info(f'Compressing data to {out_path}')
         with open(in_path, 'rb') as fi, LZMAFile(out_path, mode='wb') as fo:
-            copyfileobj(fi, fo)
+            await asyncio.to_thread(copyfileobj, fi, fo)
         yield out_path
 
 
@@ -80,18 +87,16 @@ class BackupService(BaseService):
                  guild: Guild,
                  backup_dir: str,
                  frequency: timedelta = timedelta(days=1),
-                 channels: List[int] = (),
-                 max_sleep_time: float = inf):
+                 channels: List[int] = ()):
         """
 
         Args:
             guild: Connection to the guild
             backup_dir: Directory in which
             channels: List of channels or categories to back up
-            max_sleep_time: Longest time to sleep before
         """
         short_name = config.team_options[guild.id].name
-        super().__init__(guild, max_sleep_time, name=f'backup_{short_name}')
+        super().__init__(guild)
         self.frequency = frequency
         self.backup_dir = Path(backup_dir) / short_name
         self.channels = channels
@@ -233,7 +238,7 @@ class BackupService(BaseService):
             (c, await t) for c, t in tasks.items()
         ])
 
-    def upload_to_gdrive(self) -> Tuple[int, int]:
+    async def upload_to_gdrive(self) -> Tuple[int, int]:
         """Upload the log files to the Google Drive
 
         Returns:
@@ -259,13 +264,13 @@ class BackupService(BaseService):
         updated_count = 0
         uploaded_size = 0
         for file in files:
-            was_updated, file_size = self.upload_file(file)
+            was_updated, file_size = await self.upload_file(file)
             if was_updated:
                 updated_count += 1
                 uploaded_size += file_size
         return updated_count, uploaded_size
 
-    def upload_file(self, file: Union[str, Path]) -> Tuple[bool, int]:
+    async def upload_file(self, file: Union[str, Path]) -> Tuple[bool, int]:
         """Upload a file if it has changed
 
         Args:
@@ -300,7 +305,7 @@ class BackupService(BaseService):
                 return False, 0
 
             # Update the file
-            with make_compressed_version(file_path) as to_upload:
+            async with make_compressed_version(file_path) as to_upload:
                 file_metadata = {'name': to_upload.name}
                 media = MediaFileUpload(str(to_upload), mimetype='application/jsonlines')
                 result = self.gdrive_client.files().update(
@@ -309,7 +314,7 @@ class BackupService(BaseService):
                 return True, int(result.get('size'))
         else:
             # Upload the file
-            with make_compressed_version(file_path) as to_upload:
+            async with make_compressed_version(file_path) as to_upload:
                 file_metadata = {'name': to_upload.name,
                                  'parents': [folder_id]}
                 media = MediaFileUpload(str(to_upload), mimetype='application/jsonlines')
@@ -322,7 +327,7 @@ class BackupService(BaseService):
     async def run(self):
         # Run the main loop
         logger.info('Starting backup thread')
-        while True:
+        while not self.stop.is_set():
             # Run the backup
             result = await self.backup_all_channels()
             logger.info(f'Backed up {sum(result.values())} messages in total. From: {", ".join(result.keys())}')
@@ -331,7 +336,7 @@ class BackupService(BaseService):
             # Upload backed-up files to GoogleDrive
             if self._creds is not None:
                 try:
-                    count, data_size = self.upload_to_gdrive()
+                    count, data_size = await self.upload_to_gdrive()
                     self.last_backup_successful = True
                     logger.info(f'Updated {count} files. Uploaded {humanize.naturalsize(data_size, binary=True)}')
                     self.total_uploaded += data_size
@@ -339,4 +344,4 @@ class BackupService(BaseService):
                     logger.info(f'Error during GDrive upload: {e}')
 
             self.next_run_time = datetime.now() + self.frequency
-            await self._sleep_until(self.next_run_time)
+            await self.sleep_until(self.next_run_time)

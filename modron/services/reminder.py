@@ -1,7 +1,6 @@
 """Services related to reminding players when it is their turn"""
 from typing import List, Optional
 from datetime import datetime, timedelta
-from math import inf
 import logging
 
 import humanize
@@ -22,17 +21,14 @@ class ReminderService(BaseService):
     def __init__(self,
                  guild: Guild,
                  reminder_channel: str,
-                 channels_to_watch: List[str],
-                 max_sleep_time: float = inf):
+                 channels_to_watch: List[str]):
         """
         Args:
             guild: Authenticated BotClient
             reminder_channel: Name of channel on which to post reminders
             channels_to_watch: IDs of the channels, which could include category channels, channels to watch
-            max_sleep_time: Longest time the thread is allowed to sleep for
         """
-        short_name = config.team_options[guild.id].name
-        super().__init__(guild, max_sleep_time, name=f'reminder_{short_name}')
+        super().__init__(guild)
         self.reminder_channel: TextChannel = utils.get(self._guild.channels, name=reminder_channel)
         self.channels_to_watch = channels_to_watch
         self.allowed_stall_time = config.team_options[guild.id].allowed_stall_time
@@ -79,9 +75,9 @@ class ReminderService(BaseService):
         This operation runs on an infinite loop and might
         be best run from a separate thread.
         """
-        while True:
+        while not self.stop.is_set():
             wake_time = await self.perform_reminder_check()
-            await self._sleep_until(wake_time)
+            await self.sleep_until(wake_time)
 
     async def perform_reminder_check(self) -> datetime:
         """Check for whether a reminder needs to be given and, if so, do it.
