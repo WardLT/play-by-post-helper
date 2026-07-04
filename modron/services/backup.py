@@ -6,7 +6,6 @@ import os
 import pickle as pkl
 from pathlib import Path
 from lzma import LZMAFile
-from shutil import copyfileobj
 from typing import List, Dict, Tuple, Union, Generator
 from datetime import datetime, timedelta
 from functools import cached_property
