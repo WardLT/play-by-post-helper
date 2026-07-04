@@ -44,7 +44,7 @@ async def make_compressed_version(in_path: Path) -> Generator[Path, None, None]:
         yield out_path
 
 
-def _get_last_write_time(output_path) -> float:
+async def _get_last_write_time(output_path) -> float:
     """Get the last timestamp from a file
 
     Args:
@@ -54,34 +54,21 @@ def _get_last_write_time(output_path) -> float:
     """
     start_time = 0
     with open(output_path) as fp:
-        for line in fp:
+        for i, line in enumerate(fp):
+            # Give back the async control every 10 lines
+            if i % 10 == 0:
+                await asyncio.sleep(0)
+
             msg = json.loads(line)
             start_time = max(start_time, float(msg["timestamp"]))
     return start_time
-
-
-def _write_messages(messages: List[Dict], output_path: str):
-    """Write messages to disk
-
-    Converts the timestamps to UTC to avoid any timezone nonsense
-
-    Args:
-        messages: List of messages to write to disk
-        output_path: Output path
-    """
-    logger.debug(f'Writing {len(messages)} to {output_path}')
-    with open(output_path, 'a') as fp:
-        for msg in messages:
-            # Write it out
-            msg = dict(msg)
-            print(json.dumps(msg), file=fp)
 
 
 class BackupService(BaseService):
     """Download and write messages from certain channels to disk
 
     Messages are written in a special "backup directory" which contains the channels
-    being backed up as separate json files.
+    being backed up as separate JSONL files.
     """
 
     def __init__(self,
@@ -188,7 +175,7 @@ class BackupService(BaseService):
             output_path.parent.mkdir(exist_ok=True, parents=True)
         else:
             # Get the last line of the file
-            start_time = _get_last_write_time(output_path)
+            start_time = await _get_last_write_time(output_path)
         logger.info(f'Starting timestamp {start_time}, which is {datetime.fromtimestamp(start_time)}')
 
         # Pulling the most recent message
@@ -300,7 +287,7 @@ class BackupService(BaseService):
             logger.info(f'Matched existing file {file_id} to {file}')
 
             # Check the last time this file was modified
-            last_message_time = datetime.fromtimestamp(_get_last_write_time(file))
+            last_message_time = datetime.fromtimestamp(await _get_last_write_time(file))
             last_uploaded = datetime.strptime(hits[0]['modifiedTime'], '%Y-%m-%dT%H:%M:%S.%fZ')
             if last_message_time <= last_uploaded:
                 return False, 0
