@@ -286,7 +286,7 @@ class BackupService(BaseService):
             logger.info(f'Matched existing file {file_id} to {file}')
 
             # Check the last time this file was modified
-            last_message_time = datetime.fromtimestamp(_get_last_write_time(file))
+            last_message_time = datetime.fromtimestamp(await _get_last_write_time(file))
             last_uploaded = datetime.strptime(hits[0]['modifiedTime'], '%Y-%m-%dT%H:%M:%S.%fZ')
             if last_message_time <= last_uploaded:
                 return False, 0
