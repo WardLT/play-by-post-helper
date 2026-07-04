@@ -39,7 +39,9 @@ async def make_compressed_version(in_path: Path) -> Generator[Path, None, None]:
         out_path = Path(out_dir) / (in_path.name + '.xz')
         logger.info(f'Compressing data to {out_path}')
         with open(in_path, 'rb') as fi, LZMAFile(out_path, mode='wb') as fo:
-            await asyncio.to_thread(copyfileobj, fi, fo)
+            while len(data := fi.read(8192)) > 0:
+                fo.write(data)
+                await asyncio.sleep(0.)
         yield out_path
 
 
