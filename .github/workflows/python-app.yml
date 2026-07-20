@@ -29,8 +29,8 @@ jobs:
         pip install -e .[test]
     - name: Run the precommit as linter
       run: |
-        - pip install pre-commit
-        - pre-commit run -a
+        pip install pre-commit
+        pre-commit run -a
     - name: Test with pytest
       env:
         BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
