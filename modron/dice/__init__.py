@@ -1,4 +1,5 @@
 """Utility functions for rolling dice"""
+
 import re
 from typing import List, Tuple, Sequence
 from random import randint
@@ -8,12 +9,13 @@ dice_regex = re.compile(r"(?P<sign>[-+]?)(?P<number>\d*)d(?P<sides>\d+)")
 _modifer_regex = re.compile(r"(?P<sign>[-+])(?P<value>\d+)([^d]|$)")
 
 
-def roll_die(sides: int,
-             advantage: bool = False,
-             disadvantage: bool = False,
-             reroll_one: bool = False,
-             reroll_two: bool = False) \
-        -> Tuple[int, Sequence[int]]:
+def roll_die(
+    sides: int,
+    advantage: bool = False,
+    disadvantage: bool = False,
+    reroll_one: bool = False,
+    reroll_two: bool = False,
+) -> Tuple[int, Sequence[int]]:
     """Compute the result of rolling a single die
 
     Follows the D&D 5e rules. (See Chapter 7 of the PHB)
@@ -31,8 +33,12 @@ def roll_die(sides: int,
         - value: (int) Value of the roll
         - all_rolls ([int]): Values of all dice rolls used in this calculation, in the order they were rolled
     """
-    assert not (advantage and disadvantage), "You cannot roll both at advantage and disadvantage"
-    assert sides > 0, "Dice must have a nonnegative number of faces. No non-Euclidean geometry"
+    assert not (advantage and disadvantage), (
+        "You cannot roll both at advantage and disadvantage"
+    )
+    assert sides > 0, (
+        "Dice must have a nonnegative number of faces. No non-Euclidean geometry"
+    )
 
     if advantage or disadvantage:
         rolls = [randint(1, sides), randint(1, sides)]
@@ -49,7 +55,9 @@ def roll_die(sides: int,
 
         # Remove the minimum or maximum value, depending on user request
         func = max if advantage else min
-        value = func([v for v, u in zip(rolls, used) if u])  # Get the best value of the used dice
+        value = func(
+            [v for v, u in zip(rolls, used) if u]
+        )  # Get the best value of the used dice
         return value, rolls
     else:
         # Simple logic: Not at [dis]advantage
@@ -66,13 +74,15 @@ class DiceRoll:
     Follows the D&D 5e rules for dice. Consult Chapter 7 of the D&D manual for details
     """
 
-    def __init__(self,
-                 dice: List[int],
-                 modifier: int = 0,
-                 reroll_ones: bool = False,
-                 reroll_twos: bool = True,
-                 advantage: bool = False,
-                 disadvantage: bool = False):
+    def __init__(
+        self,
+        dice: List[int],
+        modifier: int = 0,
+        reroll_ones: bool = False,
+        reroll_twos: bool = True,
+        advantage: bool = False,
+        disadvantage: bool = False,
+    ):
         """Roll dice
 
         Args:
@@ -84,7 +94,9 @@ class DiceRoll:
             disadvantage (bool): Whether to roll the dice twice and take the low value
         """
 
-        assert not (advantage and disadvantage), "You cannot roll both at advantage and disadvantage"
+        assert not (advantage and disadvantage), (
+            "You cannot roll both at advantage and disadvantage"
+        )
         dice = sorted(dice, reverse=True)  # Sort dice in descending order
         self._dice = Counter(dice)
         self.modifier = modifier
@@ -94,9 +106,16 @@ class DiceRoll:
         self.disadvantage = disadvantage
 
         # Make the rolls. Store the results and all dice which were rolled
-        self.results = [roll_die(s, advantage=advantage, disadvantage=disadvantage,
-                                 reroll_one=reroll_ones, reroll_two=reroll_twos)
-                        for s in self._dice.elements()]
+        self.results = [
+            roll_die(
+                s,
+                advantage=advantage,
+                disadvantage=disadvantage,
+                reroll_one=reroll_ones,
+                reroll_two=reroll_twos,
+            )
+            for s in self._dice.elements()
+        ]
 
         # Store the result, which is the result of the used dice
         self.value = sum(self.dice_values) + self.modifier
@@ -122,8 +141,14 @@ class DiceRoll:
         return [x[1] for x in self.results]
 
     @classmethod
-    def make_roll(cls, roll: str, reroll_ones: bool = False, reroll_twos: bool = False,
-                  advantage: bool = False, disadvantage: bool = False) -> 'DiceRoll':
+    def make_roll(
+        cls,
+        roll: str,
+        reroll_ones: bool = False,
+        reroll_twos: bool = False,
+        advantage: bool = False,
+        disadvantage: bool = False,
+    ) -> "DiceRoll":
         """Make a roll given a text string describing the dice
 
         Args:
@@ -141,10 +166,10 @@ class DiceRoll:
         for match in dice_regex.finditer(roll):
             groups = match.groupdict()
             if groups["sign"] == "-":
-                raise ValueError('We do not yet support subtracting dice off the roll')
-            number = groups.get('number')
-            number = 1 if number == '' else int(number)
-            sides = int(groups.get('sides'))
+                raise ValueError("We do not yet support subtracting dice off the roll")
+            number = groups.get("number")
+            number = 1 if number == "" else int(number)
+            sides = int(groups.get("sides"))
             dice.extend([sides] * number)
 
         # Match the modifier
@@ -154,8 +179,14 @@ class DiceRoll:
         else:
             modifier = 0
 
-        return cls(dice, modifier, reroll_ones=reroll_ones, reroll_twos=reroll_twos,
-                   advantage=advantage, disadvantage=disadvantage)
+        return cls(
+            dice,
+            modifier,
+            reroll_ones=reroll_ones,
+            reroll_twos=reroll_twos,
+            advantage=advantage,
+            disadvantage=disadvantage,
+        )
 
     @property
     def roll_description(self) -> str:
@@ -177,14 +208,17 @@ class DiceRoll:
             desc += " re-rolling twos"
         elif self.reroll_ones:
             desc += " re-rolling ones"
-        roll_desc = f'{dice_desc}{desc}'
+        roll_desc = f"{dice_desc}{desc}"
         return roll_desc
 
     @property
     def dice_description(self):
         """Description of the dice which were rolled and the modifier"""
-        coll_dice = [f'{count}d{sides}' for sides, count in sorted(self._dice.items(), key=lambda x: -x[0])]
-        return f'{"+".join(coll_dice)}{self.modifier:+d}'
+        coll_dice = [
+            f"{count}d{sides}"
+            for sides, count in sorted(self._dice.items(), key=lambda x: -x[0])
+        ]
+        return f"{'+'.join(coll_dice)}{self.modifier:+d}"
 
     def __str__(self):
-        return f'{self.roll_description} = {self.value}'
+        return f"{self.roll_description} = {self.value}"

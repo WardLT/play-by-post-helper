@@ -8,7 +8,7 @@ from modron.db import ModronState
 
 @fixture
 def state_path(tmpdir):
-    state_path = Path(tmpdir) / 'state.yml'
+    state_path = Path(tmpdir) / "state.yml"
     ModronState().save(state_path)
     return state_path
 
@@ -30,5 +30,5 @@ def test_active_character(guild_id, run_in_repo_root, player_id):
     assert state.get_active_character(guild_id, player_id)[1].player == player_id
 
     # Make sure the character name was stored
-    assert state.characters[guild_id][player_id] == 'adrianna'
+    assert state.characters[guild_id][player_id] == "adrianna"
     assert state.get_active_character(guild_id, player_id)[1].player == player_id

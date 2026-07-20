@@ -22,18 +22,24 @@ def main(testing: bool = False):
 
     # Write logs only in test mode
     if not testing:
-        logging.basicConfig(level=logging.INFO,
-                            format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-                            handlers=[RotatingFileHandler('modron.log', mode='a',
-                                                          maxBytes=1024 * 1024 * 2,
-                                                          backupCount=1),
-                                      logging.StreamHandler(sys.stdout)])
-    logger.info('Started the Modron service, about to attempt to connect to Discord')
+        logging.basicConfig(
+            level=logging.INFO,
+            format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+            handlers=[
+                RotatingFileHandler(
+                    "modron.log", mode="a", maxBytes=1024 * 1024 * 2, backupCount=1
+                ),
+                logging.StreamHandler(sys.stdout),
+            ],
+        )
+    logger.info("Started the Modron service, about to attempt to connect to Discord")
 
     # Get the secure tokens
-    BOT_TOKEN = os.environ.get('BOT_TOKEN')
+    BOT_TOKEN = os.environ.get("BOT_TOKEN")
     if BOT_TOKEN is None:
-        raise ValueError('Bot token not found. Set the BOT_TOKEN environmental variable')
+        raise ValueError(
+            "Bot token not found. Set the BOT_TOKEN environmental variable"
+        )
 
     # Create a bot with the correct intents
     intents = Intents.default()
@@ -49,7 +55,7 @@ def main(testing: bool = False):
         CharacterSheet(),
         ReminderModule(),
         StatisticModule(),
-        NPCGenerator()
+        NPCGenerator(),
     ]
     attach_commands(bot, modules)
 

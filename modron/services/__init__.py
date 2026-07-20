@@ -1,4 +1,5 @@
 """Persistent processes that perform pre-defined projects periodically"""
+
 from abc import ABCMeta, abstractmethod
 from datetime import datetime
 from asyncio import Event, wait_for
@@ -42,12 +43,16 @@ class BaseService(metaclass=ABCMeta):
         # Compute the amount of remaining time
         remaining_time = (wake_time - datetime.now()).total_seconds()
         if remaining_time <= 0:
-            logger.warning(f'Requested a wake time that is {-remaining_time:.2f}s in the past.')
+            logger.warning(
+                f"Requested a wake time that is {-remaining_time:.2f}s in the past."
+            )
             return
 
         # Sleep for the maximum allowable time smaller
         #  than the amount of remaining time
-        logger.info(f'Sleeping until {wake_time.isoformat()}, {humanize.naturaltime(wake_time)}.')
+        logger.info(
+            f"Sleeping until {wake_time.isoformat()}, {humanize.naturaltime(wake_time)}."
+        )
         try:
             await wait_for(self.stop.wait(), remaining_time)
         except TimeoutError:

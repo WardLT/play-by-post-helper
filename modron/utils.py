@@ -21,7 +21,7 @@ def get_version() -> str:
 
     lib_path = Path(__file__).parent
     py_files = sorted(lib_path.rglob("*.py"))
-    logger.info(f'Computing hash over {len(py_files)} Python files')
+    logger.info(f"Computing hash over {len(py_files)} Python files")
     hasher = sha1()
     for file in py_files:
         hasher.update(file.read_bytes())

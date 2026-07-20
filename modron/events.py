@@ -1,4 +1,5 @@
 """Functions used to respond to events"""
+
 import logging
 import platform
 from datetime import datetime
@@ -11,7 +12,9 @@ from modron.slack import BotClient
 logger = logging.getLogger(__name__)
 
 
-def status_check(event, clients: Dict[str, BotClient], start_time: datetime = datetime.now()):
+def status_check(
+    event, clients: Dict[str, BotClient], start_time: datetime = datetime.now()
+):
     """Reply to a message event with a status check
 
     Args:
@@ -23,7 +26,7 @@ def status_check(event, clients: Dict[str, BotClient], start_time: datetime = da
     # Determine the team and get the appropriate client
     team_id = event["team_id"]
     client = clients[team_id]
-    logger.info(f'Received a status check event from {team_id}')
+    logger.info(f"Received a status check event from {team_id}")
 
     # Figure out where this came from
     reply_channel = event["event"]["channel"]
@@ -33,9 +36,9 @@ def status_check(event, clients: Dict[str, BotClient], start_time: datetime = da
         return
 
     # Reply back with something
-    logger.info(f'Received a direct message from {sender}')
+    logger.info(f"Received a direct message from {sender}")
     client.chat_postMessage(
         channel=reply_channel,
-        text=f'Hello! I\'ve been awake {humanize.naturaldelta(datetime.now() - start_time)}'
-             f' on {platform.node()}'
+        text=f"Hello! I've been awake {humanize.naturaldelta(datetime.now() - start_time)}"
+        f" on {platform.node()}",
     )

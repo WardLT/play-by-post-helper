@@ -24,7 +24,7 @@ def guild_id() -> int:
 
 @fixture()
 def player_id() -> int:
-    """ID of player used """
+    """ID of player used"""
     return 854826609101111317
 
 
@@ -51,9 +51,9 @@ def run_in_repo_root(repo_root):
 
 @async_fixture()
 async def bot() -> ModronClient:
-    token = os.environ.get('BOT_TOKEN', None)
+    token = os.environ.get("BOT_TOKEN", None)
     if token is None:
-        raise ValueError('Cannot find Auth token')
+        raise ValueError("Cannot find Auth token")
     client = ModronClient(command_prefix="/", intents=Intents.default())
     client.testing = True
 

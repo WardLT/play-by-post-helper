@@ -1,4 +1,5 @@
-"""Functions to load """
+"""Functions to load"""
+
 from pathlib import Path
 from typing import List, Tuple
 

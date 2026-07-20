@@ -1,4 +1,5 @@
 """Utilities for evaluating the fairness of die"""
+
 from typing import List, Union, Tuple
 
 from scipy.linalg import solve
@@ -16,10 +17,10 @@ def _pretty_multiplier(x: float) -> str:
         A humanized version of it
     """
     if x > 100:
-        return f'{x:.0f}x'
+        return f"{x:.0f}x"
     elif x > 2:
-        return f'{x:.1f}x'
-    return f'{(x-1)*100:.1f}%'
+        return f"{x:.1f}x"
+    return f"{(x - 1) * 100:.1f}%"
 
 
 # Dice models
@@ -57,7 +58,9 @@ class DieModel:
         """Get the allowed bounds for the parameters"""
         raise NotImplementedError()
 
-    def compute_likelihood(self, rolls: Union[np.ndarray, int, List[int]]) -> np.ndarray:
+    def compute_likelihood(
+        self, rolls: Union[np.ndarray, int, List[int]]
+    ) -> np.ndarray:
         """Compute the likelihood of one or more dice rolls
 
         Args:
@@ -95,9 +98,11 @@ class FairDie(DieModel):
     def get_bounds(self) -> List[Tuple[float, float]]:
         return []
 
-    def compute_likelihood(self, rolls: Union[np.ndarray, int, List[int]]) -> np.ndarray:
+    def compute_likelihood(
+        self, rolls: Union[np.ndarray, int, List[int]]
+    ) -> np.ndarray:
         x = np.zeros_like(rolls, dtype=float)
-        x += 1. / self.n_faces
+        x += 1.0 / self.n_faces
         return x
 
 
@@ -119,24 +124,28 @@ class SlantedDie(DieModel):
         if self.weight > 1:
             return f"Large values are {_pretty_multiplier(self.weight)} more likely than small."
         else:
-            return f"Small values are {_pretty_multiplier(1. / self.weight)} more likely than large."
+            return f"Small values are {_pretty_multiplier(1.0 / self.weight)} more likely than large."
 
     def get_params(self) -> List[float]:
         return [self.weight]
 
     def set_params(self, x: List[float]):
-        self.weight, = x
+        (self.weight,) = x
 
     def get_bounds(self) -> List[Tuple[float, float]]:
         return [(0.001, 1000)]
 
-    def compute_likelihood(self, rolls: Union[np.ndarray, int, List[int]]) -> np.ndarray:
+    def compute_likelihood(
+        self, rolls: Union[np.ndarray, int, List[int]]
+    ) -> np.ndarray:
         # Get slope the low- and high-values
-        start = 2. / (self.weight + 1)
+        start = 2.0 / (self.weight + 1)
         slope = (self.weight * start - start) / (self.n_faces - 1)
 
         # Compute the probability for each roll
-        return np.multiply(1. / self.n_faces, start + np.multiply(slope, np.subtract(rolls, 1)))
+        return np.multiply(
+            1.0 / self.n_faces, start + np.multiply(slope, np.subtract(rolls, 1))
+        )
 
 
 class ExtremeDie(DieModel):
@@ -156,10 +165,10 @@ class ExtremeDie(DieModel):
         if self.extremity > 1:
             return f"Extreme values are {_pretty_multiplier(self.extremity)} more likely than average."
         else:
-            return f"Average values are {_pretty_multiplier(1. / self.extremity)} more likely than extreme."
+            return f"Average values are {_pretty_multiplier(1.0 / self.extremity)} more likely than extreme."
 
     def set_params(self, x: List[float]):
-        self.extremity, = x
+        (self.extremity,) = x
 
     def get_params(self) -> List[float]:
         return [self.extremity]
@@ -167,7 +176,9 @@ class ExtremeDie(DieModel):
     def get_bounds(self) -> List[Tuple[float, float]]:
         return [(0.001, 1000)]
 
-    def compute_likelihood(self, rolls: Union[np.ndarray, int, List[int]]) -> np.ndarray:
+    def compute_likelihood(
+        self, rolls: Union[np.ndarray, int, List[int]]
+    ) -> np.ndarray:
         # Compute the curvature
         #  Let m be the average value: m = (d - 1) / 2 + 1 = 0.5 * (d + 1)
         #  Assume p(x) ~ a * (x - m) ** 2 + c
@@ -177,10 +188,13 @@ class ExtremeDie(DieModel):
         #  Let: sum_i=1^d p(i) = 1
         #  Eq 2: a * sum_i=1^d (i - m) ** 2 + d * c = 1
         m = 0.5 * (self.n_faces + 1)
-        a, c = solve([
-            [(1 - m) ** 2, 1 - self.extremity],
-            [np.power(np.arange(1, self.n_faces + 1) - m, 2).sum(), self.n_faces]
-        ], [0, 1])
+        a, c = solve(
+            [
+                [(1 - m) ** 2, 1 - self.extremity],
+                [np.power(np.arange(1, self.n_faces + 1) - m, 2).sum(), self.n_faces],
+            ],
+            [0, 1],
+        )
 
         return a * np.power(np.subtract(rolls, m), 2) + c
 
@@ -203,7 +217,10 @@ def fit_model(rolls: List[int], die_model: DieModel) -> float:
     def nll(x):
         die_model.set_params(x)
         return die_model.compute_neg_log_likelihood(rolls)
-    fx = minimize(nll, die_model.get_params(), method='powell', bounds=die_model.get_bounds())
+
+    fx = minimize(
+        nll, die_model.get_params(), method="powell", bounds=die_model.get_bounds()
+    )
 
     # Set the parameters
     die_model.set_params(fx.x)
@@ -217,10 +234,12 @@ class DieModelSummary(BaseModel):
     model_name: str = Field(..., description="Name of the model")
     nll: float = Field(..., description="Negative log-likelihood of the model fitting")
     description: str = Field(..., description="Short description for the model")
-    likelihoods: List[float] = Field(..., description="Likelihoods for each value of die")
+    likelihoods: List[float] = Field(
+        ..., description="Likelihoods for each value of die"
+    )
 
     @classmethod
-    def from_fitting(cls, rolls: List[int], model: DieModel) -> 'DieModelSummary':
+    def from_fitting(cls, rolls: List[int], model: DieModel) -> "DieModelSummary":
         """Create a die summary
 
         Args:
@@ -236,7 +255,7 @@ class DieModelSummary(BaseModel):
             model_name=model.__class__.__name__,
             nll=nll,
             description=model.description,
-            likelihoods=model.likelihoods
+            likelihoods=model.likelihoods,
         )
 
 
@@ -245,10 +264,12 @@ class DiceRollStatistics(BaseModel):
 
     rolls: List[int] = Field(..., description="Values of all of the rolls")
     num_faces: int = Field(..., description="Number of faces on the die")
-    models: List[DieModelSummary] = Field(..., description="Description of the models. Sorted by fitness")
+    models: List[DieModelSummary] = Field(
+        ..., description="Description of the models. Sorted by fitness"
+    )
 
     @classmethod
-    def from_rolls(cls, num_faces: int, rolls: List[int]) -> 'DiceRollStatistics':
+    def from_rolls(cls, num_faces: int, rolls: List[int]) -> "DiceRollStatistics":
         """Generate a summary of a series of rolls
 
         Args:
@@ -257,12 +278,14 @@ class DiceRollStatistics(BaseModel):
         """
 
         # Run the models
-        fits = [DieModelSummary.from_fitting(rolls, model)
-                for model in [FairDie(num_faces), SlantedDie(num_faces), ExtremeDie(num_faces)]]
+        fits = [
+            DieModelSummary.from_fitting(rolls, model)
+            for model in [
+                FairDie(num_faces),
+                SlantedDie(num_faces),
+                ExtremeDie(num_faces),
+            ]
+        ]
         fits = sorted(fits, key=lambda x: x.nll)  # Sort by fitness
 
-        return DiceRollStatistics(
-            rolls=rolls,
-            num_faces=num_faces,
-            models=fits
-        )
+        return DiceRollStatistics(rolls=rolls, num_faces=num_faces, models=fits)

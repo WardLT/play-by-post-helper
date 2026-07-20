@@ -1,4 +1,5 @@
 """Definition of the bot"""
+
 from datetime import timedelta
 from typing import List, Optional
 import logging
@@ -26,7 +27,7 @@ class ModronClient(Bot):
 
     async def on_ready(self):
         """Start the services when the bot is ready"""
-        logger.info(f'Logged on as {self.user}')
+        logger.info(f"Logged on as {self.user}")
 
         # If testing, do nothing
         if self.testing:
@@ -34,7 +35,7 @@ class ModronClient(Bot):
 
         # Determine whether we have launched services. If not, do nothing!
         if self.services is not None:
-            logger.info('Connection already made, so will not relaunch services')
+            logger.info("Connection already made, so will not relaunch services")
             return
         self.services = []
 
@@ -43,7 +44,9 @@ class ModronClient(Bot):
         state = ModronState().load()
         was_updated = False
         if state.library_version != my_version:
-            logger.info(f'Library has been updated since last boot. New version: {my_version}')
+            logger.info(
+                f"Library has been updated since last boot. New version: {my_version}"
+            )
             was_updated = True
             state.library_version = my_version
             state.save()
@@ -54,37 +57,44 @@ class ModronClient(Bot):
 
             # Start the reminder thread
             if team_config.reminders:
-                reminder = ReminderService(guild, team_config.reminder_channel,
-                                           team_config.watch_channels)
+                reminder = ReminderService(
+                    guild, team_config.reminder_channel, team_config.watch_channels
+                )
                 self.loop.create_task(reminder.run())
-                logger.info(f'Launched reminder service for {team_config.name}')
+                logger.info(f"Launched reminder service for {team_config.name}")
                 self.services.append(reminder)
             else:
-                logger.info(f'No reminders for {team_config.name}')
+                logger.info(f"No reminders for {team_config.name}")
 
             # Start the backup thread
             if len(team_config.backup_channels) > 0:
-                backup = BackupService(guild,
-                                       backup_dir=config.backup_dir,
-                                       frequency=timedelta(days=1),
-                                       channels=team_config.backup_channels)
+                backup = BackupService(
+                    guild,
+                    backup_dir=config.backup_dir,
+                    frequency=timedelta(days=1),
+                    channels=team_config.backup_channels,
+                )
                 self.loop.create_task(backup.run())
                 self.services.append(backup)
-                logger.info(f'Launched backup service for {team_config.name}')
+                logger.info(f"Launched backup service for {team_config.name}")
             else:
-                logger.info(f'No backup for {team_config.name}')
+                logger.info(f"No backup for {team_config.name}")
 
             # Make a hello message, if we're not in testing mode
             ooc_channel = utils.get(guild.channels, name=team_config.ooc_channel)
             if was_updated:
-                await ooc_channel.send('I have been leveled up. My summoner knows my new powers')
+                await ooc_channel.send(
+                    "I have been leveled up. My summoner knows my new powers"
+                )
             else:
-                await ooc_channel.send('I have been re-summoned. Your incense was appreciated. 🤖')
+                await ooc_channel.send(
+                    "I have been re-summoned. Your incense was appreciated. 🤖"
+                )
 
-        logger.info('Successfully started Modron.')
+        logger.info("Successfully started Modron.")
 
     async def on_disconnect(self):
-        logger.warning('Disconnected from Discord service')
+        logger.warning("Disconnected from Discord service")
 
     async def on_connect(self):
-        logger.info('Connected to Discord service')
+        logger.info("Connected to Discord service")

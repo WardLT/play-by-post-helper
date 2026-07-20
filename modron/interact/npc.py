@@ -1,4 +1,5 @@
 """NPC generator for the DM"""
+
 import logging
 from tempfile import TemporaryDirectory
 from argparse import ArgumentParser, Namespace
@@ -14,13 +15,13 @@ from modron.interact import InteractionModule
 from modron.npc import generate_npc
 from modron.config import config
 
-_description = '''Generate a randomized NPC
+_description = """Generate a randomized NPC
 
-Follows the method used by MAB to create NPCs for Kaluth'''
+Follows the method used by MAB to create NPCs for Kaluth"""
 
 logger = logging.getLogger(__name__)
 
-_table_template = '''<!doctype html>
+_table_template = """<!doctype html>
 <html>
 <head>
 <!-- Latest compiled and minified CSS -->
@@ -41,7 +42,7 @@ _table_template = '''<!doctype html>
 <body>
 $content
 </body>
-</html>'''
+</html>"""
 
 
 def generate_and_render_npcs(location: str, n: int) -> str:
@@ -60,13 +61,16 @@ def generate_and_render_npcs(location: str, n: int) -> str:
     # Render an HTML table
     headers = list(npcs[0].keys())
     table = [[x[k] for k in headers] for x in npcs]
-    table_content = tabulate(table, headers, tablefmt='html')
+    table_content = tabulate(table, headers, tablefmt="html")
 
     # Add in the style header
-    table_content = table_content.replace("<table>", "<table class=\"table table-striped\">")
+    table_content = table_content.replace(
+        "<table>", '<table class="table table-striped">'
+    )
 
-    return Template(_table_template).substitute(title=f'{n} NPCs from {location}',
-                                                content=table_content)
+    return Template(_table_template).substitute(
+        title=f"{n} NPCs from {location}", content=table_content
+    )
 
 
 class NPCGenerator(InteractionModule):
@@ -74,35 +78,41 @@ class NPCGenerator(InteractionModule):
 
     def __init__(self):
         super().__init__(
-            name='npcgen',
-            help_string='Generate a new NPC',
-            description=_description
+            name="npcgen", help_string="Generate a new NPC", description=_description
         )
 
     def register_argparse(self, parser: ArgumentParser):
-        parser.add_argument('n', help='Number of NPCs to generate', type=int, default=1)
-        parser.add_argument('--location', '-l', help='Which demographic template to use',
-                            default='default', choices=config.npc_race_dist.keys(), type=str)
+        parser.add_argument("n", help="Number of NPCs to generate", type=int, default=1)
+        parser.add_argument(
+            "--location",
+            "-l",
+            help="Which demographic template to use",
+            default="default",
+            choices=config.npc_race_dist.keys(),
+            type=str,
+        )
 
     async def interact(self, args: Namespace, context: Context):
         # Log the interaction
-        logger.info(f'{context.author} requested to make {args.n} NPCs from {args.location}')
+        logger.info(
+            f"{context.author} requested to make {args.n} NPCs from {args.location}"
+        )
 
         # Make the HTML table
         npc_table = generate_and_render_npcs(args.location, args.n)
 
         with TemporaryDirectory() as td:
             # Convert the table to PDF
-            filename = f'npcs_{args.n}_{args.location}.pdf'
+            filename = f"npcs_{args.n}_{args.location}.pdf"
             pdf_path = os.path.join(td, filename)
-            pdfkit.from_string(npc_table, pdf_path, options={
-                'orientation': 'landscape',
-                'page-size': 'Letter'
-            })
+            pdfkit.from_string(
+                npc_table,
+                pdf_path,
+                options={"orientation": "landscape", "page-size": "Letter"},
+            )
 
             # Upload it as a file
             file = File(pdf_path, filename=filename)
             await context.reply(
-                f'The {args.n} NPCs from {args.location} you requested',
-                file=file
+                f"The {args.n} NPCs from {args.location} you requested", file=file
             )
