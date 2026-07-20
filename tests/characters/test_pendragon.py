@@ -4,7 +4,7 @@ from pytest import fixture, raises
 
 from modron.characters.pendragon import PendragonCharacter, HasExtras
 
-_alek_path = Path(__file__).parent / '../../characters/pendragon/alek.yml'
+_alek_path = Path(__file__).parent / "../../characters/pendragon/alek.yml"
 
 
 @fixture()
@@ -16,17 +16,26 @@ def test_traits(alek):
     """Make sure the traits all add to 20!"""
 
     pairs = [
-        ('chaste', 'lustful'), ('energetic', 'lazy'), ('forgiving', 'vengeful'), ('generous', 'selfish'),
-        ('honest', 'deceitful'), ('just', 'arbitrary'), ('merciful', 'cruel'), ('modest', 'proud'),
-        ('prudent', 'reckless'), ('spiritual', 'worldly'), ('temperate', 'indulgent'), ('trusting', 'suspicious'),
-        ('valorous', 'cowardly')
+        ("chaste", "lustful"),
+        ("energetic", "lazy"),
+        ("forgiving", "vengeful"),
+        ("generous", "selfish"),
+        ("honest", "deceitful"),
+        ("just", "arbitrary"),
+        ("merciful", "cruel"),
+        ("modest", "proud"),
+        ("prudent", "reckless"),
+        ("spiritual", "worldly"),
+        ("temperate", "indulgent"),
+        ("trusting", "suspicious"),
+        ("valorous", "cowardly"),
     ]
     for virtue, vice in pairs:
         assert getattr(alek.traits, virtue) + getattr(alek.traits, vice) == 20
 
-    assert alek.traits.get_religious_bonus('christian') == 13 + 10 + 10 + 13 + 14 + 8
-    assert alek.traits.get_religious_bonus('pagan') == 15 + 13 + 16 + 7 + 7 + 8
-    assert alek.traits.get_religious_bonus('wodinic') == 13 + 6 + 7 + 11 + 15 + 12
+    assert alek.traits.get_religious_bonus("christian") == 13 + 10 + 10 + 13 + 14 + 8
+    assert alek.traits.get_religious_bonus("pagan") == 15 + 13 + 16 + 7 + 7 + 8
+    assert alek.traits.get_religious_bonus("wodinic") == 13 + 6 + 7 + 11 + 15 + 12
 
     assert alek.traits.chivalry_bonus == 15 + 13 + 8 + 10 + 13 + 15
 
@@ -34,7 +43,7 @@ def test_traits(alek):
 def test_passions(alek):
     assert alek.passions.hate is None
     assert alek.passions.concern_commoners == 6
-    assert 'concern_commoners' in alek.passions.model_dump()
+    assert "concern_commoners" in alek.passions.model_dump()
 
 
 def test_statistics(alek):
@@ -47,19 +56,19 @@ def test_statistics(alek):
 
 
 def test_extras():
-    HasExtras.model_validate({'a': 1})
-    with raises(ValueError, match='a is a <class \'str'):
-        HasExtras.model_validate({'a': 'a'})
+    HasExtras.model_validate({"a": 1})
+    with raises(ValueError, match="a is a <class 'str"):
+        HasExtras.model_validate({"a": "a"})
 
 
 def test_describe(alek):
-    assert alek.describe_ability('damage').endswith('d6')
-    assert alek.describe_ability('healing rate').endswith('per week')
-    assert alek.describe_ability('move rate').endswith('per round')
-    assert alek.describe_ability('unconscious').isdigit()
-    assert alek.describe_ability('major_wound').isdigit()
-    assert alek.describe_ability('wodinic').isdigit()
-    assert alek.describe_ability('chivalry').isdigit()
-    assert alek.describe_ability('chaste').startswith('TN')
-    with raises(KeyError, match='motorbike'):
-        alek.describe_ability('motorbikes')
+    assert alek.describe_ability("damage").endswith("d6")
+    assert alek.describe_ability("healing rate").endswith("per week")
+    assert alek.describe_ability("move rate").endswith("per round")
+    assert alek.describe_ability("unconscious").isdigit()
+    assert alek.describe_ability("major_wound").isdigit()
+    assert alek.describe_ability("wodinic").isdigit()
+    assert alek.describe_ability("chivalry").isdigit()
+    assert alek.describe_ability("chaste").startswith("TN")
+    with raises(KeyError, match="motorbike"):
+        alek.describe_ability("motorbikes")

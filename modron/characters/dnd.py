@@ -1,4 +1,5 @@
 """D&D and related character sheet systems"""
+
 import re
 from enum import StrEnum
 from typing import Dict, Optional, List
@@ -21,15 +22,16 @@ def _compute_mod(score: int) -> int:
 
 class Ability(StrEnum):
     """Character abilities"""
-    STR = 'strength'
-    DEX = 'dexterity'
-    CON = 'constitution'
-    INT = 'intelligence'
-    WIS = 'wisdom'
-    CHA = 'charisma'
+
+    STR = "strength"
+    DEX = "dexterity"
+    CON = "constitution"
+    INT = "intelligence"
+    WIS = "wisdom"
+    CHA = "charisma"
 
     @classmethod
-    def match(cls, name: str) -> 'Ability':
+    def match(cls, name: str) -> "Ability":
         """Match a name to known ability
 
         Args:
@@ -46,27 +48,52 @@ class Ability(StrEnum):
 
 class Alignment(StrEnum):
     """Possible alignments"""
-    LAWFUL_GOOD = 'lawful good'
-    GOOD = 'good'
-    CHAOTIC_GOOD = 'chaotic good'
-    LAWFUL_NEUTRAL = 'lawful'
-    NEUTRAL = 'neutral'
-    CHAOTIC_NEUTRAL = 'chaotic neutral'
-    LAWFUL_EVIL = 'lawful evil'
-    EVIL = 'evil'
-    CHAOTIC_EVIL = 'chaotic evil'
+
+    LAWFUL_GOOD = "lawful good"
+    GOOD = "good"
+    CHAOTIC_GOOD = "chaotic good"
+    LAWFUL_NEUTRAL = "lawful"
+    NEUTRAL = "neutral"
+    CHAOTIC_NEUTRAL = "chaotic neutral"
+    LAWFUL_EVIL = "lawful evil"
+    EVIL = "evil"
+    CHAOTIC_EVIL = "chaotic evil"
 
 
 _5e_skills = {
-    'acrobatics': Ability.DEX, 'animal handling': Ability.WIS, 'arcana': Ability.INT, 'athletics': Ability.STR,
-    'deception': Ability.CHA, 'history': Ability.INT, 'insight': Ability.WIS, 'intimidation': Ability.CHA,
-    'investigation': Ability.INT, 'medicine': Ability.WIS, 'nature': Ability.INT, 'perception': Ability.WIS,
-    'performance': Ability.CHA, 'persuasion': Ability.CHA, 'religion': Ability.INT, 'sleight of hand': Ability.DEX,
-    'stealth': Ability.DEX, 'survival': Ability.WIS
+    "acrobatics": Ability.DEX,
+    "animal handling": Ability.WIS,
+    "arcana": Ability.INT,
+    "athletics": Ability.STR,
+    "deception": Ability.CHA,
+    "history": Ability.INT,
+    "insight": Ability.WIS,
+    "intimidation": Ability.CHA,
+    "investigation": Ability.INT,
+    "medicine": Ability.WIS,
+    "nature": Ability.INT,
+    "perception": Ability.WIS,
+    "performance": Ability.CHA,
+    "persuasion": Ability.CHA,
+    "religion": Ability.INT,
+    "sleight of hand": Ability.DEX,
+    "stealth": Ability.DEX,
+    "survival": Ability.WIS,
 }
 _class_hit_die = {
-    'artificer': 8, 'barbarian': 12, 'bard': 8, 'cleric': 8, 'druid': 8, 'fighter': 10, 'monk': 8, 'paladin': 10,
-    'ranger': 10, 'rogue': 8, 'sorcerer': 6, 'warlock': 8, 'wizard': 6
+    "artificer": 8,
+    "barbarian": 12,
+    "bard": 8,
+    "cleric": 8,
+    "druid": 8,
+    "fighter": 10,
+    "monk": 8,
+    "paladin": 10,
+    "ranger": 10,
+    "rogue": 8,
+    "sorcerer": 6,
+    "warlock": 8,
+    "wizard": 6,
 }
 """Hit die for each 5E class"""
 
@@ -79,42 +106,65 @@ class DnD5Character(Character):
     maximum but not the current hit points and the skill ist but not the languages."""
 
     # Basic information about the character
-    classes: Dict[str, int] = Field(..., description='Levels in different classes')
-    background: str = Field(None, description='Character background')
-    race: str = Field(None, description='Race of the character')
-    alignment: Alignment = Field(..., description='Alignment for the character')
+    classes: Dict[str, int] = Field(..., description="Levels in different classes")
+    background: str = Field(None, description="Character background")
+    race: str = Field(None, description="Race of the character")
+    alignment: Alignment = Field(..., description="Alignment for the character")
 
     # Attributes
-    strength: int = Field(..., description='Physical strength of the character', ge=0)
-    dexterity: int = Field(..., description='Gracefulness of the character', ge=0)
-    constitution: int = Field(..., description='Resistance to physical adversity', ge=0)
-    intelligence: int = Field(..., description='Ability to apply knowledge and skills', ge=0)
-    wisdom: int = Field(..., description='Aptitude towards using knowledge to make good decisions', ge=0)
-    charisma: int = Field(..., description='Proficiency with bringing people to agreement with you', ge=0)
+    strength: int = Field(..., description="Physical strength of the character", ge=0)
+    dexterity: int = Field(..., description="Gracefulness of the character", ge=0)
+    constitution: int = Field(..., description="Resistance to physical adversity", ge=0)
+    intelligence: int = Field(
+        ..., description="Ability to apply knowledge and skills", ge=0
+    )
+    wisdom: int = Field(
+        ..., description="Aptitude towards using knowledge to make good decisions", ge=0
+    )
+    charisma: int = Field(
+        ..., description="Proficiency with bringing people to agreement with you", ge=0
+    )
 
     # Combat attributes
-    speed: int = Field(30, description='Speed in feet per round')
-    armor_class: int = Field(..., description='Resistance to physical attacks.')  # Eventually make derived
-    current_hit_points: Optional[int] = Field(..., description='Current hit points. Does not include temporary', ge=0)
-    hit_points: int = Field(..., description='Maximum number of hit points', gt=0)
-    temporary_hit_points: int = Field(0, description='Amount of temporary hit points.', ge=0)
-    hit_points_adjustment: int = Field(0, description='Adjustments to the hit point maximum. '
-                                                      'Can be positive or negative')
+    speed: int = Field(30, description="Speed in feet per round")
+    armor_class: int = Field(
+        ..., description="Resistance to physical attacks."
+    )  # Eventually make derived
+    current_hit_points: Optional[int] = Field(
+        ..., description="Current hit points. Does not include temporary", ge=0
+    )
+    hit_points: int = Field(..., description="Maximum number of hit points", gt=0)
+    temporary_hit_points: int = Field(
+        0, description="Amount of temporary hit points.", ge=0
+    )
+    hit_points_adjustment: int = Field(
+        0,
+        description="Adjustments to the hit point maximum. Can be positive or negative",
+    )
 
     # Abilities
-    saving_throws: List[Ability] = Field(..., description='Saving throws for which the character is proficient')
-    custom_skills: Dict[str, Ability] = Field(dict(), description='Skills not included in 5e. '
-                                                                  'Dictionary of skill names and associated ability')
-    proficiencies: List[str] = Field(..., description='Names of skills in which the characters is proficient.')
-    expertise: List[str] = Field([], description='Skills in which the character is an expert')
+    saving_throws: List[Ability] = Field(
+        ..., description="Saving throws for which the character is proficient"
+    )
+    custom_skills: Dict[str, Ability] = Field(
+        dict(),
+        description="Skills not included in 5e. "
+        "Dictionary of skill names and associated ability",
+    )
+    proficiencies: List[str] = Field(
+        ..., description="Names of skills in which the characters is proficient."
+    )
+    expertise: List[str] = Field(
+        [], description="Skills in which the character is an expert"
+    )
 
     # Validators for different fields
-    @field_validator('proficiencies', 'expertise', mode='after')
+    @field_validator("proficiencies", "expertise", mode="after")
     @classmethod
     def _val_lowercase(cls, v: list[str]) -> list[str]:
         return [x.lower() for x in v]
 
-    @field_validator('custom_skills', 'classes', 'roll_aliases', mode='after')
+    @field_validator("custom_skills", "classes", "roll_aliases", mode="after")
     @classmethod
     def _val_dicts(cls, v: dict):
         """Makes keys for dictionaries"""
@@ -156,7 +206,7 @@ class DnD5Character(Character):
     @property
     def initiative(self) -> int:
         output = self.dexterity_mod
-        if self.classes.get('bard', 0) >= 2:
+        if self.classes.get("bard", 0) >= 2:
             output += self.proficiency_bonus // 2
         return output
 
@@ -180,7 +230,9 @@ class DnD5Character(Character):
         if self.current_hit_points is None:
             self.full_heal()
         self.current_hit_points += amount
-        self.current_hit_points = min(self.current_hit_points, self.current_hit_point_maximum)
+        self.current_hit_points = min(
+            self.current_hit_points, self.current_hit_point_maximum
+        )
 
     def harm(self, amount: int):
         """Apply damage to this character
@@ -231,8 +283,7 @@ class DnD5Character(Character):
 
         # Make sure the hit points stays below the maximum
         self.current_hit_points = min(
-            self.current_hit_point_maximum,
-            self.current_hit_points
+            self.current_hit_point_maximum, self.current_hit_points
         )
 
     def reset_hit_point_maximum(self):
@@ -247,7 +298,7 @@ class DnD5Character(Character):
         """
         output = {}
         for cls, num in self.classes.items():
-            hit_die = f'd{_class_hit_die[cls]}'
+            hit_die = f"d{_class_hit_die[cls]}"
             if hit_die not in output:
                 output[hit_die] = num
             else:
@@ -290,7 +341,7 @@ class DnD5Character(Character):
         matched_ability = Ability.match(ability)
 
         # Look up the ability modifier
-        return getattr(self, f'{matched_ability}_mod')
+        return getattr(self, f"{matched_ability}_mod")
 
     def skill_modifier(self, name: str) -> int:
         """Get the skill modifier for a certain skill
@@ -310,15 +361,15 @@ class DnD5Character(Character):
         elif name_lower in _5e_skills:
             ability = _5e_skills[name_lower]
         else:
-            raise ValueError(f'Unrecognized skill: {name}')
-        mod = getattr(self, f'{str(ability)}_mod')
+            raise ValueError(f"Unrecognized skill: {name}")
+        mod = getattr(self, f"{str(ability)}_mod")
 
         # Add proficiency or expertise
         if name_lower in self.expertise:
             return mod + self.proficiency_bonus * 2
         elif name_lower in self.proficiencies:
             return mod + self.proficiency_bonus
-        elif self.classes.get('bard', 0) >= 2:
+        elif self.classes.get("bard", 0) >= 2:
             return mod + self.proficiency_bonus // 2
         else:
             return mod
@@ -339,17 +390,17 @@ class DnD5Character(Character):
         # Get the proficiency bonus
         if len(words) == 1:
             word = words[0]
-            if word in ['initiative', 'init']:
+            if word in ["initiative", "init"]:
                 return self.initiative
-            elif word in ['proficiency', 'prof']:
+            elif word in ["proficiency", "prof"]:
                 return self.proficiency_bonus
 
         # Start with initiative
-        if words == ['initiative'] or words == ['init']:
+        if words == ["initiative"] or words == ["init"]:
             return self.initiative
 
         # Save
-        if 'save' in words:
+        if "save" in words:
             return self.save_modifier(words[0])
 
         # Ability check
@@ -364,7 +415,7 @@ class DnD5Character(Character):
     def describe_ability(self, ability_name: str) -> str:
         # Use the modifier
         modifier = self.lookup_modifier(ability_name)
-        return f'{modifier:+d}'
+        return f"{modifier:+d}"
 
     def get_skills_by_ability(self, ability: str) -> Dict[str, str]:
         """List out the skills for this character that use a certain base ability
@@ -379,12 +430,18 @@ class DnD5Character(Character):
         matched_ability = Ability.match(ability)
 
         # Loop over the 5e skills
-        matched_skills = [skill for skill, attr in _5e_skills.items() if attr == matched_ability]
+        matched_skills = [
+            skill for skill, attr in _5e_skills.items() if attr == matched_ability
+        ]
 
         # Match the custom skills
-        matched_skills.extend([
-            skill for skill, attr in self.custom_skills.items() if attr == matched_ability
-        ])
+        matched_skills.extend(
+            [
+                skill
+                for skill, attr in self.custom_skills.items()
+                if attr == matched_ability
+            ]
+        )
 
         # Return the outputs
         output = {}
@@ -413,11 +470,11 @@ class DnD5Character(Character):
         """
 
         # Split based on +-
-        split_description = re.split('([+-])', roll_description)
+        split_description = re.split("([+-])", roll_description)
 
         # Prepend a + sign if none provided
-        if split_description[0] not in ['-', '+']:
-            split_description.insert(0, '+')
+        if split_description[0] not in ["-", "+"]:
+            split_description.insert(0, "+")
 
         # Separate dice and
         dice = []
@@ -429,17 +486,19 @@ class DnD5Character(Character):
 
             if part.isdigit():  # It is an integer
                 mods.append(sign * int(part))
-            elif 'd' in part and any(x.isdigit() for x in part):  # It contains at least one digit and d
+            elif "d" in part and any(
+                x.isdigit() for x in part
+            ):  # It contains at least one digit and d
                 dice.append(part)
             else:  # Assume it is a modifier
                 mods.append(sign * self.lookup_modifier(part))
 
         # Combine everything together into a single dice roll
-        return f'{"+".join(dice)}{sum(mods):+d}'
+        return f"{'+'.join(dice)}{sum(mods):+d}"
 
     def create_roll(self, ability_name: str) -> str:
         if ability_name in self.roll_aliases:
             return self.substitute_modifiers(str(self.roll_aliases[ability_name]))
         else:
             modifier = self.lookup_modifier(ability_name)
-            return f'1d20{modifier:+d}'
+            return f"1d20{modifier:+d}"

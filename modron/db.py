@@ -7,6 +7,7 @@ that performance requirements will not require a formal database.
 Using YAML to store state on disk has the advantage of it being easy to
 assess and alter the server state from the command line.
 """
+
 from typing import Dict, Optional, Union
 from datetime import datetime
 from pathlib import Path
@@ -27,9 +28,11 @@ logger = logging.getLogger(__name__)
 class LastMessage(BaseModel):
     """Information about the last message"""
 
-    last_time: datetime = Field(..., description='Time the last message was sent')
-    sender: str = Field(..., description='Username of person who sent the last message')
-    channel: str = Field(..., description='Name of the channel in which the message was sent')
+    last_time: datetime = Field(..., description="Time the last message was sent")
+    sender: str = Field(..., description="Username of person who sent the last message")
+    channel: str = Field(
+        ..., description="Name of the channel in which the message was sent"
+    )
 
     @classmethod
     def from_discord(cls, message: Message):
@@ -51,14 +54,20 @@ class ModronState(BaseModel):
     """Holder for elements of Modron's configuration that can change during runtime
     or need to be persistent across restarts"""
 
-    library_version: Optional[str] = Field(None, description='Version of Modron last booted')
-    reminder_time: Dict[int, datetime] = Field(default_factory=dict,
-                                               description='Next time to check if a reminder is needed')
-    last_message: Dict[int, LastMessage] = Field(default_factory=dict, description='Information about the last message')
-    characters: Dict[int, Dict[int, str]] = Field(default_factory=dict,
-                                                  description='Character being played by each player')
+    library_version: Optional[str] = Field(
+        None, description="Version of Modron last booted"
+    )
+    reminder_time: Dict[int, datetime] = Field(
+        default_factory=dict, description="Next time to check if a reminder is needed"
+    )
+    last_message: Dict[int, LastMessage] = Field(
+        default_factory=dict, description="Information about the last message"
+    )
+    characters: Dict[int, Dict[int, str]] = Field(
+        default_factory=dict, description="Character being played by each player"
+    )
 
-    @field_validator('reminder_time', mode='after')
+    @field_validator("reminder_time", mode="after")
     @classmethod
     def convert_str_to_int(cls, value: Optional[Dict]):
         if value is not None:
@@ -66,7 +75,7 @@ class ModronState(BaseModel):
         return dict()
 
     @classmethod
-    def load(cls, path: Union[str, Path] = config.state_path) -> 'ModronState':
+    def load(cls, path: Union[str, Path] = config.state_path) -> "ModronState":
         """Load the configuration from disk
 
         Args:
@@ -74,11 +83,13 @@ class ModronState(BaseModel):
         Returns:
             State from disk
         """
-        with open(path, 'r') as fp:
+        with open(path, "r") as fp:
             data = yaml.load(fp, yaml.SafeLoader)
             return ModronState.model_validate(data)
 
-    def get_active_character(self, guild_id: int, player_id: int) -> tuple[str, Character, Path]:
+    def get_active_character(
+        self, guild_id: int, player_id: int
+    ) -> tuple[str, Character, Path]:
         """Get the active character for a player
 
         Args:
@@ -92,7 +103,7 @@ class ModronState(BaseModel):
 
         # Assemble the dictionary, if needed
         if guild_id not in self.characters:
-            logger.info(f'Initializing character dictionary for {guild_id}')
+            logger.info(f"Initializing character dictionary for {guild_id}")
             self.characters[guild_id] = dict()
 
         # Load the character's sheet already selected are already defined
@@ -101,7 +112,7 @@ class ModronState(BaseModel):
         else:
             # Pick one at random
             choice = list_available_characters(guild_id, player_id)[0]
-            logger.info(f'Chose a character at random to start with, {choice}')
+            logger.info(f"Chose a character at random to start with, {choice}")
             self.characters[guild_id][player_id] = choice
 
         sheet, path = load_character(guild_id, choice)
@@ -113,6 +124,6 @@ class ModronState(BaseModel):
         Args:
             path (str): Where to save the data
         """
-        with open(path, 'w') as fp:
+        with open(path, "w") as fp:
             # Convert to JSON so that it uses Pydantic's conversations of special types
-            yaml.dump(self.model_dump(mode='json'), fp, indent=2)
+            yaml.dump(self.model_dump(mode="json"), fp, indent=2)

@@ -16,7 +16,7 @@ Calling `modron` on the command line:
 
 ## Persistent Services
 
-Persistent services perform tasks on a scheduled basis, such as backing up chat history. 
+Persistent services perform tasks on a scheduled basis, such as backing up chat history.
 
 Each thread is based on [BaseService](../modron/services/__init__.py) class,
 which contains utility operations for pausing the thread on regular intervals.
@@ -26,16 +26,16 @@ which contains utility operations for pausing the thread on regular intervals.
 
 ## Discord Commands
 
-We discord.py's [Command](https://discordpy.readthedocs.io/en/stable/ext/commands/commands.html) 
+We discord.py's [Command](https://discordpy.readthedocs.io/en/stable/ext/commands/commands.html)
 to implement commands written using [Python's argparse](https://docs.python.org/3/library/argparse.html) with Discord.
 
 Each command is built by subclassing the [`InteractionModule`](../modron/interact/base.py).
 Implementations of this class provide a `register_argparse` that configures
-an argument parser to read the user's command and an `interact` function 
-that acts on the command given the parsed arguments and the Discord command payload. 
+an argument parser to read the user's command and an `interact` function
+that acts on the command given the parsed arguments and the Discord command payload.
 
 The parser relies on a subclassed version of the Python's
-`ArgumentParser` that raises a special exception type holding the exception 
+`ArgumentParser` that raises a special exception type holding the exception
 string rather than printing the parser help to `stderr` and
 then calling `exit()`.
 See [`_argparse.py`](../modron/interact/_argparse.py) for details.

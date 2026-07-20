@@ -1,4 +1,5 @@
 """Get information about a specific character"""
+
 from argparse import Namespace, ArgumentParser
 import logging
 from pathlib import Path
@@ -13,26 +14,28 @@ from modron.characters.utils import list_available_characters, load_character
 
 logger = logging.getLogger(__name__)
 
-_description = '''Handles operations related to character sheets
+_description = """Handles operations related to character sheets
 
 TBD: You may also use this command to change which character you are playing,
 which will dictate the character sheet it reads.
-'''
+"""
 
-_ability_description = '''Gets the dice and modifier for a certain roll.
+_ability_description = """Gets the dice and modifier for a certain roll.
 
 Modron will attempt to infer the what you are looking for from the following options:'
 - _Ability check_. List the ability and if it is at proficiency. Ex: "dex" or "prof dex" or "dexterity proficiency"
 - _Save_. Name the ability (full name or abbreviation is fine)
-- _Skill check_. Give the name of the skill'''
+- _Skill check_. Give the name of the skill"""
 
-_hp_description = '''Keep track of the HP for a character
+_hp_description = """Keep track of the HP for a character
 
 This command can be used to get current HP, apply damage or healing, or
-make temporary changes to the HP'''
+make temporary changes to the HP"""
 
 
-def load_sheet(context: Context, character: Optional[str] = None) -> Tuple[Character, Path]:
+def load_sheet(
+    context: Context, character: Optional[str] = None
+) -> Tuple[Character, Path]:
     """Load the requested character sheet
 
     Args:
@@ -44,8 +47,8 @@ def load_sheet(context: Context, character: Optional[str] = None) -> Tuple[Chara
     # Get the characters available for this player
     available_chars = list_available_characters(context.guild.id, context.author.id)
     if len(available_chars) == 0:
-        logger.warning(f'No character found for {context.author.name}')
-        raise ValueError('You have not defined a character yet. Talk to Logan.')
+        logger.warning(f"No character found for {context.author.name}")
+        raise ValueError("You have not defined a character yet. Talk to Logan.")
 
     # Determine which character is being played
     if character is not None:
@@ -56,12 +59,16 @@ def load_sheet(context: Context, character: Optional[str] = None) -> Tuple[Chara
             if sheet.player != context.author.id:
                 raise ValueError()
         except (FileNotFoundError, ValueError):
-            raise ValueError(f'You are not authorized to play: {character}')
+            raise ValueError(f"You are not authorized to play: {character}")
     else:
         # Load the state variable if not
         state = ModronState.load()
-        _, sheet, sheet_path = state.get_active_character(context.guild.id, context.author.id)
-        logger.info(f'User {context.author} mapped to character {sheet.name}. Loaded their sheet')
+        _, sheet, sheet_path = state.get_active_character(
+            context.guild.id, context.author.id
+        )
+        logger.info(
+            f"User {context.author} mapped to character {sheet.name}. Loaded their sheet"
+        )
     return sheet, sheet_path
 
 
@@ -69,42 +76,60 @@ class CharacterSheet(InteractionModule):
     """Handles interactions related to a character sheet"""
 
     def __init__(self):
-        super().__init__(name='character', help_string='Work with character sheets', description=_description)
+        super().__init__(
+            name="character",
+            help_string="Work with character sheets",
+            description=_description,
+        )
 
     def register_argparse(self, parser: ArgumentParser):
-        parser.add_argument('--character', '-c',
-                            help='Name of the character whose sheet to load', default=None)
+        parser.add_argument(
+            "--character",
+            "-c",
+            help="Name of the character whose sheet to load",
+            default=None,
+        )
 
         # Add a subparser group
-        subparsers = parser.add_subparsers(description='Available options for working with characters',
-                                           dest='char_subcommand')
+        subparsers = parser.add_subparsers(
+            description="Available options for working with characters",
+            dest="char_subcommand",
+        )
 
         # Add the "ability" command
-        ability_parser = subparsers.add_parser('ability', help='Lookup an ability for a character',
-                                               description=_ability_description)
-        ability_parser.add_argument('name', help='Which ability to look up', nargs='+')
+        ability_parser = subparsers.add_parser(
+            "ability",
+            help="Lookup an ability for a character",
+            description=_ability_description,
+        )
+        ability_parser.add_argument("name", help="Which ability to look up", nargs="+")
 
         # Add commands for controlling roll aliases
-        alias_parser = subparsers.add_parser('roll',
-                                             help='Control aliases for common types of rolls. '
-                                                  'Aliases can be a combination of ability mods, dice, '
-                                                  'proficiency, and skill modifiers. Ex: 4d6+STR', )
-        alias_subparsers = alias_parser.add_subparsers(description='Commands for adjusting aliases',
-                                                       dest='alias_subcommand')
-        alias_subparsers.add_parser('list', help='Print out the available roll aliases')
+        alias_parser = subparsers.add_parser(
+            "roll",
+            help="Control aliases for common types of rolls. "
+            "Aliases can be a combination of ability mods, dice, "
+            "proficiency, and skill modifiers. Ex: 4d6+STR",
+        )
+        alias_subparsers = alias_parser.add_subparsers(
+            description="Commands for adjusting aliases", dest="alias_subcommand"
+        )
+        alias_subparsers.add_parser("list", help="Print out the available roll aliases")
 
-        alias_rm = alias_subparsers.add_parser('remove', help='Remove an alias')
-        alias_rm.add_argument('name', help='Name of the alias to remove')
+        alias_rm = alias_subparsers.add_parser("remove", help="Remove an alias")
+        alias_rm.add_argument("name", help="Name of the alias to remove")
 
-        alias_add = alias_subparsers.add_parser('set', help='Add or edit an alias')
-        alias_add.add_argument('name', help='Name of the alias')
-        alias_add.add_argument('roll', help='Description of the roll.')
+        alias_add = alias_subparsers.add_parser("set", help="Add or edit an alias")
+        alias_add.add_argument("name", help="Name of the alias")
+        alias_add.add_argument("roll", help="Description of the roll.")
 
         # Add ability to list the available characters and update the current one
-        subparsers.add_parser('list', help='List characters available for you to play')
+        subparsers.add_parser("list", help="List characters available for you to play")
 
-        set_parser = subparsers.add_parser('set', help='Change your default character')
-        set_parser.add_argument("choice", help='Name of character you would like to play')
+        set_parser = subparsers.add_parser("set", help="Change your default character")
+        set_parser.add_argument(
+            "choice", help="Name of character you would like to play"
+        )
 
     async def interact(self, args: Namespace, context: Context):
         # Get the character sheet
@@ -113,45 +138,59 @@ class CharacterSheet(InteractionModule):
         # Switch on the chosen subcommand
         if args.char_subcommand is None:
             # Return the character sheet
-            logger.info('Reminding the user which character they are currently playing')
-            await context.reply(f'You are playing {sheet.name} (lvl {sheet.level})')
+            logger.info("Reminding the user which character they are currently playing")
+            await context.reply(f"You are playing {sheet.name} (lvl {sheet.level})")
         elif args.char_subcommand == "ability":
-            ability_name = ' '.join(args.name)
+            ability_name = " ".join(args.name)
             try:
                 description = sheet.describe_ability(ability_name)
             except ValueError:
                 logger.info(f'Ability lookup failed for "{ability_name}"')
                 await context.reply(f'Could not find ability "{ability_name}"')
                 return
-            logger.info(f'{sheet.name} has a {ability_name} of {description}')
-            await context.reply(f'{sheet.name} has a {ability_name} of {description}')
+            logger.info(f"{sheet.name} has a {ability_name} of {description}")
+            await context.reply(f"{sheet.name} has a {ability_name} of {description}")
         elif args.char_subcommand == "list":
             state = ModronState.load()
             active = state.get_active_character(context.guild.id, context.author.id)[0]
             characters = list_available_characters(context.guild.id, context.author.id)
-            await context.reply("Available characters: " + ", ".join(
-                f"{name}" + (" (_active_)" if name == active else "") for name in characters
-            ), delete_after=60)
+            await context.reply(
+                "Available characters: "
+                + ", ".join(
+                    f"{name}" + (" (_active_)" if name == active else "")
+                    for name in characters
+                ),
+                delete_after=60,
+            )
         elif args.char_subcommand == "set":
             # First make sure it's an allowed character
             available = list_available_characters(context.guild.id, context.author.id)
             if args.choice not in available:
-                await context.reply(f'{args.choice} is not within your list of characters: {", ".join(available)}',
-                                    delete_after=120)
+                await context.reply(
+                    f"{args.choice} is not within your list of characters: {', '.join(available)}",
+                    delete_after=120,
+                )
                 return
 
             # Update the state
             state = ModronState.load()
-            active, _, _ = state.get_active_character(context.guild.id, context.author.id)
+            active, _, _ = state.get_active_character(
+                context.guild.id, context.author.id
+            )
             state.characters[context.guild.id][context.author.id] = args.choice
-            await context.reply(f'Set your active character to {args.choice} from {active}', delete_after=120)
+            await context.reply(
+                f"Set your active character to {args.choice} from {active}",
+                delete_after=120,
+            )
             state.save()
         elif args.char_subcommand == "roll":
             await self.manage_aliases(context, args, sheet, path)
         else:
-            raise ValueError(f'Subcommand {args.char_subcommand} not yet implemented')
+            raise ValueError(f"Subcommand {args.char_subcommand} not yet implemented")
 
-    async def manage_aliases(self, context: Context, args: Namespace, sheet: Character, path: Path):
+    async def manage_aliases(
+        self, context: Context, args: Namespace, sheet: Character, path: Path
+    ):
         """Remove, set or list aliases for rolls
 
         Args:
@@ -162,19 +201,23 @@ class CharacterSheet(InteractionModule):
         """
 
         subcmd = args.alias_subcommand
-        if subcmd == 'list':
-            msg = f'Available rolls for {sheet.name}:\n'
-            msg += "\n".join(f'\t{name}: {roll}' for name, roll in sheet.roll_aliases.items())
+        if subcmd == "list":
+            msg = f"Available rolls for {sheet.name}:\n"
+            msg += "\n".join(
+                f"\t{name}: {roll}" for name, roll in sheet.roll_aliases.items()
+            )
             await context.reply(msg, delete_after=120)
         elif subcmd == "set":
             sheet.roll_aliases[args.name] = args.roll
             sheet.to_yaml(path)
-            await context.reply(f'Set {args.name} to mean "{args.roll}"', delete_after=120)
-        elif subcmd == 'remove':
+            await context.reply(
+                f'Set {args.name} to mean "{args.roll}"', delete_after=120
+            )
+        elif subcmd == "remove":
             if sheet.roll_aliases[args.name]:
                 sheet.roll_aliases.pop(args.name)
             sheet.to_yaml(path)
-            await context.reply(f'Removed {args.name} from aliases', delete_after=120)
+            await context.reply(f"Removed {args.name} from aliases", delete_after=120)
         else:
             raise ValueError(f'Alias subcommand "{subcmd} not yet implemented')
 
@@ -183,39 +226,64 @@ class HPTracker(InteractionModule):
     """Interaction for tracking character health"""
 
     def __init__(self):
-        super(HPTracker, self).__init__(name='hp', description=_hp_description, help_string='Track character HP')
+        super(HPTracker, self).__init__(
+            name="hp", description=_hp_description, help_string="Track character HP"
+        )
 
     def register_argparse(self, parser: ArgumentParser):
-        parser.add_argument('--character', '-c', help='Name of character whose HP to change', default=None)
+        parser.add_argument(
+            "--character",
+            "-c",
+            help="Name of character whose HP to change",
+            default=None,
+        )
 
         # Add the "hp" command
-        hp_subparsers = parser.add_subparsers(description='Available options for tracking HP', dest='hp_subcommand')
+        hp_subparsers = parser.add_subparsers(
+            description="Available options for tracking HP", dest="hp_subcommand"
+        )
 
-        heal_parser = hp_subparsers.add_parser('heal', help='Apply healing to a character')
-        heal_parser.add_argument('amount', help='Amount of healing. Can be an integer or "full".')
+        heal_parser = hp_subparsers.add_parser(
+            "heal", help="Apply healing to a character"
+        )
+        heal_parser.add_argument(
+            "amount", help='Amount of healing. Can be an integer or "full".'
+        )
 
-        harm_parser = hp_subparsers.add_parser('harm', help='Apply damage to a character')
-        harm_parser.add_argument('amount', help='Amount of damage. Must be an integer.', type=int)
+        harm_parser = hp_subparsers.add_parser(
+            "harm", help="Apply damage to a character"
+        )
+        harm_parser.add_argument(
+            "amount", help="Amount of damage. Must be an integer.", type=int
+        )
 
-        temp_parser = hp_subparsers.add_parser('temp', help='Grant temporary it points')
-        temp_parser.add_argument('amount', help='Amount of change, or "reset" to change the temporary back to zero')
+        temp_parser = hp_subparsers.add_parser("temp", help="Grant temporary it points")
+        temp_parser.add_argument(
+            "amount",
+            help='Amount of change, or "reset" to change the temporary back to zero',
+        )
 
-        max_parser = hp_subparsers.add_parser('max', help='Adjust hit point maximum')
-        max_parser.add_argument('amount', help='Amount of change, or "reset" to change the temporary back to zero')
+        max_parser = hp_subparsers.add_parser("max", help="Adjust hit point maximum")
+        max_parser.add_argument(
+            "amount",
+            help='Amount of change, or "reset" to change the temporary back to zero',
+        )
 
     async def interact(self, args: Namespace, context: Context):
         # Get the character sheet
         sheet, sheet_path = load_sheet(context, character=args.character)
 
         # Make any changes
-        change_msg = ''
+        change_msg = ""
         if args.hp_subcommand is None:
-            logger.info(f'No changes. Just printing out the HP for {sheet.name}')
+            logger.info(f"No changes. Just printing out the HP for {sheet.name}")
         elif args.hp_subcommand == "heal":
             if args.amount.lower() == "full":
                 sheet.full_heal()
                 change_msg = f"Healed back to the hit point maximum of {sheet.current_hit_point_maximum}."
-                logger.info(f"Fully healed {sheet.name} back to {sheet.current_hit_points}")
+                logger.info(
+                    f"Fully healed {sheet.name} back to {sheet.current_hit_points}"
+                )
             else:
                 try:
                     amount = int(args.amount)
@@ -225,7 +293,7 @@ class HPTracker(InteractionModule):
 
                 change_msg = f"Healed {amount} hit points."
                 sheet.heal(amount)
-                logger.info(f'Healed {sheet.name} {amount} hit points')
+                logger.info(f"Healed {sheet.name} {amount} hit points")
         elif args.hp_subcommand == "harm":
             try:
                 amount = int(args.amount)
@@ -237,11 +305,11 @@ class HPTracker(InteractionModule):
             change_msg = f"Took {amount} hit points of damage."
             if sheet.total_hit_points == 0:
                 change_msg += f" **{sheet.name} are now unconscious!**"
-            logger.info(f'Damaged {sheet.name} {amount} hit points')
+            logger.info(f"Damaged {sheet.name} {amount} hit points")
         elif args.hp_subcommand == "temp":
             if args.amount.lower() == "reset":
                 sheet.remove_temporary_hit_points()
-                change_msg = 'Removed all temporary hit points'
+                change_msg = "Removed all temporary hit points"
                 logger.info(change_msg)
             else:
                 try:
@@ -256,7 +324,7 @@ class HPTracker(InteractionModule):
         elif args.hp_subcommand == "max":
             if args.amount.lower() == "reset":
                 sheet.reset_hit_point_maximum()
-                change_msg = 'Reset hit point maximum.'
+                change_msg = "Reset hit point maximum."
                 logger.info(change_msg)
             else:
                 try:
@@ -269,19 +337,21 @@ class HPTracker(InteractionModule):
                 change_msg = f"Adjusted hit point maximum by {amount} hit points."
                 logger.info(change_msg)
         else:
-            raise ValueError(f'Subcommand {args.hp_subcommand} not yet implemented (Blame Logan)')
+            raise ValueError(
+                f"Subcommand {args.hp_subcommand} not yet implemented (Blame Logan)"
+            )
 
         # Save changes to the sheet
         if len(change_msg) > 0:
             sheet.to_yaml(sheet_path)
-            logger.info(f'Saved updated sheet to {sheet_path}')
+            logger.info(f"Saved updated sheet to {sheet_path}")
 
         # Render the status message
-        msg = ''
+        msg = ""
         if len(change_msg) > 0:
-            msg += f'{change_msg.strip()}\n\n'
-        msg += f'{sheet.name} has {sheet.total_hit_points}/{sheet.current_hit_point_maximum} hit points'
+            msg += f"{change_msg.strip()}\n\n"
+        msg += f"{sheet.name} has {sheet.total_hit_points}/{sheet.current_hit_point_maximum} hit points"
         if sheet.hit_points_adjustment != 0:
             msg += f" including a {sheet.hit_points_adjustment} change to HP maximum"
 
-        await context.send(f'||{msg}||')
+        await context.send(f"||{msg}||")

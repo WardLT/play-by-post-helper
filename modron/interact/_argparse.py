@@ -15,8 +15,7 @@ class NoExitParserError(Exception):
     from subparsers to be easily accessed by the user, as they will
     be passed along with the exception itself."""
 
-    def __init__(self, parser: 'NoExitParser', error_message: Text,
-                 text_output: Text):
+    def __init__(self, parser: "NoExitParser", error_message: Text, text_output: Text):
         super().__init__()
         self.parser = parser
         self.error_message = error_message
@@ -30,9 +29,9 @@ class NoExitParserError(Exception):
             any text output by the failed parsing command
         """
         # Make the reply message
-        msg = ''
+        msg = ""
         if self.error_message is not None:
-            msg = f'*{self.error_message}*\n'
+            msg = f"*{self.error_message}*\n"
         msg += self.text_output
         return msg
 
@@ -58,27 +57,25 @@ class MarkdownFormatter(RawTextHelpFormatter):
 
             # return nothing if the section was empty
             if not item_help:
-                return ''
+                return ""
 
             # add the heading if the section was non-empty
             if self.heading is not None:
-                heading = f'  *{self.heading}*\n\n'
+                heading = f"  *{self.heading}*\n\n"
             else:
-                heading = ''
+                heading = ""
 
             # join the section-initial newline, the heading and the help
-            return join(['\n', heading, item_help, '\n'])
+            return join(["\n", heading, item_help, "\n"])
 
-    def _format_usage(self, usage: Text, actions,
-                      groups, prefix: Optional[Text]):
+    def _format_usage(self, usage: Text, actions, groups, prefix: Optional[Text]):
         if prefix is None:
-            prefix = '*usage*: '
+            prefix = "*usage*: "
         return super()._format_usage(usage, actions, groups, prefix)
 
     def _format_action(self, action):
         # determine the required width and the entry label
-        help_position = min(self._action_max_length + 2,
-                            self._max_help_position)
+        help_position = min(self._action_max_length + 2, self._max_help_position)
         help_width = max(self._width - help_position, 11)
         action_header = self._format_action_invocation(action)
 
@@ -86,7 +83,7 @@ class MarkdownFormatter(RawTextHelpFormatter):
         subactions = list(self._iter_indented_subactions(action))
         if len(subactions) == 0:
             # make the action part of a indented list
-            parts = [f'{" " * self._current_indent}- `{action_header}`\n']
+            parts = [f"{' ' * self._current_indent}- `{action_header}`\n"]
 
             # if there was help for the action, add lines of help text
             #  Split the help into multiple lines even though it will
@@ -97,11 +94,13 @@ class MarkdownFormatter(RawTextHelpFormatter):
                 parts.extend(help_lines)
 
             # or add a newline if the description doesn't end with one
-            parts.append('\n')
+            parts.append("\n")
 
         else:
             # Print out the sub-options in a nice way
-            assert action_header.startswith('{') and action_header.endswith('}'), 'Unexpected header format'
+            assert action_header.startswith("{") and action_header.endswith("}"), (
+                "Unexpected header format"
+            )
             parts = []
 
             # if there are any sub-actions, add their help as well
@@ -117,12 +116,14 @@ class NoExitParser(ArgumentParser):
 
     def __init__(self, *args, **kwargs):
         #  formatter_class=MarkdownFormatter,
-        super().__init__(*args,  formatter_class=MarkdownFormatter, **kwargs)
+        super().__init__(*args, formatter_class=MarkdownFormatter, **kwargs)
         self.text_buffer = StringIO()
 
     def _print_message(self, message: str, file: Optional[IO[str]] = ...) -> None:
-        logger.debug(f'Print message "{repr(message[:16])}"...[{len(message)} char]'
-                     f' called from {traceback.extract_stack(limit=4)}')
+        logger.debug(
+            f'Print message "{repr(message[:16])}"...[{len(message)} char]'
+            f" called from {traceback.extract_stack(limit=4)}"
+        )
         if message:
             self.text_buffer.write(message)
 

@@ -11,7 +11,7 @@ _test_modules = [DiceRollInteraction]
 
 @fixture()
 def test_sheet_path(guild: Guild):
-    return config.config.get_character_sheet_path(guild.id, 'modron')
+    return config.config.get_character_sheet_path(guild.id, "modron")
 
 
 class MockContext:
@@ -23,10 +23,20 @@ class MockContext:
         self.channel = channel
         self.last_message = None
 
-    async def send(self, content=None, *, tts=False, embed=None, file=None,
-                   files=None, delete_after=None, nonce=None,
-                   allowed_mentions=None, reference=None,
-                   mention_author=None):
+    async def send(
+        self,
+        content=None,
+        *,
+        tts=False,
+        embed=None,
+        file=None,
+        files=None,
+        delete_after=None,
+        nonce=None,
+        allowed_mentions=None,
+        reference=None,
+        mention_author=None,
+    ):
         self.last_message = content
 
     async def reply(self, content=None, **kwargs):
@@ -41,20 +51,12 @@ class MockMessage(Message):
 async def payload(guild: Guild) -> MockContext:
     """Build a fake context"""
     author = guild.get_member(862094786956886035)  # Modron
-    channel = utils.get(guild.channels, name='bot_testing')
-    return MockContext(
-        author=author,
-        guild=guild,
-        channel=channel
-    )
+    channel = utils.get(guild.channels, name="bot_testing")
+    return MockContext(author=author, guild=guild, channel=channel)
 
 
 @async_fixture()
 async def pen_payload(pen_guild: Guild, guild: Guild) -> MockContext:
     author = pen_guild.get_member(862094786956886035)  # Modron
-    channel = utils.get(guild.channels, name='bot_testing')
-    return MockContext(
-        author=author,
-        guild=pen_guild,
-        channel=channel
-    )
+    channel = utils.get(guild.channels, name="bot_testing")
+    return MockContext(author=author, guild=pen_guild, channel=channel)

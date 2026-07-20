@@ -10,7 +10,7 @@ Some the commands interact with [persistent services](#persistent-services)
 The primary way players will interact with Modron is via Discord commands.
 Modron will reply to specially-constructed commands in the Discrd chat that all
 begin with a `$`.
-List the available commands with `$modron` and print their descriptions 
+List the available commands with `$modron` and print their descriptions
 by adding `-h` or `--help` to the end of a command.
 
 ### `$roll`: Rolling Dice
@@ -28,7 +28,7 @@ The `/roll` command can lookup dice modifiers off of character sheets
 [if installed](installation.md#adding-character-sheets):
 
    - `/roll -a stealth`: Roll a Stealth Check at advantage
-   
+
 ### `$character`: Managing Characters
 
 > Before running any of these commands, ensure you have a character installed with Modron
@@ -45,23 +45,23 @@ The `/modron character ability` command allows you to lookup values of a charact
 ### `$hp`: Managing Health Points
 
 ![manage-hp](img/manage-hp.png)
- 
+
 It links to several subcommands:
 
    - `$hp`: Just print out the character's health
-   - `$hp heal <amount>`: Heal a character by a certain amount 
-   - `$hp heal full`: Heal a character back to their hit point maximum 
+   - `$hp heal <amount>`: Heal a character by a certain amount
+   - `$hp heal full`: Heal a character back to their hit point maximum
    - `$hp harm <amount>`: Apply a certain amount of damage to a character
    - `$hp temp <amount>`: Grant a certain number of temporary hit points
-   - `$hp temp reset`: Remove any temporary hit points 
+   - `$hp temp reset`: Remove any temporary hit points
    - `$hp max <change>`: Alter the character's HP maximum by a certain amount
    - `$hp max reset`: Reset any changes to the HP maximum
-   
+
 ### `$npcgen`: Generating NPCs
 
 ![npc-generator](img/npc-generator.png)
 
-Generate randomized NPCs on demand. 
+Generate randomized NPCs on demand.
 The random character generator can be configured based on your campaign setting
 and returns the NPC physical description along with a little bit of backstory.
 NPCs are returned as a PDF so that you can add notes to the generated table later.
@@ -76,11 +76,11 @@ Several services run on your server.
 
 ## Channel Reminders
 
-![reminder](img/reminder.png) 
+![reminder](img/reminder.png)
 
 Modron will issue reminders if play stalls.
 
 ### Message Back-up
 
-Modron will automatically download recent messages to disk and, 
+Modron will automatically download recent messages to disk and,
 [if configured](installation.md#backing-up-to-google-drive), upload them to Google drive for later use.

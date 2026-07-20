@@ -17,9 +17,9 @@ The [installation guide](./docs/installation.md) describes how to install it for
 
 ## Using Modron
 
-Modron is a collection of Discord slash commands and persistent services. 
+Modron is a collection of Discord slash commands and persistent services.
 We briefly introduce them here and refer you to the [user guide](./docs/user-guide.md)
-for the full documentation. 
+for the full documentation.
 
 ### Rolling Dice
 
@@ -39,6 +39,6 @@ Modron can look up values from a character sheet for each player and change its 
 
 ### Channel Reminders
 
-![reminder](docs/img/reminder.png) 
+![reminder](docs/img/reminder.png)
 
 Modron will issue reminders if play stalls for more than a configurable amount.

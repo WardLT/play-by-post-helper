@@ -12,7 +12,7 @@ from modron.interact.npc import NPCGenerator
 
 def test_launch():
     # Launch Modron as a subprocess
-    proc = Process(target=main, daemon=True, kwargs={'testing': True})
+    proc = Process(target=main, daemon=True, kwargs={"testing": True})
     proc.start()
 
     # Issue a kill command after 30 seconds
@@ -21,8 +21,8 @@ def test_launch():
 
     # See if it exits cleanly
     proc.join(timeout=30)
-    assert proc.exitcode is not None, 'Still has not terminated'
-    assert proc.exitcode in [0, -15], f'Something went awry. Exitcode: {proc.exitcode}'
+    assert proc.exitcode is not None, "Still has not terminated"
+    assert proc.exitcode in [0, -15], f"Something went awry. Exitcode: {proc.exitcode}"
 
 
 @mark.asyncio
@@ -32,9 +32,9 @@ def test_register_functions(bot: ModronClient):
     attach_commands(bot, modules)
 
     assert len(bot.commands) == 4  # ['roll', 'modron', 'help', 'npcgen']
-    assert bot.all_commands['modron'].signature == '[args...]'
+    assert bot.all_commands["modron"].signature == "[args...]"
 
     for module in modules:
         command = bot.all_commands[module.name]
-        assert command.signature == '[args...]'
+        assert command.signature == "[args...]"
         assert isinstance(command.callback.module, module.__class__)

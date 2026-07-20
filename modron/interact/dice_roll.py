@@ -1,4 +1,5 @@
 """Interaction for receiving a dice roll"""
+
 import csv
 import json
 import logging
@@ -20,7 +21,7 @@ from modron.characters.utils import list_available_characters, load_character
 
 logger = logging.getLogger(__name__)
 
-_private_channel_pattern = re.compile(r'(?:[-_]|^)gm(?:[-_]|$)')
+_private_channel_pattern = re.compile(r"(?:[-_]|^)gm(?:[-_]|$)")
 
 
 def _render_dice_rolls(roll: DiceRoll) -> List[str]:
@@ -36,21 +37,23 @@ def _render_dice_rolls(roll: DiceRoll) -> List[str]:
     for (value, rolls), d in zip(roll.results, roll.dice):
         # Get whether the dice was used
         used_ix = rolls.index(value)
-        assert used_ix is not None, "Outcome of roll is not in the list of dice rolled!?"
+        assert used_ix is not None, (
+            "Outcome of roll is not in the list of dice rolled!?"
+        )
         was_used = [False] * len(rolls)
         was_used[used_ix] = True
 
         # Render the roll value
         if value == 1:
-            value_str = '*1*'
+            value_str = "*1*"
         elif value == d:
-            value_str = f'_{value}_'
+            value_str = f"_{value}_"
         else:
-            value_str = f'{value}'
+            value_str = f"{value}"
 
         # Render the value of all dice
         output.append(
-            ' '.join([value_str if u else f'~~{v}~~' for v, u in zip(rolls, was_used)])
+            " ".join([value_str if u else f"~~{v}~~" for v, u in zip(rolls, was_used)])
         )
     return output
 
@@ -76,40 +79,84 @@ class DiceRollInteraction(InteractionModule):
     """Servicing requests to roll dice"""
 
     def __init__(self):
-        super().__init__("roll", "Roll a set of dice. Ex: `/modron roll 1d20+4 --advantage`", _description)
+        super().__init__(
+            "roll",
+            "Roll a set of dice. Ex: `/modron roll 1d20+4 --advantage`",
+            _description,
+        )
 
     def register_argparse(self, parser: ArgumentParser):
         # Add the roll definition
-        parser.add_argument("dice", help='List of dice to roll and a modifier. There should be no spaces in this'
-                                         ' list of dice. Separate multiple types of dice with a plus sign.'
-                                         ' For example, "1d6+4d6+4" would be accepted and "1d6+4d6 + 4"'
-                                         ' would not.\n'
-                                         'Alternatively, you can omit the dice and instead have Modron lookup '
-                                         'your roll modifier based on the purpose (e.g., "stealth")',
-                            type=str)
-        parser.add_argument("purpose", help='Purpose of the roll. Used for making the reply prettier '
-                                            'and tracking player statistics.',
-                            nargs='*', default=None, type=str)
-        parser.add_argument("--character", "-c", help='Name of the character sheet to use')
+        parser.add_argument(
+            "dice",
+            help="List of dice to roll and a modifier. There should be no spaces in this"
+            " list of dice. Separate multiple types of dice with a plus sign."
+            ' For example, "1d6+4d6+4" would be accepted and "1d6+4d6 + 4"'
+            " would not.\n"
+            "Alternatively, you can omit the dice and instead have Modron lookup "
+            'your roll modifier based on the purpose (e.g., "stealth")',
+            type=str,
+        )
+        parser.add_argument(
+            "purpose",
+            help="Purpose of the roll. Used for making the reply prettier "
+            "and tracking player statistics.",
+            nargs="*",
+            default=None,
+            type=str,
+        )
+        parser.add_argument(
+            "--character", "-c", help="Name of the character sheet to use"
+        )
 
         # Add modifiers to how the roll is computed
         adv_group = parser.add_mutually_exclusive_group(required=False)
-        adv_group.add_argument("--advantage", "-a", help="Perform the roll at advantage", action='store_true')
-        adv_group.add_argument("--disadvantage", "-d", help="Perform the roll at disadvantage", action='store_true')
+        adv_group.add_argument(
+            "--advantage",
+            "-a",
+            help="Perform the roll at advantage",
+            action="store_true",
+        )
+        adv_group.add_argument(
+            "--disadvantage",
+            "-d",
+            help="Perform the roll at disadvantage",
+            action="store_true",
+        )
         reroll_group = parser.add_mutually_exclusive_group(required=False)
-        reroll_group.add_argument("--reroll_ones", '-1', help="Re-roll any dice that roll a 1 the first time",
-                                  action='store_true')
-        reroll_group.add_argument("--reroll_twos", '-2', help="Re-roll any dice that roll a 1 or 2 the first time",
-                                  action='store_true')
+        reroll_group.add_argument(
+            "--reroll_ones",
+            "-1",
+            help="Re-roll any dice that roll a 1 the first time",
+            action="store_true",
+        )
+        reroll_group.add_argument(
+            "--reroll_twos",
+            "-2",
+            help="Re-roll any dice that roll a 1 or 2 the first time",
+            action="store_true",
+        )
 
         # Mark how it is logged
         blind_group = parser.add_mutually_exclusive_group(required=False)
-        blind_group.add_argument('--blind', '-b', help='Only report the roll to the GM, regardless of the defaults',
-                                 action='store_const', const=True)
-        blind_group.add_argument('--show', '-s', help='Report the roll to this channel, regardless of the defaults',
-                                 action='store_const', const=True)
+        blind_group.add_argument(
+            "--blind",
+            "-b",
+            help="Only report the roll to the GM, regardless of the defaults",
+            action="store_const",
+            const=True,
+        )
+        blind_group.add_argument(
+            "--show",
+            "-s",
+            help="Report the roll to this channel, regardless of the defaults",
+            action="store_const",
+            const=True,
+        )
 
-    def log_dice_roll(self, context: Context, character: Optional[str], roll: DiceRoll, purpose: str):
+    def log_dice_roll(
+        self, context: Context, character: Optional[str], roll: DiceRoll, purpose: str
+    ):
         """Log a dice roll to disk
 
         Only logs dice rolls if ``config.DICE_LOG`` is not ``None``
@@ -124,9 +171,14 @@ class DiceRollInteraction(InteractionModule):
 
         # Get the channels where tracking is allowed
         guild: Guild = context.guild
-        allowed_channels = sum([
-            cat.channels for cat in guild.categories if cat.id in config.team_options[guild.id].dice_tracked_categories
-        ], [])
+        allowed_channels = sum(
+            [
+                cat.channels
+                for cat in guild.categories
+                if cat.id in config.team_options[guild.id].dice_tracked_categories
+            ],
+            [],
+        )
 
         # Determine if we should log or not
         if isinstance(context.channel, TextChannel):
@@ -139,32 +191,34 @@ class DiceRollInteraction(InteractionModule):
         no_log = not config.team_options[context.guild.id].dice_log
 
         if no_log or skipped_channel:
-            logger.info(f'Refusing to log dice roll. Reasons: No log - {no_log}, skipped channel - {skipped_channel}')
+            logger.info(
+                f"Refusing to log dice roll. Reasons: No log - {no_log}, skipped channel - {skipped_channel}"
+            )
             return
 
         # Get the information about this dice roll
         dice_info = {
-            'time': datetime.now().isoformat(),
-            'user': context.author.name,
-            'user_id': context.author.id,
-            'character': character,
-            'channel': channel_name,
-            'reason': purpose,
-            'dice': roll.dice_description,
-            'advantage': roll.advantage,
-            'disadvantage': roll.disadvantage,
-            'reroll_ones': roll.reroll_ones,
-            'reroll_twos': roll.reroll_twos,
-            'total_value': roll.value,
-            'dice_values': json.dumps(roll.dice_values),
-            'raw_rolls': json.dumps(roll.raw_rolls)
+            "time": datetime.now().isoformat(),
+            "user": context.author.name,
+            "user_id": context.author.id,
+            "character": character,
+            "channel": channel_name,
+            "reason": purpose,
+            "dice": roll.dice_description,
+            "advantage": roll.advantage,
+            "disadvantage": roll.disadvantage,
+            "reroll_ones": roll.reroll_ones,
+            "reroll_twos": roll.reroll_twos,
+            "total_value": roll.value,
+            "dice_values": json.dumps(roll.dice_values),
+            "raw_rolls": json.dumps(roll.raw_rolls),
         }
 
         # If desired, save the dice roll
         dice_path = config.get_dice_log_path(context.guild.id)
         new_file = not os.path.isfile(dice_path)
         os.makedirs(os.path.dirname(dice_path), exist_ok=True)
-        with open(config.get_dice_log_path(context.guild.id), 'a') as fp:
+        with open(config.get_dice_log_path(context.guild.id), "a") as fp:
             writer = csv.DictWriter(fp, fieldnames=list(dice_info.keys()))
             if new_file:
                 writer.writeheader()
@@ -177,82 +231,118 @@ class DiceRollInteraction(InteractionModule):
                 character = None
             else:
                 state = ModronState.load()
-                character = state.get_active_character(context.guild.id, context.author.id)[0]
+                character = state.get_active_character(
+                    context.guild.id, context.author.id
+                )[0]
         else:
             character = args.character.lower()
 
         # Check if the user is requesting a roll by name
         if dice_regex.match(args.dice) is None:
-            logger.info('Dice did not match regex, attempting to match to character ability')
-            ability_name = ' '.join([args.dice] + args.purpose).lower()
+            logger.info(
+                "Dice did not match regex, attempting to match to character ability"
+            )
+            ability_name = " ".join([args.dice] + args.purpose).lower()
 
             # Remove "at advantage" if is in the roll
-            if ability_name.endswith('at advantage') or ability_name.endswith('at disadvantage'):
-                args.disadvantage = 'disadvantage' in ability_name
+            if ability_name.endswith("at advantage") or ability_name.endswith(
+                "at disadvantage"
+            ):
+                args.disadvantage = "disadvantage" in ability_name
                 args.advantage = not args.disadvantage
-                ability_name = ' '.join(ability_name.rsplit(" ", maxsplit=2)[:1])  # Remove last two words
-                logger.info(f'User asked for a {ability_name} roll to be '
-                            f'at {"advantage" if args.advantage else "disadvantage"}')
+                ability_name = " ".join(
+                    ability_name.rsplit(" ", maxsplit=2)[:1]
+                )  # Remove last two words
+                logger.info(
+                    f"User asked for a {ability_name} roll to be "
+                    f"at {'advantage' if args.advantage else 'disadvantage'}"
+                )
 
             # Mark the ability name as the ability for the roll
             args.purpose = [ability_name]
 
             if ability_name == "luck":
                 args.dice = "1d20"
-                args.purpose = ['luck']
+                args.purpose = ["luck"]
             else:
                 if character is None:
-                    raise ValueError('No characters available for your player')
+                    raise ValueError("No characters available for your player")
 
                 # Reformat command to use a specific character roll
                 sheet, _ = load_character(context.guild.id, character)
 
                 # Get the roll
                 args.dice = sheet.create_roll(ability_name)
-                logger.info(f'Reformatted command to be for {ability_name} for {sheet.name}')
+                logger.info(
+                    f"Reformatted command to be for {ability_name} for {sheet.name}"
+                )
 
         # Make the dice roll
-        roll = DiceRoll.make_roll(args.dice, advantage=args.advantage, disadvantage=args.disadvantage,
-                                  reroll_ones=args.reroll_ones, reroll_twos=args.reroll_twos)
+        roll = DiceRoll.make_roll(
+            args.dice,
+            advantage=args.advantage,
+            disadvantage=args.disadvantage,
+            reroll_ones=args.reroll_ones,
+            reroll_twos=args.reroll_twos,
+        )
 
         # Make the reply
-        purpose = ' '.join(args.purpose)
+        purpose = " ".join(args.purpose)
         if len(purpose) > 0:
-            reply = f'<@!{context.author.id}> rolled for {purpose}\n' \
-                    f'{roll.roll_description} = *{roll.value}*'
-            logger.info(f'{context.author.name} requested to roll {roll.roll_description} for {purpose}.'
-                        f' Result = {roll.value}')
+            reply = (
+                f"<@!{context.author.id}> rolled for {purpose}\n"
+                f"{roll.roll_description} = *{roll.value}*"
+            )
+            logger.info(
+                f"{context.author.name} requested to roll {roll.roll_description} for {purpose}."
+                f" Result = {roll.value}"
+            )
         else:
-            reply = f'<@!{context.author.id}> rolled {roll.roll_description} = *{roll.value}*'
-            logger.info(f'{context.author.name} requested to roll {roll.roll_description}.'
-                        f' Result = {roll.value}')
-        reply += f'\nRolls: {", ".join(_render_dice_rolls(roll))}'
+            reply = f"<@!{context.author.id}> rolled {roll.roll_description} = *{roll.value}*"
+            logger.info(
+                f"{context.author.name} requested to roll {roll.roll_description}."
+                f" Result = {roll.value}"
+            )
+        reply += f"\nRolls: {', '.join(_render_dice_rolls(roll))}"
 
         # Conditions which define where the dice roll is going
-        blind_channel = ' '.join(args.purpose).lower() in config.team_options[context.guild.id].blind_rolls
+        blind_channel = (
+            " ".join(args.purpose).lower()
+            in config.team_options[context.guild.id].blind_rolls
+        )
         force_blind = args.blind
         force_show = args.show
-        ic_channel = context.channel.name in config.team_options[context.guild.id].watch_channels
+        ic_channel = (
+            context.channel.name in config.team_options[context.guild.id].watch_channels
+        )
         is_private = _private_channel_pattern.search(context.channel.name) is not None
-        has_public_channel = config.team_options[context.guild.id].public_channel is not None
+        has_public_channel = (
+            config.team_options[context.guild.id].public_channel is not None
+        )
 
         # Send the result in the appropriate channel: blind, in channel, or publicly
-        postfix = (f'channel={context.channel.name} forced={force_show or force_blind} '
-                   f'has-public={has_public_channel} ic_channel={ic_channel}')
+        postfix = (
+            f"channel={context.channel.name} forced={force_show or force_blind} "
+            f"has-public={has_public_channel} ic_channel={ic_channel}"
+        )
         if force_blind or (blind_channel and not force_show):  # Role blind
-            logger.info(f'Rolling blind. {postfix}')
+            logger.info(f"Rolling blind. {postfix}")
             channel_name = config.team_options[context.guild.id].blind_channel
             channel: TextChannel = utils.get(context.guild.channels, name=channel_name)
 
             # Tell the user we are rolling blind
-            await context.send(f'<@!{context.author.id}> rolled {roll.roll_description}, and '
-                               'only the GM will see the result')
+            await context.send(
+                f"<@!{context.author.id}> rolled {roll.roll_description}, and "
+                "only the GM will see the result"
+            )
             await channel.send(reply)
-        elif (ic_channel and is_private) or not ic_channel or not has_public_channel:  # Reply in channel
-            logger.info(f'Rolling in channel. {postfix}')
+        elif (
+            (ic_channel and is_private) or not ic_channel or not has_public_channel
+        ):  # Reply in channel
+            logger.info(f"Rolling in channel. {postfix}")
             await context.send(reply)
         else:  # Public channel exists, we're in an IC channel and that channel is not private
-            logger.info(f'Rolling publicly. {postfix}')
+            logger.info(f"Rolling publicly. {postfix}")
             channel_name = config.team_options[context.guild.id].public_channel
             channel: TextChannel = utils.get(context.guild.channels, name=channel_name)
             await channel.send(reply)

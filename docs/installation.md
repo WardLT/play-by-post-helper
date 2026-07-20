@@ -59,7 +59,7 @@ The "bot" scope will open a menu and give your bot the following permissions:
 - "Mention Everyone" for alerts
 - "Add Reactions," which is unused but potentially fun
 
-That will give you a URL that points to discord.com. 
+That will give you a URL that points to discord.com.
 Open it and follow the instructions to add Modron to your party!
 
 ## Launching Modron for First Time
@@ -72,14 +72,14 @@ which follows the format defined in [`config.yml`](../modron/config.py).
 A few first steps are to:
 
 1. Enable [Developer Mode](https://www.howtogeek.com/714348/how-to-enable-or-disable-developer-mode-on-discord/)
-   on your app, which will display numeric IDs of channels/guilds/etc in the app.   
+   on your app, which will display numeric IDs of channels/guilds/etc in the app.
 2. Create a new section in the `team_options` section with the ID for your "server."
    Give that server a name as the `name` field of the server.
 3. Provide the name of the channel you will use to talk to Modron in `ooc_channel`.
 
 
 Your initial YAML file will look like.
-   
+
 ```yaml
 team_options:
   <server id>:
@@ -118,7 +118,7 @@ team_options:
     reminder_channel: ic_all
     watch_channels:
        - ic_all
-       - player1_gm 
+       - player1_gm
 ```
 
 ### Backing up to Google Drive
@@ -142,5 +142,5 @@ Folder IDs are available from the URL: `https://drive.google.com/drive/u/0/folde
 Character sheets for Modron are stored in a YAML format on your server.
 See [`Adrianna`](../characters/kaluth/adrianna.yml) as an example.
 
-Add your own characters by first creating a subdirectory in `characters` using the name of your 
+Add your own characters by first creating a subdirectory in `characters` using the name of your
 campaign and then add characters following the schema described in [`characters.py`](../modron/characters.py).

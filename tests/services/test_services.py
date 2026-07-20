@@ -12,9 +12,9 @@ from modron.services.reminder import ReminderService
 
 @fixture()
 def change_team_name(guild_id):
-    config.team_options[guild_id].name = 'kaluth-test'
+    config.team_options[guild_id].name = "kaluth-test"
     yield
-    config.team_options[guild_id].name = 'kaluth'
+    config.team_options[guild_id].name = "kaluth"
 
 
 @mark.timeout(60)
@@ -23,14 +23,15 @@ async def test_reminder(guild: Guild):
     service = ReminderService(guild, "bot_testing", ["bot_testing"])
 
     # Send a message to the bot-test channel
-    test_channel: TextChannel = utils.get(guild.channels, name='bot_testing')
-    message = await test_channel.send('Test message')
+    test_channel: TextChannel = utils.get(guild.channels, name="bot_testing")
+    message = await test_channel.send("Test message")
 
     # Make sure the message is captured
     last_time = await service.assess_last_activity()
-    assert ((message.created_at.replace(tzinfo=None) + get_local_tz_offset()) - last_time).total_seconds() < 5, \
-        'Did not pick up the latest message'
-    assert service.watched_channels[0].name == 'bot_testing'
+    assert (
+        (message.created_at.replace(tzinfo=None) + get_local_tz_offset()) - last_time
+    ).total_seconds() < 5, "Did not pick up the latest message"
+    assert service.watched_channels[0].name == "bot_testing"
 
     # Delete the message
     await message.delete()
@@ -44,20 +45,19 @@ async def test_reminder(guild: Guild):
 @mark.asyncio
 async def test_backup(guild: Guild, change_team_name, tmpdir):
     # Make a temporary directory
-    log_dir = os.path.join(tmpdir, 'test')
+    log_dir = os.path.join(tmpdir, "test")
     os.makedirs(log_dir, exist_ok=True)
-    service = BackupService(guild,
-                            log_dir,
-                            timedelta(days=1),
-                            channels=[863442378592878602])
+    service = BackupService(
+        guild, log_dir, timedelta(days=1), channels=[863442378592878602]
+    )
 
     # Make sure the path to the output folder has the correct name
     folder_id = service.get_folder_id()
     folder = service.gdrive_client.files().get(fileId=folder_id).execute()
-    assert folder['name'] == 'kaluth-test'
+    assert folder["name"] == "kaluth-test"
 
     # Run the code
-    backup_channel: TextChannel = utils.get(guild.channels, name='bot_testing')
+    backup_channel: TextChannel = utils.get(guild.channels, name="bot_testing")
     count = await service.backup_messages(backup_channel)
     assert count > 0
 
@@ -67,7 +67,7 @@ async def test_backup(guild: Guild, change_team_name, tmpdir):
 
     # Run the loop
     counts = await service.backup_all_channels()
-    assert counts == {'bot_testing': 0}
+    assert counts == {"bot_testing": 0}
 
     # Delete the upload folder
     service.gdrive_client.files().delete(fileId=folder_id).execute()
@@ -97,7 +97,9 @@ async def test_backup(guild: Guild, change_team_name, tmpdir):
     await message.delete()
 
     # Make sure only file was created
-    result = service.gdrive_client.files().list(
-        q=f'"{folder_id}" in parents and trashed = false'
-    ).execute()
-    assert len(result['files']) == 1
+    result = (
+        service.gdrive_client.files()
+        .list(q=f'"{folder_id}" in parents and trashed = false')
+        .execute()
+    )
+    assert len(result["files"]) == 1

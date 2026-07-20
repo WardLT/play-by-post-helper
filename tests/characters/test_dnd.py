@@ -4,7 +4,7 @@ from pytest import fixture, raises
 
 from modron.characters.dnd import DnD5Character
 
-_joe_path = Path(__file__).parent / 'joe.yaml'
+_joe_path = Path(__file__).parent / "joe.yaml"
 
 
 @fixture
@@ -17,7 +17,7 @@ def test_level(joe):
     assert joe.proficiency_bonus == 2
 
     # Test leveling him up
-    joe.classes['fighter'] = 2
+    joe.classes["fighter"] = 2
     assert joe.level == 5
     assert joe.proficiency_bonus == 3
 
@@ -31,32 +31,32 @@ def test_ability_mods(joe):
 
 
 def test_saving_throws(joe):
-    assert joe.save_modifier('strength') == 4
-    assert joe.save_modifier('dexterity') == -1
+    assert joe.save_modifier("strength") == 4
+    assert joe.save_modifier("dexterity") == -1
 
 
 def test_skills(joe):
     # Make sure the skills are found
     assert len(joe.proficiencies) == 1
-    assert 'medicine' in joe.proficiencies
-    assert joe.custom_skills['tomfoolery'] == 'charisma'
+    assert "medicine" in joe.proficiencies
+    assert joe.custom_skills["tomfoolery"] == "charisma"
 
     # Check the modifiers
-    assert joe.skill_modifier('tomfoolery') == 0
-    assert joe.skill_modifier('medicine') == 4
-    assert joe.skill_modifier('athletics') == 6
+    assert joe.skill_modifier("tomfoolery") == 0
+    assert joe.skill_modifier("medicine") == 4
+    assert joe.skill_modifier("athletics") == 6
     with raises(ValueError):
-        assert joe.skill_modifier('not a skill')
+        assert joe.skill_modifier("not a skill")
 
 
 def test_hit_die(joe):
     hit_die = joe.get_hit_die()
-    assert hit_die == {'d8': 3, 'd10': 1}
+    assert hit_die == {"d8": 3, "d10": 1}
 
     # Add a level in Paladin, which has the same hit die as his Fighter class
-    joe.classes['paladin'] = 1
+    joe.classes["paladin"] = 1
     hit_die = joe.get_hit_die()
-    assert hit_die == {'d8': 3, 'd10': 2}
+    assert hit_die == {"d8": 3, "d10": 2}
 
 
 def test_lookup_modifier(joe):
@@ -144,30 +144,35 @@ def test_temporary_hit_points(joe):
 
 def test_jack_of_all_trades(joe):
     # Make Joe a bard
-    joe.classes['bard'] = 2
+    joe.classes["bard"] = 2
 
     # Test initiative
     assert joe.initiative == joe.dexterity_mod + joe.proficiency_bonus // 2
-    assert joe.lookup_modifier('initiative') == joe.dexterity_mod + joe.proficiency_bonus // 2
+    assert (
+        joe.lookup_modifier("initiative")
+        == joe.dexterity_mod + joe.proficiency_bonus // 2
+    )
 
     # No additional bonus to proficient skills
-    assert joe.skill_modifier('medicine') == joe.wisdom_mod + joe.proficiency_bonus
-    assert joe.skill_modifier('athletics') == joe.strength_mod + joe.proficiency_bonus * 2
+    assert joe.skill_modifier("medicine") == joe.wisdom_mod + joe.proficiency_bonus
+    assert (
+        joe.skill_modifier("athletics") == joe.strength_mod + joe.proficiency_bonus * 2
+    )
 
     # But a bonus to others
-    assert joe.skill_modifier('insight') == joe.wisdom_mod + joe.proficiency_bonus // 2
+    assert joe.skill_modifier("insight") == joe.wisdom_mod + joe.proficiency_bonus // 2
 
 
 def test_complex_roll(joe):
     """Test a roll which combines dice types and sheet modifiers"""
 
-    simplified = joe.substitute_modifiers('1d20+2')
-    assert simplified == '1d20+2'
+    simplified = joe.substitute_modifiers("1d20+2")
+    assert simplified == "1d20+2"
 
     # Try an attribute
-    simplified = joe.substitute_modifiers('1d20+STR')
-    assert simplified == f'1d20+{joe.strength_mod}'
+    simplified = joe.substitute_modifiers("1d20+STR")
+    assert simplified == f"1d20+{joe.strength_mod}"
 
     # Try a skill
-    simplified = joe.substitute_modifiers('1d21+3d6 + animal handling-3')
+    simplified = joe.substitute_modifiers("1d21+3d6 + animal handling-3")
     assert simplified == f"1d21+3d6{joe.skill_modifier('animal handling') - 3:+d}"

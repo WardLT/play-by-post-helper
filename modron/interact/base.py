@@ -1,4 +1,5 @@
 """Base class for interaction modules"""
+
 from argparse import ArgumentParser, Namespace
 import logging
 from collections.abc import Callable
@@ -38,7 +39,7 @@ class InteractionModule:
         self.description = description
 
         # Build the parser for this class
-        self.parser = NoExitParser(description=self.description, prog=f'/{name}')
+        self.parser = NoExitParser(description=self.description, prog=f"/{name}")
         self.register_argparse(self.parser)
 
     def register_argparse(self, parser: ArgumentParser):
@@ -62,7 +63,7 @@ class InteractionModule:
             try:
                 args = self.parser.parse_args(args)
             except NoExitParserError as exc:
-                logger.info(f'Parser raised an exception. Message: {exc.error_message}')
+                logger.info(f"Parser raised an exception. Message: {exc.error_message}")
                 await context.send(exc.make_message(), delete_after=60)
                 return
 
@@ -70,8 +71,10 @@ class InteractionModule:
             try:
                 await self.interact(args, context)
             except ValueError as e:
-                logger.info(f'Interaction raised an exception. Message: {e}')
-                await context.send(f'Command failure! Message: {str(e)}', delete_after=120)
+                logger.info(f"Interaction raised an exception. Message: {e}")
+                await context.send(
+                    f"Command failure! Message: {str(e)}", delete_after=120
+                )
                 raise e
 
         _command.module = self

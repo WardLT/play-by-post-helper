@@ -1,4 +1,5 @@
 """Services related to reminding players when it is their turn"""
+
 from typing import List, Optional
 from datetime import datetime, timedelta
 import logging
@@ -18,10 +19,9 @@ logger = logging.getLogger(__name__)
 class ReminderService(BaseService):
     """Thread that issues a reminder to players if play stalls"""
 
-    def __init__(self,
-                 guild: Guild,
-                 reminder_channel: str,
-                 channels_to_watch: List[str]):
+    def __init__(
+        self, guild: Guild, reminder_channel: str, channels_to_watch: List[str]
+    ):
         """
         Args:
             guild: Authenticated BotClient
@@ -29,7 +29,9 @@ class ReminderService(BaseService):
             channels_to_watch: IDs of the channels, which could include category channels, channels to watch
         """
         super().__init__(guild)
-        self.reminder_channel: TextChannel = utils.get(self._guild.channels, name=reminder_channel)
+        self.reminder_channel: TextChannel = utils.get(
+            self._guild.channels, name=reminder_channel
+        )
         self.channels_to_watch = channels_to_watch
         self.allowed_stall_time = config.team_options[guild.id].allowed_stall_time
 
@@ -91,8 +93,10 @@ class ReminderService(BaseService):
         # Determine the last activity
         last_time = await self.assess_last_activity()
         stall_time = datetime.now() - last_time
-        logger.info(f'Most recent post was {stall_time} ago in {self.active_channel} '
-                    f'by {self.last_message.author.name}')
+        logger.info(
+            f"Most recent post was {stall_time} ago in {self.active_channel} "
+            f"by {self.last_message.author.name}"
+        )
         self.last_channel_poll = datetime.now()
 
         # Determine when we would issue a reminder based on activity
@@ -105,48 +109,58 @@ class ReminderService(BaseService):
         # If it is after any previous reminder time, replace that reminder time
         team_reminder_time = state.reminder_time.get(self._guild.id, None)
         if team_reminder_time is None or reminder_time > team_reminder_time:
-            logger.info(f'Moving up the next reminder time to: {reminder_time}')
+            logger.info(f"Moving up the next reminder time to: {reminder_time}")
             state.reminder_time[self._guild.id] = reminder_time
         else:
-            logger.info(f'Activity-based reminder would be sooner '
-                        f'than user-specified reminder: {team_reminder_time}. Not updating reminder time')
+            logger.info(
+                f"Activity-based reminder would be sooner "
+                f"than user-specified reminder: {team_reminder_time}. Not updating reminder time"
+            )
             reminder_time = state.reminder_time[self._guild.id]
         state.save()
 
         # Check if we are past the stall time
         now = datetime.now()
         if now > reminder_time:
-            logger.info(f'Channel has been stalled for {stall_time - self.allowed_stall_time} too long')
+            logger.info(
+                f"Channel has been stalled for {stall_time - self.allowed_stall_time} too long"
+            )
 
             # Check if the last message was me giving a reminder message
-            active_poster_was_me = (self.last_message is not None and
-                                    self.last_message.author == self._guild.me)
+            active_poster_was_me = (
+                self.last_message is not None
+                and self.last_message.author == self._guild.me
+            )
 
             # Check if we're in the middle of an off time
             wake_time, sleep_time = config.team_options[self._guild.id].reminder_window
             if now.time() > sleep_time or now.time() < wake_time:
                 # If so, sleep until
-                wake_datetime = now.replace(hour=wake_time.hour, minute=wake_time.minute)
+                wake_datetime = now.replace(
+                    hour=wake_time.hour, minute=wake_time.minute
+                )
                 if wake_datetime < now:
                     wake_datetime += timedelta(days=1)
 
-                logger.info(f'It is a bad time to remind anyone. Sleeping until {wake_datetime.time()}')
+                logger.info(
+                    f"It is a bad time to remind anyone. Sleeping until {wake_datetime.time()}"
+                )
                 return wake_datetime + timedelta(seconds=1)
 
             # If not, send a reminder
             if active_poster_was_me:
-                logger.info('Last poster was me. Upping the ante')
+                logger.info("Last poster was me. Upping the ante")
                 await self.reminder_channel.send(
-                    content=f'@everyone, another reminder! It\'s been since {humanize.naturaltime(stall_time)}'
-                            f' that we played some D&D!',
-                    allowed_mentions=AllowedMentions.all()
+                    content=f"@everyone, another reminder! It's been since {humanize.naturaltime(stall_time)}"
+                    f" that we played some D&D!",
+                    allowed_mentions=AllowedMentions.all(),
                 )
             else:
-                logger.info('Last poster was not me. Sending an @channel reminder')
+                logger.info("Last poster was not me. Sending an @channel reminder")
                 await self.reminder_channel.send(
-                    content=f'@everyone Last message was {humanize.naturaltime(stall_time)}.'
-                            f' Who\'s up? Let\'s play some D&D!',
-                    allowed_mentions=AllowedMentions.all()
+                    content=f"@everyone Last message was {humanize.naturaltime(stall_time)}."
+                    f" Who's up? Let's play some D&D!",
+                    allowed_mentions=AllowedMentions.all(),
                 )
 
             # Sleep for the timeout length
@@ -178,14 +192,16 @@ class ReminderService(BaseService):
             elif isinstance(watch_channel, CategoryChannel):
                 self.watched_channels.extend(watch_channel.text_channels)
             else:
-                raise ValueError(f'Unrecognized type of channel: {type(watch_channel)}')
-        logger.info(f'Watching {len(self.watched_channels)} channels for activity')
+                raise ValueError(f"Unrecognized type of channel: {type(watch_channel)}")
+        logger.info(f"Watching {len(self.watched_channels)} channels for activity")
 
         # Warn user if the bot does not write a channel watched for stalling
         if self.reminder_channel not in self.watched_channels:
-            logger.warning('Bot will write reminders to a channel not being watched for stalling, which '
-                           'means it will issue reminders even if no other activity has occurred since the '
-                           'previous reminder.')
+            logger.warning(
+                "Bot will write reminders to a channel not being watched for stalling, which "
+                "means it will issue reminders even if no other activity has occurred since the "
+                "previous reminder."
+            )
 
         # Check every channel
         tasks = [await get_last_activity(c) for c in self.watched_channels]
