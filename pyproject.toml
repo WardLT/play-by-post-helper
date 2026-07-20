@@ -1,0 +1,42 @@
+[build-system]
+requires = ["setuptools >= 83"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "modron"
+description = 'Bot to help manage play-by-post campaigns hosted on Slack'
+version = "0.1.0"
+license = "MIT"
+
+dependencies = [
+    "pandas",
+    "scipy",
+    "numpy",
+    "humanize",
+    "pytimeparse",
+    "discord.py>=2",
+    "tabulate",
+    "pdfkit",
+    "pydantic>=2",
+    "pyyaml",
+    "google-api-python-client",
+    "google-auth-httplib2",
+    "google-auth-oauthlib",
+    "python-dateutil",
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest>=5.3",
+    "pytest-timeout",
+    "pytest-cov",
+    "pytest-asyncio",
+    "flake8",
+]
+
+[project.scripts]
+modron = "modron.app:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["modron*"]

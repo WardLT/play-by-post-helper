@@ -1,5 +1,0 @@
-pytest>=5.3
-pytest-timeout
-pytest-cov
-pytest-asyncio
-flake8
