@@ -1,11 +1,14 @@
 """Character sheets for the Pendragon 6th edition."""
 
 from typing import Optional, List, Set
+import logging
 
 from pydantic import Field, model_validator
 from pydantic.main import BaseModel
 
 from .base import Character
+
+logger = logging.getLogger(__name__)
 
 
 class Checkable(BaseModel):
@@ -195,61 +198,82 @@ class Traits(HasExtras):
                 + self.valorous
                 + self.worldly
             )
+        elif religion == "heathen":
+            return (
+                self.arbitrary
+                + self.honest
+                + self.proud
+                + self.spiritual
+                + self.suspicious
+                + self.vengeful
+            )
         else:
             raise KeyError(f"No such religion: {religion}")
 
 
-class Passions(HasExtras):
+class Passions(HasExtras, Checkable):
     """What drives the knight's decisions
 
     Knights only have a few passions and can pull from them to perform heroic deeds.
     """
 
-    homage: Optional[int] = Field(None, description="A knight swears service to a lord")
-    fealty: Optional[int] = Field(
-        None, description="A knight makes a lesser oath of loyalty"
+    # Fidelitas
+    duty: int = Field(0, description="A knight must follow their world.")
+    fealty: int = Field(0, description="A knight makes a lesser oath of loyalty")
+    homage: int = Field(0, description="A knight swears service to a lord")
+    loyalty_companions: int = Field(0, description="A knight bonds to his compatriots")
+    loyalty_king: int = Field(0, description="A knight supports his land's ruler.")
+
+    # Fervor
+    hate: int = Field(0, description="A knight is driven by a bitter poison")
+    love_family: int = Field(
+        0, description="A knight protects those who share his blood."
     )
-    loyalty_companions: Optional[int] = Field(
-        None, description="A knight bonds to his compatriots"
-    )
-    loyalty_king: Optional[int] = Field(
-        None, description="A knight supports his land's ruler."
+    love_person: int = Field(
+        0, description="A knight has fervor for a specific individual"
     )
 
-    hate: Optional[int] = Field(
-        None, description="A knight is driven by a bitter poison"
+    # Adoratio
+    adoration: int = Field(
+        0, description="A knight is commanded by admiration for a Beloved."
     )
-    love_family: Optional[int] = Field(
-        None, description="A knight protects those who share his blood."
-    )
-    love_person: Optional[int] = Field(
-        None, description="A knight has fervor for a specific individual"
+    devotion: int = Field(
+        0, description="A knight follows a faith in the supernatural."
     )
 
-    adoration: Optional[int] = Field(
-        None, description="A knight is commanded by admiration for a Beloved."
+    # Civilitas
+    chivalry: int = Field(0, description="A knight believes he must protect the weak")
+    hospitality: int = Field(
+        0, description="A knight provides for and protects visitors"
     )
-    devotion: Optional[int] = Field(
-        None, description="A knight follows a faith in the supernatural."
-    )
-
-    chivalry: Optional[int] = Field(
-        None, description="A knight believes he must protect the weak"
-    )
-    hospitality: Optional[int] = Field(
-        None, description="A knight provides for and protects visitors"
-    )
-    station: Optional[int] = Field(
-        None, description="A knight is above the common but below the lords"
+    station: int = Field(
+        0, description="A knight is above the common but below the lords"
     )
 
     details: List[str] = Field(
         default_factory=list, description="Record notes about the passions"
     )
 
-    checks: Set[str] = Field(
-        default_factory=set, description="Passions that have been checked this season"
-    )
+    def check_courts(self):
+        """Ensure that the passions are not too large in a particular area"""
+
+        courts = {
+            "fidelitas": (
+                self.duty
+                + self.fealty
+                + self.homage
+                + self.loyalty_companions
+                + self.loyalty_king
+            ),
+            "fervor": (self.hate + self.love_family + self.love_person),
+            "adoratio": (self.adoration + self.devotion),
+            "civilitas": (self.chivalry + self.hospitality + self.station),
+        }
+        for court, value in courts.items():
+            if value > 40:
+                logger.warning(
+                    f"The knight has too much passion ({value}) in the court of {court}"
+                )
 
 
 class Statistics(Checkable):
