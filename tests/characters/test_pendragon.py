@@ -63,6 +63,7 @@ def test_statistics(alek):
     assert alek.statistics.hit_point_max == 27
     assert alek.statistics.unconscious == 6
     assert alek.statistics.major_wound == 17
+    assert alek.statistics.knockdown == alek.statistics.siz
 
 
 def test_extras():

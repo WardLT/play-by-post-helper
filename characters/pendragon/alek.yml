@@ -29,48 +29,50 @@ traits:
   valorous: 15
 
 passions:
-  fealty_lord: 19
-  love_family: 13
-  chivalry: 13
+  honor: 15
+  fealty: 15
+  love_family: 12
+  devotion: 5
+  station: 10
+  hospitality: 15
+  chivalry: 3
 
 skills:
-  # Battle
-  battle: 10
-  siege: 2
-  horsemanship: 15
+  # Combat
+  battle: 8
+  bow: 5
+  brawling: 12
+  charge: 10
+  crossbow: 5
+  hafted: 5
+  two_handed_hafted: 5
+  horsemanship: 13
+  spear: 6
+  sword: 13
+  thrown: 5
 
-  # Weapons
-  sword: 10
-  lance: 10
-  spear: 10
-  dagger: 10
-
-  # Other
-  awareness: 10
-  boating: 1
-  compose: 3
-  courtesy: 15
-  dancing: 10
-  faerie_lore: 3
-  falconry: 10
-  fashion: 0
-  first_aid: 10
-  flirting: 13
-  folklore: 4
-  gaming: 3
-  heraldry: 1
-  hunting: 6
-  intrigue: 8
-  orate: 5
-  play_harp: 3
-  read_latin: 5
-  recognize: 10
-  religion_any: 2
-  romance: 1
-  singing: 4
-  stewardship: 2
-  swimming: 2
-  tourney: 0
+  # Main
+  awareness: 7
+  chirurgery: 0
+  compose: 6
+  courtesy: 11
+  dancing: 7
+  falconry: 5
+  fashion: 8
+  first_aid: 7
+  flirting: 10
+  folklore: 8
+  gaming: 5
+  hunting: 5
+  industry: 0
+  intrigue: 9
+  literacy: 0
+  orate: 8
+  play: 5
+  recognize: 8
+  religion: 5
+  singing: 5
+  stewardship: 5
 
   checks:
     - horsemanship

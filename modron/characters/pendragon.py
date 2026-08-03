@@ -254,6 +254,11 @@ class Passions(HasExtras, Checkable):
         default_factory=list, description="Record notes about the passions"
     )
 
+    @model_validator(mode="after")
+    def _check_courts(self):
+        self.check_courts()
+        return self
+
     def check_courts(self):
         """Ensure that the passions are not too large in a particular area"""
 
@@ -289,6 +294,11 @@ class Statistics(Checkable):
     app: int = Field(
         ..., description="Natural charm, presence, and physical attractiveness"
     )
+
+    @property
+    def knockdown(self) -> int:
+        """How much it takes to knock the knight off their feet or horse"""
+        return self.siz
 
     @property
     def damage(self) -> int:
@@ -329,32 +339,18 @@ class Statistics(Checkable):
 class Skills(HasExtras):
     """Proficiency at specific actions"""
 
-    # Combat-oriented
-    battle: int = Field(
-        ..., description="Survive and lead in large-scale military conflict"
-    )
-    siege: int = Field(..., description="Overcoming the defenses of a stronghold")
-    horsemanship: int = Field(
-        ..., description="Guiding horses through difficult circumstances"
-    )
-
-    # Weapons
-    sword: int = Field(..., description="Wielding swords")
-    lance: int = Field(..., description="Wielding a lance while mounted")
-    spear: int = Field(..., description="Fighting with a polearm")
-    dagger: int = Field(..., description="Using a small knife in battle")
-
-    # Other
     awareness: int = Field(
         ..., description="Attentiveness and ability to use their senses"
     )
-    boating: int = Field(..., description="Being useful on watercraft")
+    chirurgery: int = Field(
+        ..., description="The delicate art of keeping the mostly-dead alive"
+    )
     compose: int = Field(..., description="Preparing a speech or work of musical art")
     courtesy: int = Field(
         ..., description="Knowledge of culture, laws, and customs of the noble class"
     )
     dancing: int = Field(..., description="Demonstrating grace on the dance floor")
-    faerie_lore: int = Field(..., description="Knowledge of the unseen world")
+    falconry: int = Field(..., description="")
     fashion: int = Field(..., description="Expressing themselves with garments")
     first_aid: int = Field(..., description="Providing immediate medical assistance")
     flirting: int = Field(
@@ -368,24 +364,41 @@ class Skills(HasExtras):
         ...,
         description="Ability with amusements for either competition or entertainment",
     )
-    heraldry: int = Field(
-        ..., description="Recognizing the markings of specific noble groups"
-    )
     hunting: int = Field(
         ..., description="Tracking, traveling in wilds, and concealing one's trail"
     )
+    industry: int = Field(..., description="Creating things with your hands")
     intrigue: int = Field(..., description="Learning and spreading secrets in court")
+    literacy: int = Field(..., description="Using the written word")
     orate: int = Field(..., description="Influence others with well-delivered words")
+    play: int = Field(..., description="Stir emotions with a musical instrument")
     recognize: int = Field(..., description="Remember and identify specific people")
-    romance: int = Field(..., description="Establishing long term courtship")
+    religion: int = Field(..., description="Knowledge of a single belief system")
     singing: int = Field(
         ..., description="Delivering beautiful music without an instrument"
     )
     stewardship: int = Field(..., description="Understanding how to manage land")
-    swimming: int = Field(..., description="Moving about in water without a boat")
-    tourney: int = Field(
-        ..., description="Knowing the routine and intricacies of noble competition"
+
+    # Combat-oriented
+    battle: int = Field(
+        ..., description="Survive and lead in large-scale military conflict"
     )
+    bow: int = Field(..., description="Accuracy and skill with a bow-and-arrow")
+    brawling: int = Field(..., description="Fighting with fists and kicks.")
+    charge: int = Field(..., description="Handling yourself in a rushing attack")
+    crossbow: int = Field(..., description="Ability to wield a crossbow")
+    hafted: int = Field(
+        ..., description="Use of a axe and other polearms with one hand"
+    )
+    two_handed_hafted: int = Field(
+        ..., description="Use of a axe and other polearms that require both arms"
+    )
+    horsemanship: int = Field(
+        ..., description="Guiding horses through difficult circumstances"
+    )
+    spear: int = Field(..., description="Fighting with a polearm")
+    sword: int = Field(..., description="Wielding swords")
+    thrown: int = Field(..., description="Hurling dangerous things")
 
 
 class PendragonCharacter(Character):
@@ -393,10 +406,11 @@ class PendragonCharacter(Character):
 
     # Basic details
     age: int = Field(..., description="Age of the knight", gt=0)
-    son_number: int = Field(..., description="How far the knight is from inheritance.")
+    religion: str = Field("christian", description="Which religion the knight follows")
     homeland: str = Field(..., description="Where the knight is from")
     culture: Optional[str] = Field(None, description="Culture within the homeland")
     lord: Optional[str] = Field(None, description="With whom they pledged fealty")
+
     current_class: str = Field(..., description="Knightly occupation")
     current_home: str = Field(..., description="Where they are when not traveling")
     distinctive_features: List[str] = Field(
