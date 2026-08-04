@@ -1,4 +1,5 @@
 from pathlib import Path
+import logging
 
 from pytest import fixture, raises
 
@@ -36,14 +37,23 @@ def test_traits(alek):
     assert alek.traits.get_religious_bonus("christian") == 13 + 10 + 10 + 13 + 14 + 8
     assert alek.traits.get_religious_bonus("pagan") == 15 + 13 + 16 + 7 + 7 + 8
     assert alek.traits.get_religious_bonus("wodinic") == 13 + 6 + 7 + 11 + 15 + 12
+    assert alek.traits.get_religious_bonus("heathen") == 12 + 16 + 7 + 8 + 12 + 10
 
     assert alek.traits.chivalry_bonus == 15 + 13 + 8 + 10 + 13 + 15
 
 
-def test_passions(alek):
-    assert alek.passions.hate is None
-    assert alek.passions.concern_commoners == 6
-    assert "concern_commoners" in alek.passions.model_dump()
+def test_passions(alek, caplog):
+    assert alek.passions.hate == 0
+
+    with caplog.at_level(logging.WARNING):
+        alek.passions.check_courts()
+    assert len(caplog.messages) == 0
+
+    alek.passions.adoration = 41
+    with caplog.at_level(logging.WARNING):
+        alek.passions.check_courts()
+    assert len(caplog.messages) == 1
+    assert caplog.messages[-1].endswith("in the court of adoratio")
 
 
 def test_statistics(alek):
@@ -53,6 +63,7 @@ def test_statistics(alek):
     assert alek.statistics.hit_point_max == 27
     assert alek.statistics.unconscious == 6
     assert alek.statistics.major_wound == 17
+    assert alek.statistics.knockdown == alek.statistics.siz
 
 
 def test_extras():
